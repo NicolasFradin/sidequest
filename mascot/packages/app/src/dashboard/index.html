@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mascot Coach — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <p class="brand">Mascot<br />Coach</p>
+      <nav class="nav" id="tabs">
+        <button class="nav-item active" data-tab="settings">
+          <span class="nav-icon">⚙</span> Réglages
+        </button>
+        <button class="nav-item" data-tab="history">
+          <span class="nav-icon">📊</span> Historique
+        </button>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" title="Changer de thème"><span id="theme-icon">🌙</span> Thème</button>
+    </aside>
+
+    <main class="content">
+      <section class="tab-panel active" id="panel-settings">
+        <h1 class="page-title">Réglages</h1>
+
+        <div class="onboarding-banner" id="onboarding-banner" hidden>
+          <div>
+            <p class="onboarding-title">Bienvenue sur Mascot Coach 👋</p>
+            <p class="onboarding-text">Choisis ton intervalle, ta mascotte, et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.</p>
+          </div>
+          <button id="onboarding-dismiss" class="onboarding-dismiss">J'ai compris</button>
+        </div>
+
+        <div class="card">
+          <label class="field-label">Intervalle entre deux exercices</label>
+          <div class="interval-row">
+            <input type="range" id="interval-range" min="1" max="120" step="1" />
+            <span class="interval-value" id="interval-value">30 min</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <label class="field-label">Mode</label>
+          <div class="option-row" id="mode-options">
+            <button class="option-btn" data-mode="notify">Notification douce</button>
+            <button class="option-btn" data-mode="gate">Blocage réel</button>
+            <button class="option-btn" data-mode="mixed">Mixte</button>
+          </div>
+          <p class="field-hint">Le blocage réel (fenêtre non-fermable tant que l'exercice n'est pas fait) arrive à l'étape 3.4 — le mode est déjà enregistré ici.</p>
+        </div>
+
+        <div class="card">
+          <label class="field-label">Mascotte</label>
+          <div class="mascot-row" id="mascot-options">
+            <button class="mascot-option" data-mascot="ronnie-coleman">
+              <img src="../../assets/mascots/ronnie-coleman.png" alt="Ronnie Coleman" />
+              <span>Ronnie Coleman</span>
+            </button>
+            <button class="mascot-option" data-mascot="miami-80s">
+              <img src="../../assets/mascots/miami-80s.png" alt="Miami 80s" />
+              <span>Miami 80s</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card toggle-row">
+          <div>
+            <label class="field-label" for="autolaunch-toggle">Lancer au démarrage</label>
+            <p class="field-hint">Ouvre Mascot Coach automatiquement à la connexion.</p>
+          </div>
+          <input type="checkbox" id="autolaunch-toggle" class="toggle" />
+        </div>
+      </section>
+
+      <section class="tab-panel history-panel" id="panel-history">
+        <h1 class="page-title">Historique</h1>
+
+        <div class="stats-row">
+          <div class="stat-tile">
+            <p class="stat-value" id="stat-streak">—</p>
+            <p class="stat-label">🔥 Streak (jours)</p>
+          </div>
+          <div class="stat-tile">
+            <p class="stat-value" id="stat-week">—</p>
+            <p class="stat-label">Séances cette semaine</p>
+          </div>
+          <div class="stat-tile">
+            <p class="stat-value" id="stat-total">—</p>
+            <p class="stat-label">Séances au total</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <label class="field-label">Volume / semaine (7 derniers jours)</label>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+
+        <div class="card history-table-card">
+          <label class="field-label">Séances récentes</label>
+          <table class="history-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Exercice</th>
+                <th>Mascotte</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body"></tbody>
+          </table>
+          <p class="field-hint" id="history-empty" hidden>Aucune séance enregistrée pour l'instant.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

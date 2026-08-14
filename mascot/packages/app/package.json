@@ -1,0 +1,20 @@
+{
+  "name": "@mascot/app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "App Electron : tray + overlay mascotte",
+  "type": "module",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "prestart": "electron-rebuild -f -w better-sqlite3",
+    "rebuild:electron": "electron-rebuild -f -w better-sqlite3"
+  },
+  "dependencies": {
+    "@mascot/core": "workspace:*"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "@electron/rebuild": "^3.7.1"
+  }
+}

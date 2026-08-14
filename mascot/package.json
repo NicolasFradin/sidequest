@@ -1,0 +1,15 @@
+{
+  "name": "mascot-monorepo",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Mascotte coach - idle time companion (MVP)",
+  "scripts": {
+    "test": "pnpm --filter @mascot/core test",
+    "build": "pnpm --filter @mascot/core build",
+    "fix:native-modules": "rm -rf node_modules packages/*/node_modules $(pnpm store path) && pnpm install"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@11.21.0"
+}
