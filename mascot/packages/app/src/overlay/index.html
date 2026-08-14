@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mascot Coach</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="card" id="card">
+    <button id="btn-settings" class="settings-btn" title="Réglages">⚙</button>
+    <img id="mascot-img" class="mascot" src="" alt="Mascotte" />
+    <div class="content">
+      <p class="label">C'est l'heure de bouger !</p>
+      <p class="exercise" id="exercise-label">—</p>
+      <p class="duration" id="exercise-duration"></p>
+      <div class="actions">
+        <button id="btn-done" class="btn btn-primary">C'est fait 💪</button>
+        <button id="btn-skip" class="btn btn-secondary">Passer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
