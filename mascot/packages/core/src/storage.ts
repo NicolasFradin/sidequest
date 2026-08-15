@@ -5,6 +5,7 @@ export type SessionStatus = "done" | "skipped" | "missed";
 export type TriggerType = "timer" | "hook";
 export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
+export type TriggerSource = "timer" | "hook" | "both";
 
 export interface Settings {
   intervalMinutes: number;
@@ -13,6 +14,8 @@ export interface Settings {
   autolaunch: boolean;
   activeProgram: string;
   theme: Theme;
+  /** Origine des déclenchements d'exercice : minuteur seul, hook Claude Code seul, ou les deux */
+  triggerSource: TriggerSource;
 }
 
 export interface SessionRecord {
@@ -36,6 +39,7 @@ const DEFAULT_SETTINGS: Settings = {
   autolaunch: false,
   activeProgram: "sport-basic",
   theme: "dark",
+  triggerSource: "both",
 };
 
 interface SettingsRow {
@@ -115,6 +119,7 @@ export class Storage {
         : DEFAULT_SETTINGS.autolaunch,
       activeProgram: stored.activeProgram ?? DEFAULT_SETTINGS.activeProgram,
       theme: (stored.theme as Theme) ?? DEFAULT_SETTINGS.theme,
+      triggerSource: (stored.triggerSource as TriggerSource) ?? DEFAULT_SETTINGS.triggerSource,
     };
   }
 
