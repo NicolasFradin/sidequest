@@ -20,6 +20,7 @@ const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
 let tray = null;
 let overlayWindow = null;
 let dashboardWindow = null;
+let isQuitting = false;
 /** @type {import('@mascot/core').Storage} */
 let storage = null;
 /** @type {import('@mascot/core').Scheduler} */
@@ -59,8 +60,10 @@ function createOverlayWindow() {
   });
 
   // Comme pour le dashboard : fermer la fenêtre (ex. Cmd+W si elle a le focus) la masque
-  // seulement, elle ne doit jamais être détruite tant que l'app tourne.
+  // seulement, elle ne doit jamais être détruite tant que l'app tourne — sauf quand c'est
+  // app.quit() lui-même qui ferme les fenêtres (sinon "Quitter" ne peut jamais aboutir).
   overlayWindow.on("close", (event) => {
+    if (isQuitting) return;
     event.preventDefault();
     overlayWindow.hide();
   });
@@ -95,8 +98,10 @@ function createDashboardWindow() {
     },
   });
 
-  // Fermer la fenêtre (croix) la masque seulement — l'app reste active en tray.
+  // Fermer la fenêtre (croix) la masque seulement — l'app reste active en tray. Idem que
+  // pour l'overlay : on laisse passer si c'est app.quit() qui est en train de fermer.
   dashboardWindow.on("close", (event) => {
+    if (isQuitting) return;
     event.preventDefault();
     dashboardWindow.hide();
   });
@@ -306,6 +311,10 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-sessions", () => storage.getSessions());
     ipcMain.handle("dashboard:get-streak", () => storage.getCurrentStreak());
     ipcMain.handle("dashboard:get-exercises", () => loadPack(storage.getSettings().activeProgram).exercises);
+  });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
   });
 
   app.on("will-quit", () => {
