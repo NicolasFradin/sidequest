@@ -98,6 +98,26 @@ window.dashboardAPI.getSettings().then((settings) => {
   }
 });
 
+const hookStatusBadge = document.getElementById("hook-status-badge");
+const hookToggleBtn = document.getElementById("hook-toggle-btn");
+
+function applyHookStatus(installed) {
+  hookStatusBadge.textContent = installed ? "Activé" : "Non activé";
+  hookStatusBadge.className = `status-badge ${installed ? "installed" : "not-installed"}`;
+  hookToggleBtn.textContent = installed ? "Désactiver" : "Activer l'intégration";
+}
+
+hookToggleBtn.addEventListener("click", async () => {
+  const currentlyInstalled = hookStatusBadge.classList.contains("installed");
+  const nowInstalled = currentlyInstalled
+    ? await window.dashboardAPI.uninstallHook()
+    : await window.dashboardAPI.installHook();
+  applyHookStatus(nowInstalled);
+  showToast(nowInstalled ? "Intégration Claude Code activée" : "Intégration Claude Code désactivée");
+});
+
+window.dashboardAPI.isHookInstalled().then(applyHookStatus);
+
 const statStreak = document.getElementById("stat-streak");
 const statWeek = document.getElementById("stat-week");
 const statTotal = document.getElementById("stat-total");
