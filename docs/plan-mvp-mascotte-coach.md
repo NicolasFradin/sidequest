@@ -112,11 +112,12 @@ Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé direc
 
 | Version | Contenu |
 |---|---|
-| V0.5 | Hooks Claude Code / Codex (déclenchement contextuel, façon claude-gym) |
+| V0.5 | Hooks Claude Code / Codex (déclenchement contextuel, façon claude-gym) — voir [`plan-v0.5-hooks-claude-code.md`](plan-v0.5-hooks-claude-code.md) |
 | V0.5+ | Mascottes animées dans l'overlay (au repos + pendant l'exercice) — à trancher entre GIF simple (rapide, cohérent avec le pixel art actuel) et animation plus poussée (spritesheet, squelette) selon le temps dispo |
 | V1 | Génération d'exercices via API Claude, programmes personnalisés |
 | V1.5 | Registre de packs installable (`mascot install pack-yoga`), encore gratuit |
 | V2 | Backend : comptes, leaderboard FR/monde (score composite, champ `verified` activé), skins premium |
+| V2.5 | Affinage post-lancement V2 sur données d'usage réelles : formule exacte du score composite, activation de la vérification anti-triche webcam (schéma déjà prêt, `verified: bool`), détail final du split Free/Premium |
 | V3 | Marketplace ouverte à des créateurs tiers (commission), abonnement IA |
 
 ## 7. Stratégie licence & monétisation future
@@ -126,13 +127,7 @@ Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé direc
 - Le client open-source reste complet et fonctionnel sans le backend premium — seules les features premium (participation leaderboard, skins, IA) nécessitent une licence/API key vérifiée côté serveur.
 - Alternative à évaluer plus tard si le risque de fork concurrent devient réel : passer les futures parties sensibles en **AGPL** plutôt que MIT.
 
-## 8. Points en attente de décision (non bloquants pour démarrer)
-
-- Formule exacte du score composite du leaderboard (à trancher avec des données d'usage réelles)
-- Activation de la vérification anti-triche (webcam) — schéma déjà prêt (`verified: bool`)
-- Détail du split Free/Premium final (voir tableau proposé en discussion, à ajuster)
-
-## 8bis. Problèmes connus (à ré-investiguer)
+## 8. Problèmes connus (à ré-investiguer)
 
 - **Icône Dock macOS peu fiable** : en dev (`electron .`) comme sur l'app packagée non signée, l'icône custom du Dock apparaît de façon intermittente puis peut disparaître après quelques secondes (`app.dock.setIcon()` en dev, mais aussi le `.icns` natif du bundle packagé). Hypothèse la plus probable : comportement connu de macOS Icon Services/LaunchServices avec les apps **non signées** (`mac.identity: null` dans la config electron-builder, faute de compte Apple Developer payant) — à revérifier une fois l'app réellement signée/notariée. Non bloquant : la tray icon (menu bar) fonctionne de façon fiable dans tous les cas, c'est le point d'accès principal de l'app.
 
