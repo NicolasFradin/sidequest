@@ -488,6 +488,22 @@ html, body {
   border-color: var(--accent-magenta);
 }
 
+.status-badge.installed {
+  color: var(--accent-teal);
+  border-color: var(--accent-teal);
+}
+
+.status-badge.not-installed {
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+.hook-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .toast {
   position: fixed;
   bottom: 24px;

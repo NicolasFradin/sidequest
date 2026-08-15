@@ -3,7 +3,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { Scheduler, Storage, loadPack, pickRandomExercise, HookServer } from "@mascot/core";
+import {
+  Scheduler,
+  Storage,
+  loadPack,
+  pickRandomExercise,
+  HookServer,
+  isInstalled as isClaudeHookInstalled,
+  install as installClaudeHook,
+  uninstall as uninstallClaudeHook,
+} from "@mascot/core";
 
 app.setName("Mascot Coach");
 // App tray-only en arrière-plan : pas de menu applicatif par défaut. Ça évite aussi les
@@ -16,6 +25,7 @@ const ASSETS_DIR = path.join(__dirname, "..", "..", "assets");
 const OVERLAY_DIR = path.join(__dirname, "..", "overlay");
 const DASHBOARD_DIR = path.join(__dirname, "..", "dashboard");
 const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
+const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
 
 let tray = null;
 let overlayWindow = null;
@@ -369,6 +379,16 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-exercises", () => loadPack(storage.getSettings().activeProgram).exercises);
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
+
+    ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));
+    ipcMain.handle("dashboard:hook-install", () => {
+      installClaudeHook(CLAUDE_SETTINGS_PATH);
+      return isClaudeHookInstalled(CLAUDE_SETTINGS_PATH);
+    });
+    ipcMain.handle("dashboard:hook-uninstall", () => {
+      uninstallClaudeHook(CLAUDE_SETTINGS_PATH);
+      return isClaudeHookInstalled(CLAUDE_SETTINGS_PATH);
+    });
   });
 
   app.on("before-quit", () => {

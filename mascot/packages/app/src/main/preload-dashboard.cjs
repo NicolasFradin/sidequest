@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   getExercises: () => ipcRenderer.invoke("dashboard:get-exercises"),
   getDebt: () => ipcRenderer.invoke("dashboard:get-debt"),
   triggerExercise: () => ipcRenderer.send("dashboard:trigger-exercise"),
+  isHookInstalled: () => ipcRenderer.invoke("dashboard:hook-is-installed"),
+  installHook: () => ipcRenderer.invoke("dashboard:hook-install"),
+  uninstallHook: () => ipcRenderer.invoke("dashboard:hook-uninstall"),
 });
