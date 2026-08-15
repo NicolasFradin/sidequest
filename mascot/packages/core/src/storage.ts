@@ -16,6 +16,8 @@ export interface Settings {
   theme: Theme;
   /** Origine des déclenchements d'exercice : minuteur seul, hook Claude Code seul, ou les deux */
   triggerSource: TriggerSource;
+  /** Ne déclencher qu'un hook Claude Code sur N (ex. 3 = une réponse sur trois) — défaut 1 (à chaque fois) */
+  hookEveryN: number;
 }
 
 export interface SessionRecord {
@@ -40,6 +42,7 @@ const DEFAULT_SETTINGS: Settings = {
   activeProgram: "sport-basic",
   theme: "dark",
   triggerSource: "both",
+  hookEveryN: 1,
 };
 
 interface SettingsRow {
@@ -120,6 +123,7 @@ export class Storage {
       activeProgram: stored.activeProgram ?? DEFAULT_SETTINGS.activeProgram,
       theme: (stored.theme as Theme) ?? DEFAULT_SETTINGS.theme,
       triggerSource: (stored.triggerSource as TriggerSource) ?? DEFAULT_SETTINGS.triggerSource,
+      hookEveryN: stored.hookEveryN ? Math.max(1, Number(stored.hookEveryN)) : DEFAULT_SETTINGS.hookEveryN,
     };
   }
 

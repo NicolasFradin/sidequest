@@ -270,6 +270,27 @@ html, body {
   accent-color: var(--accent-magenta);
 }
 
+.hook-every-n-row {
+  margin-top: 16px;
+  gap: 8px;
+}
+
+.field-sublabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.hook-every-n-row input[type="number"] {
+  width: 56px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
 .interval-value {
   min-width: 60px;
   text-align: right;
