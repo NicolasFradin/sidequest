@@ -270,7 +270,9 @@ if (!gotSingleInstanceLock) {
     }
 
     if (process.platform === "darwin" && app.dock) {
-      app.dock.hide(); // pas d'icône dans le dock, juste dans la menu bar
+      // En dev (`electron .`), l'app n'a pas encore l'icône packagée (icns) — on force celle
+      // de la mascotte pour que le dock ne montre pas l'icône générique Electron.
+      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "ronnie-coleman.png"));
     }
 
     // Premier lancement : le dashboard s'ouvre automatiquement (onboarding, cf. Sprint 3.5).
