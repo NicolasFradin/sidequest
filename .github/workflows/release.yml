@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            dist-script: dist:mac
+          - os: windows-latest
+            dist-script: dist:win
+          - os: ubuntu-latest
+            dist-script: dist:linux
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: mascot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable corepack (pnpm)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm --filter @mascot/core build
+
+      - name: Package app (${{ matrix.os }})
+        working-directory: mascot/packages/app
+        run: pnpm run ${{ matrix.dist-script }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            mascot/packages/app/release/*.dmg
+            mascot/packages/app/release/*.zip
+            mascot/packages/app/release/*.exe
+            mascot/packages/app/release/*.AppImage
+            mascot/packages/app/release/*.deb
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

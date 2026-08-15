@@ -76,8 +76,7 @@ Ce choix (données déclaratives, pas de code) est ce qui permettra plus tard d'
 
 L'app tourne en arrière-plan comme une "menu bar app" (pas de fenêtre ouverte par défaut, juste une icône dans la barre des tâches/menu bar) :
 
-- **Clic simple sur l'icône tray** → ouvre/masque la fenêtre dashboard (toggle).
-- **Clic droit sur l'icône tray** → menu contextuel : "Ouvrir le dashboard", "Mettre en pause", "Quitter".
+- **Clic sur l'icône tray** (gauche ou droit, pas de distinction sur macOS) → affiche le menu contextuel : "Ouvrir le dashboard", "Mettre en pause", "Quitter". Le dashboard ne s'ouvre jamais automatiquement au clic, seulement via "Ouvrir le dashboard" (décision revue en cours de Sprint 5 — le plan prévoyait initialement un clic simple = toggle direct).
 - **Raccourci clavier global configurable** (ex. `Cmd/Ctrl+Shift+M`) pour ouvrir le dashboard depuis n'importe où sans toucher la souris.
 - **Depuis l'overlay mascotte** : une icône réglages discrète (⚙) ouvre directement le dashboard sur l'onglet concerné.
 - **Premier lancement** : le dashboard s'ouvre automatiquement (onboarding : choix de la mascotte, intervalle, autolaunch).
@@ -132,6 +131,10 @@ Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé direc
 - Formule exacte du score composite du leaderboard (à trancher avec des données d'usage réelles)
 - Activation de la vérification anti-triche (webcam) — schéma déjà prêt (`verified: bool`)
 - Détail du split Free/Premium final (voir tableau proposé en discussion, à ajuster)
+
+## 8bis. Problèmes connus (à ré-investiguer)
+
+- **Icône Dock macOS peu fiable** : en dev (`electron .`) comme sur l'app packagée non signée, l'icône custom du Dock apparaît de façon intermittente puis peut disparaître après quelques secondes (`app.dock.setIcon()` en dev, mais aussi le `.icns` natif du bundle packagé). Hypothèse la plus probable : comportement connu de macOS Icon Services/LaunchServices avec les apps **non signées** (`mac.identity: null` dans la config electron-builder, faute de compte Apple Developer payant) — à revérifier une fois l'app réellement signée/notariée. Non bloquant : la tray icon (menu bar) fonctionne de façon fiable dans tous les cas, c'est le point d'accès principal de l'app.
 
 ## 9. Charte graphique (adaptée du template fourni)
 

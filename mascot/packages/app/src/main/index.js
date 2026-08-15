@@ -20,6 +20,7 @@ const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
 let tray = null;
 let overlayWindow = null;
 let dashboardWindow = null;
+let isQuitting = false;
 /** @type {import('@mascot/core').Storage} */
 let storage = null;
 /** @type {import('@mascot/core').Scheduler} */
@@ -61,8 +62,10 @@ function createOverlayWindow() {
   });
 
   // Comme pour le dashboard : fermer la fenêtre (ex. Cmd+W si elle a le focus) la masque
-  // seulement, elle ne doit jamais être détruite tant que l'app tourne.
+  // seulement, elle ne doit jamais être détruite tant que l'app tourne — sauf quand c'est
+  // app.quit() lui-même qui ferme les fenêtres (sinon "Quitter" ne peut jamais aboutir).
   overlayWindow.on("close", (event) => {
+    if (isQuitting) return;
     event.preventDefault();
     overlayWindow.hide();
   });
@@ -101,8 +104,10 @@ function createDashboardWindow() {
     },
   });
 
-  // Fermer la fenêtre (croix) la masque seulement — l'app reste active en tray.
+  // Fermer la fenêtre (croix) la masque seulement — l'app reste active en tray. Idem que
+  // pour l'overlay : on laisse passer si c'est app.quit() qui est en train de fermer.
   dashboardWindow.on("close", (event) => {
+    if (isQuitting) return;
     event.preventDefault();
     dashboardWindow.hide();
   });
@@ -225,7 +230,9 @@ function createTray() {
   icon.setTemplateImage(true); // s'adapte au mode clair/sombre de la menu bar macOS
   tray = new Tray(icon);
   tray.setToolTip("Mascot Coach");
-  tray.on("click", () => toggleDashboard());
+  // Le clic gauche sur l'icône tray n'ouvre plus le dashboard automatiquement — seul
+  // "Ouvrir le dashboard" dans le menu (clic droit), le raccourci clavier ou l'icône ⚙
+  // de l'overlay le font.
   buildTrayMenu();
 }
 
@@ -295,8 +302,13 @@ if (!gotSingleInstanceLock) {
       scheduler.triggerNow();
     }
 
-    if (process.platform === "darwin" && app.dock) {
-      app.dock.hide(); // pas d'icône dans le dock, juste dans la menu bar
+    if (process.platform === "darwin" && app.dock && !app.isPackaged) {
+      // Uniquement en dev (`electron .`) : l'app packagée a déjà la bonne icône via son
+      // .icns (fiable, bundle statique) — appeler setIcon() dessus l'écrase par un mécanisme
+      // runtime plus fragile qui finit par disparaître. En dev, l'icône générique Electron
+      // est remplacée par la mascotte (best-effort, peut être capricieux selon le cache
+      // d'icônes du Dock macOS — sans impact sur l'app packagée, ce qui compte vraiment).
+      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "ronnie-coleman.png"));
     }
 
     // Premier lancement : le dashboard s'ouvre automatiquement (onboarding, cf. Sprint 3.5).
@@ -330,6 +342,10 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-exercises", () => loadPack(storage.getSettings().activeProgram).exercises);
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
+  });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
   });
 
   app.on("will-quit", () => {

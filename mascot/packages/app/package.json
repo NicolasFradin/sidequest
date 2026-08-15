@@ -3,18 +3,52 @@
   "version": "0.0.1",
   "private": true,
   "description": "App Electron : tray + overlay mascotte",
+  "author": "NicolasFradin",
   "type": "module",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
     "prestart": "electron-rebuild -f -w better-sqlite3",
-    "rebuild:electron": "electron-rebuild -f -w better-sqlite3"
+    "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
+    "predist": "pnpm --filter @mascot/core build && electron-rebuild -f -w better-sqlite3",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
     "@mascot/core": "workspace:*"
   },
   "devDependencies": {
     "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
     "@electron/rebuild": "^3.7.1"
+  },
+  "build": {
+    "appId": "com.mascotcoach.app",
+    "productName": "Mascot Coach",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "!src/**/*.map"
+    ],
+    "asar": false,
+    "mac": {
+      "category": "public.app-category.healthcare-fitness",
+      "target": ["dmg", "zip"],
+      "identity": null
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility"
+    }
   }
 }
