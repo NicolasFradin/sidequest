@@ -108,6 +108,23 @@ html, body {
   margin-bottom: 6px;
 }
 
+.blocking-badge[hidden] {
+  display: none;
+}
+
+.blocking-badge {
+  display: inline-block;
+  color: var(--accent-magenta);
+  border: 1px solid var(--accent-magenta);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
 .exercise {
   color: var(--text-primary);
   font-size: 20px;

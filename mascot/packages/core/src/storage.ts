@@ -25,6 +25,8 @@ export interface SessionRecord {
   verified: boolean;
   /** Mascotte active au moment de la séance */
   mascot: string;
+  /** Mode actif au moment de la séance */
+  mode: ScheduleMode;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -49,6 +51,7 @@ interface SessionRow {
   trigger_type: string;
   verified: number;
   mascot: string;
+  mode: string;
 }
 
 export class Storage {
@@ -73,14 +76,18 @@ export class Storage {
         status TEXT NOT NULL,
         trigger_type TEXT NOT NULL,
         verified INTEGER NOT NULL DEFAULT 0,
-        mascot TEXT NOT NULL DEFAULT 'ronnie-coleman'
+        mascot TEXT NOT NULL DEFAULT 'ronnie-coleman',
+        mode TEXT NOT NULL DEFAULT 'notify'
       );
     `);
 
-    // Migration pour les bases créées avant l'ajout de la colonne "mascot".
+    // Migrations pour les bases créées avant l'ajout de ces colonnes.
     const columns = this.db.prepare("PRAGMA table_info(sessions)").all() as { name: string }[];
     if (!columns.some((c) => c.name === "mascot")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN mascot TEXT NOT NULL DEFAULT 'ronnie-coleman'");
+    }
+    if (!columns.some((c) => c.name === "mode")) {
+      this.db.exec("ALTER TABLE sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'notify'");
     }
   }
 
@@ -131,8 +138,8 @@ export class Storage {
 
   recordSession(session: Omit<SessionRecord, "id">): SessionRecord {
     const stmt = this.db.prepare(
-      `INSERT INTO sessions (timestamp, exercise_id, status, trigger_type, verified, mascot)
-       VALUES (@timestamp, @exerciseId, @status, @triggerType, @verified, @mascot)`
+      `INSERT INTO sessions (timestamp, exercise_id, status, trigger_type, verified, mascot, mode)
+       VALUES (@timestamp, @exerciseId, @status, @triggerType, @verified, @mascot, @mode)`
     );
     const info = stmt.run({
       timestamp: session.timestamp,
@@ -141,13 +148,14 @@ export class Storage {
       triggerType: session.triggerType,
       verified: session.verified ? 1 : 0,
       mascot: session.mascot,
+      mode: session.mode,
     });
     return { ...session, id: Number(info.lastInsertRowid) };
   }
 
   getSessions(): SessionRecord[] {
     const rows = this.db
-      .prepare("SELECT * FROM sessions ORDER BY timestamp DESC")
+      .prepare("SELECT * FROM sessions ORDER BY timestamp DESC, id DESC")
       .all() as SessionRow[];
     return rows.map((r) => ({
       id: r.id,
@@ -157,7 +165,27 @@ export class Storage {
       triggerType: r.trigger_type as TriggerType,
       verified: Boolean(r.verified),
       mascot: r.mascot,
+      mode: r.mode as ScheduleMode,
     }));
+  }
+
+  /**
+   * Dette de séances non faites (honor system) : chaque séance "skipped"/"missed" ajoute 1,
+   * chaque séance "done" en rembourse 1 (jamais en dessous de 0). Rejouée chronologiquement
+   * (pas juste une soustraction des totaux) pour qu'un ancien excédent de séances "done" ne
+   * puisse pas servir de crédit qui absorberait silencieusement de futurs skips.
+   */
+  getDebt(): number {
+    const chronological = [...this.getSessions()].reverse(); // getSessions() est du + récent au + ancien
+    let debt = 0;
+    for (const session of chronological) {
+      if (session.status === "skipped" || session.status === "missed") {
+        debt += 1;
+      } else if (session.status === "done") {
+        debt = Math.max(0, debt - 1);
+      }
+    }
+    return debt;
   }
 
   /** Nombre de jours consécutifs (en remontant depuis aujourd'hui) avec au moins un exercice "done" */
