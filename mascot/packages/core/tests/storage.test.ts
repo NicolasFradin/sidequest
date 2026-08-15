@@ -47,6 +47,7 @@ describe("Storage", () => {
       triggerType: "timer",
       verified: false,
       mascot: "ronnie-coleman",
+      mode: "notify",
     });
 
     const sessions = storage.getSessions();
@@ -65,6 +66,7 @@ describe("Storage", () => {
       triggerType: "timer",
       verified: false,
       mascot: "ronnie-coleman",
+      mode: "notify",
     });
 
     expect(storage.getCurrentStreak()).toBe(1);
@@ -72,6 +74,76 @@ describe("Storage", () => {
 
   it("retourne un streak de 0 sans session", () => {
     expect(storage.getCurrentStreak()).toBe(0);
+  });
+
+  it("retourne une dette de 0 sans session", () => {
+    expect(storage.getDebt()).toBe(0);
+  });
+
+  it("chaque séance 'skipped' augmente la dette de 1", () => {
+    storage.recordSession({
+      timestamp: new Date().toISOString(),
+      exerciseId: "squat-10",
+      status: "skipped",
+      triggerType: "timer",
+      verified: false,
+      mascot: "ronnie-coleman",
+      mode: "notify",
+    });
+    storage.recordSession({
+      timestamp: new Date().toISOString(),
+      exerciseId: "squat-10",
+      status: "skipped",
+      triggerType: "timer",
+      verified: false,
+      mascot: "ronnie-coleman",
+      mode: "notify",
+    });
+
+    expect(storage.getDebt()).toBe(2);
+  });
+
+  it("chaque séance 'done' rembourse la dette d'1, sans jamais devenir négative", () => {
+    const record = (status: "done" | "skipped") =>
+      storage.recordSession({
+        timestamp: new Date().toISOString(),
+        exerciseId: "squat-10",
+        status,
+        triggerType: "timer",
+        verified: false,
+        mascot: "ronnie-coleman",
+        mode: "notify",
+      });
+
+    record("skipped");
+    record("skipped");
+    expect(storage.getDebt()).toBe(2);
+
+    record("done");
+    expect(storage.getDebt()).toBe(1);
+
+    record("done");
+    record("done");
+    expect(storage.getDebt()).toBe(0);
+  });
+
+  it("un gros historique de séances 'done' passées n'efface pas un skip qui arrive après", () => {
+    const record = (status: "done" | "skipped", offsetMs: number) =>
+      storage.recordSession({
+        timestamp: new Date(Date.now() + offsetMs).toISOString(),
+        exerciseId: "squat-10",
+        status,
+        triggerType: "timer",
+        verified: false,
+        mascot: "ronnie-coleman",
+        mode: "notify",
+      });
+
+    for (let i = 0; i < 20; i++) record("done", i);
+    expect(storage.getDebt()).toBe(0);
+
+    record("skipped", 100);
+    expect(storage.getDebt()).toBe(1);
   });
 
   it("ne compte pas les sessions 'skipped' dans le streak", () => {
@@ -82,6 +154,7 @@ describe("Storage", () => {
       triggerType: "timer",
       verified: false,
       mascot: "ronnie-coleman",
+      mode: "notify",
     });
 
     expect(storage.getCurrentStreak()).toBe(0);

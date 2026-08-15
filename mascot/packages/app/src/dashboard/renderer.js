@@ -81,6 +81,9 @@ const onboardingBanner = document.getElementById("onboarding-banner");
 const onboardingDismiss = document.getElementById("onboarding-dismiss");
 onboardingDismiss.addEventListener("click", () => (onboardingBanner.hidden = true));
 
+const triggerExerciseBtn = document.getElementById("trigger-exercise");
+triggerExerciseBtn.addEventListener("click", () => window.dashboardAPI.triggerExercise());
+
 window.dashboardAPI.getSettings().then((settings) => {
   applySettingsToUI(settings);
   if (settings.isFirstLaunch) {
@@ -91,11 +94,13 @@ window.dashboardAPI.getSettings().then((settings) => {
 const statStreak = document.getElementById("stat-streak");
 const statWeek = document.getElementById("stat-week");
 const statTotal = document.getElementById("stat-total");
+const statDebt = document.getElementById("stat-debt");
 const barChart = document.getElementById("bar-chart");
 const historyTableBody = document.getElementById("history-table-body");
 const historyEmpty = document.getElementById("history-empty");
 
 const STATUS_LABELS = { done: "Fait", skipped: "Passé", missed: "Manqué" };
+const MODE_LABELS = { notify: "Notification douce", gate: "Blocage réel", mixed: "Mixte" };
 const MASCOT_LABELS = { "ronnie-coleman": "Ronnie Coleman", "miami-80s": "Miami 80s" };
 const MASCOT_IMAGES = {
   "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
@@ -176,29 +181,38 @@ function renderHistoryTable(sessions, exerciseLabels) {
     mascotWrap.append(mascotImg, mascotLabel);
     mascotCell.appendChild(mascotWrap);
 
+    const modeCell = document.createElement("td");
+    modeCell.textContent = MODE_LABELS[session.mode] ?? session.mode;
+
     const statusCell = document.createElement("td");
     const badge = document.createElement("span");
     badge.className = `status-badge ${session.status}`;
     badge.textContent = STATUS_LABELS[session.status] ?? session.status;
     statusCell.appendChild(badge);
 
-    row.append(dateCell, exerciseCell, mascotCell, statusCell);
+    row.append(dateCell, exerciseCell, mascotCell, modeCell, statusCell);
     historyTableBody.appendChild(row);
   });
 }
 
 async function refreshHistory() {
-  const [sessions, streak, exercises] = await Promise.all([
+  const [sessions, streak, exercises, debt] = await Promise.all([
     window.dashboardAPI.getSessions(),
     window.dashboardAPI.getStreak(),
     window.dashboardAPI.getExercises(),
+    window.dashboardAPI.getDebt(),
   ]);
   const exerciseLabels = new Map(exercises.map((e) => [e.id, e.label]));
 
   statStreak.textContent = streak;
   statTotal.textContent = sessions.length;
   statWeek.textContent = renderBarChart(sessions);
+  statDebt.textContent = debt;
+  statDebt.classList.toggle("stat-value-warning", debt > 0);
   renderHistoryTable(sessions, exerciseLabels);
 }
+
+const refreshHistoryBtn = document.getElementById("refresh-history");
+refreshHistoryBtn.addEventListener("click", () => refreshHistory());
 
 refreshHistory();

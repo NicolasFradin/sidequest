@@ -26,6 +26,8 @@ let storage = null;
 let scheduler = null;
 let currentExercise = null;
 let currentMascot = null;
+let currentMode = null;
+let currentBlocking = false;
 
 let overlayReady = false;
 let pendingPayload = null;
@@ -71,7 +73,11 @@ function createOverlayWindow() {
     overlayReady = true;
     if (pendingPayload) {
       overlayWindow.webContents.send("show-exercise", pendingPayload);
-      overlayWindow.showInactive();
+      if (pendingPayload.blocking) {
+        overlayWindow.show();
+      } else {
+        overlayWindow.showInactive();
+      }
       pendingPayload = null;
     }
   });
@@ -157,14 +163,22 @@ function showExercise() {
   const settings = storage.getSettings();
   const pack = loadPack(settings.activeProgram);
   const exercise = pickRandomExercise(pack);
+  const debt = storage.getDebt();
+  // gate = toujours bloquant. mixed = bloquant seulement si on a trop esquivé (dette > 0),
+  // sinon aussi souple que notify. notify = jamais bloquant.
+  const blocking = settings.mode === "gate" || (settings.mode === "mixed" && debt > 0);
+
   currentExercise = exercise;
   currentMascot = settings.activeMascot;
+  currentMode = settings.mode;
+  currentBlocking = blocking;
 
   const payload = {
     exercise,
     mascot: settings.activeMascot,
     mode: settings.mode,
     theme: settings.theme,
+    blocking,
   };
 
   if (!overlayReady) {
@@ -175,11 +189,20 @@ function showExercise() {
   }
 
   overlayWindow.webContents.send("show-exercise", payload);
-  overlayWindow.showInactive();
+  if (blocking) {
+    overlayWindow.show();
+  } else {
+    overlayWindow.showInactive();
+  }
 }
 
 function recordAndHide(status) {
   if (!currentExercise) return;
+  if (status === "skipped" && currentBlocking) {
+    // Filet de sécurité : le bouton "Passer" est masqué côté overlay en mode bloquant,
+    // mais on ignore quand même un éventuel skip pour ne pas casser la garantie de blocage.
+    return;
+  }
   storage.recordSession({
     timestamp: new Date().toISOString(),
     exerciseId: currentExercise.id,
@@ -187,9 +210,12 @@ function recordAndHide(status) {
     triggerType: "timer",
     verified: false,
     mascot: currentMascot,
+    mode: currentMode,
   });
   currentExercise = null;
   currentMascot = null;
+  currentMode = null;
+  currentBlocking = false;
   overlayWindow.hide();
 }
 
@@ -302,6 +328,8 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-sessions", () => storage.getSessions());
     ipcMain.handle("dashboard:get-streak", () => storage.getCurrentStreak());
     ipcMain.handle("dashboard:get-exercises", () => loadPack(storage.getSettings().activeProgram).exercises);
+    ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
+    ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
   });
 
   app.on("will-quit", () => {

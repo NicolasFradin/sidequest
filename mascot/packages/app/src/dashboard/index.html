@@ -22,7 +22,10 @@
 
     <main class="content">
       <section class="tab-panel active" id="panel-settings">
-        <h1 class="page-title">Réglages</h1>
+        <div class="page-header">
+          <h1 class="page-title">Réglages</h1>
+          <button id="trigger-exercise" class="page-action" title="Générer un exercice maintenant">🎲 Générer un exercice</button>
+        </div>
 
         <div class="onboarding-banner" id="onboarding-banner" hidden>
           <div>
@@ -47,7 +50,7 @@
             <button class="option-btn" data-mode="gate">Blocage réel</button>
             <button class="option-btn" data-mode="mixed">Mixte</button>
           </div>
-          <p class="field-hint">Le blocage réel (fenêtre non-fermable tant que l'exercice n'est pas fait) arrive à l'étape 3.4 — le mode est déjà enregistré ici.</p>
+          <p class="field-hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire l'exercice. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
         </div>
 
         <div class="card">
@@ -74,7 +77,10 @@
       </section>
 
       <section class="tab-panel history-panel" id="panel-history">
-        <h1 class="page-title">Historique</h1>
+        <div class="page-header">
+          <h1 class="page-title">Historique</h1>
+          <button id="refresh-history" class="page-icon-btn" title="Rafraîchir">🔄</button>
+        </div>
 
         <div class="stats-row">
           <div class="stat-tile">
@@ -88,6 +94,10 @@
           <div class="stat-tile">
             <p class="stat-value" id="stat-total">—</p>
             <p class="stat-label">Séances au total</p>
+          </div>
+          <div class="stat-tile">
+            <p class="stat-value" id="stat-debt">—</p>
+            <p class="stat-label">⛓ Dette de séances</p>
           </div>
         </div>
 
@@ -104,6 +114,7 @@
                 <th>Date</th>
                 <th>Exercice</th>
                 <th>Mascotte</th>
+                <th>Mode</th>
                 <th>Statut</th>
               </tr>
             </thead>

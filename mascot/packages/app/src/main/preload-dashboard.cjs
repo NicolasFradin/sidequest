@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   getSessions: () => ipcRenderer.invoke("dashboard:get-sessions"),
   getStreak: () => ipcRenderer.invoke("dashboard:get-streak"),
   getExercises: () => ipcRenderer.invoke("dashboard:get-exercises"),
+  getDebt: () => ipcRenderer.invoke("dashboard:get-debt"),
+  triggerExercise: () => ipcRenderer.send("dashboard:trigger-exercise"),
 });
