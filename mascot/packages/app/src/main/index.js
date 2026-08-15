@@ -37,6 +37,8 @@ let storage = null;
 let scheduler = null;
 /** @type {import('@mascot/core').HookServer} */
 let hookServer = null;
+/** Nombre d'appels du hook reçus depuis le dernier déclenchement (voir hookEveryN) */
+let hookCallCount = 0;
 let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
@@ -318,9 +320,17 @@ if (!gotSingleInstanceLock) {
 
     hookServer = new HookServer({
       onTrigger: () => {
+        const currentSettings = storage.getSettings();
         // "timer" seul : on ignore les appels du hook (ex. laissé configuré après un
         // changement de réglage) plutôt que de le désinstaller côté Claude Code.
-        if (storage.getSettings().triggerSource === "timer") return;
+        if (currentSettings.triggerSource === "timer") return;
+
+        // hookEveryN = 1 (défaut) déclenche à chaque appel. > 1 = une réponse Claude sur N,
+        // pour ne pas interrompre trop souvent sur des sessions avec beaucoup d'allers-retours.
+        hookCallCount += 1;
+        if (hookCallCount < currentSettings.hookEveryN) return;
+        hookCallCount = 0;
+
         showExercise();
       },
     });
@@ -355,6 +365,9 @@ if (!gotSingleInstanceLock) {
       const next = storage.updateSettings(partial);
       if (partial.intervalMinutes !== undefined) {
         scheduler.updateInterval(next.intervalMinutes);
+      }
+      if (partial.hookEveryN !== undefined) {
+        hookCallCount = 0;
       }
       if (partial.triggerSource !== undefined) {
         if (next.triggerSource === "hook") {

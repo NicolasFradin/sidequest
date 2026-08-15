@@ -34,6 +34,7 @@ const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
 const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
 const mascotButtons = [...document.querySelectorAll("#mascot-options .mascot-option")];
+const hookEveryNInput = document.getElementById("hook-every-n-input");
 const autolaunchToggle = document.getElementById("autolaunch-toggle");
 const toast = document.getElementById("toast");
 
@@ -49,6 +50,7 @@ function applySettingsToUI(settings) {
     btn.classList.toggle("active", btn.dataset.triggerSource === settings.triggerSource)
   );
   mascotButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mascot === settings.activeMascot));
+  hookEveryNInput.value = settings.hookEveryN;
   autolaunchToggle.checked = settings.autolaunch;
   applyTheme(settings.theme);
 }
@@ -76,6 +78,12 @@ intervalRange.addEventListener("input", () => {
   intervalValue.textContent = formatInterval(Number(intervalRange.value));
 });
 intervalRange.addEventListener("change", () => save({ intervalMinutes: Number(intervalRange.value) }));
+
+hookEveryNInput.addEventListener("change", () => {
+  const value = Math.max(1, Number(hookEveryNInput.value) || 1);
+  hookEveryNInput.value = value;
+  save({ hookEveryN: value });
+});
 
 modeButtons.forEach((btn) => btn.addEventListener("click", () => save({ mode: btn.dataset.mode })));
 triggerSourceButtons.forEach((btn) =>

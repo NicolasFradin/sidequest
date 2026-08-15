@@ -70,6 +70,12 @@
             <button class="option-btn" id="hook-toggle-btn">…</button>
           </div>
           <p class="field-hint">Ajoute un hook "Stop" à ta config Claude Code (<code>~/.claude/settings.json</code>) : la mascotte se déclenche dès que Claude termine sa réponse. Ne touche à aucun autre réglage déjà présent dans ce fichier.</p>
+
+          <div class="interval-row hook-every-n-row">
+            <label class="field-sublabel" for="hook-every-n-input">Se déclencher toutes les</label>
+            <input type="number" id="hook-every-n-input" min="1" step="1" value="1" />
+            <span class="field-sublabel">réponse(s) de Claude</span>
+          </div>
         </div>
 
         <div class="card">

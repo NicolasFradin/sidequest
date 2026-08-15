@@ -25,6 +25,7 @@ describe("Storage", () => {
     expect(settings.activeMascot).toBe("ronnie-coleman");
     expect(settings.theme).toBe("dark");
     expect(settings.triggerSource).toBe("both");
+    expect(settings.hookEveryN).toBe(1);
   });
 
   it("met à jour le thème", () => {
@@ -35,6 +36,16 @@ describe("Storage", () => {
   it("met à jour la source de déclenchement", () => {
     storage.updateSettings({ triggerSource: "hook" });
     expect(storage.getSettings().triggerSource).toBe("hook");
+  });
+
+  it("met à jour hookEveryN", () => {
+    storage.updateSettings({ hookEveryN: 3 });
+    expect(storage.getSettings().hookEveryN).toBe(3);
+  });
+
+  it("ne laisse jamais hookEveryN descendre en dessous de 1", () => {
+    storage.updateSettings({ hookEveryN: 0 });
+    expect(storage.getSettings().hookEveryN).toBe(1);
   });
 
   it("met à jour partiellement les réglages sans écraser le reste", () => {
