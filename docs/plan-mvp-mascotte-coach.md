@@ -76,8 +76,7 @@ Ce choix (données déclaratives, pas de code) est ce qui permettra plus tard d'
 
 L'app tourne en arrière-plan comme une "menu bar app" (pas de fenêtre ouverte par défaut, juste une icône dans la barre des tâches/menu bar) :
 
-- **Clic simple sur l'icône tray** → ouvre/masque la fenêtre dashboard (toggle).
-- **Clic droit sur l'icône tray** → menu contextuel : "Ouvrir le dashboard", "Mettre en pause", "Quitter".
+- **Clic sur l'icône tray** (gauche ou droit, pas de distinction sur macOS) → affiche le menu contextuel : "Ouvrir le dashboard", "Mettre en pause", "Quitter". Le dashboard ne s'ouvre jamais automatiquement au clic, seulement via "Ouvrir le dashboard" (décision revue en cours de Sprint 5 — le plan prévoyait initialement un clic simple = toggle direct).
 - **Raccourci clavier global configurable** (ex. `Cmd/Ctrl+Shift+M`) pour ouvrir le dashboard depuis n'importe où sans toucher la souris.
 - **Depuis l'overlay mascotte** : une icône réglages discrète (⚙) ouvre directement le dashboard sur l'onglet concerné.
 - **Premier lancement** : le dashboard s'ouvre automatiquement (onboarding : choix de la mascotte, intervalle, autolaunch).

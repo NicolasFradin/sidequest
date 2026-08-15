@@ -199,7 +199,9 @@ function createTray() {
   icon.setTemplateImage(true); // s'adapte au mode clair/sombre de la menu bar macOS
   tray = new Tray(icon);
   tray.setToolTip("Mascot Coach");
-  tray.on("click", () => toggleDashboard());
+  // Le clic gauche sur l'icône tray n'ouvre plus le dashboard automatiquement — seul
+  // "Ouvrir le dashboard" dans le menu (clic droit), le raccourci clavier ou l'icône ⚙
+  // de l'overlay le font.
   buildTrayMenu();
 }
 
