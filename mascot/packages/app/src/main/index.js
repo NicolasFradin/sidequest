@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { Scheduler, Storage, loadPack, pickRandomExercise } from "@mascot/core";
+import { Scheduler, Storage, loadPack, pickRandomExercise, HookServer } from "@mascot/core";
 
 app.setName("Mascot Coach");
 // App tray-only en arrière-plan : pas de menu applicatif par défaut. Ça évite aussi les
@@ -25,6 +25,8 @@ let isQuitting = false;
 let storage = null;
 /** @type {import('@mascot/core').Scheduler} */
 let scheduler = null;
+/** @type {import('@mascot/core').HookServer} */
+let hookServer = null;
 let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
@@ -299,7 +301,22 @@ if (!gotSingleInstanceLock) {
       intervalMinutes: settings.intervalMinutes,
       onTrigger: showExercise,
     });
-    scheduler.start();
+    // "hook" seul : le minuteur classique reste en pause, seul /trigger déclenche des exercices.
+    if (settings.triggerSource !== "hook") {
+      scheduler.start();
+    }
+
+    hookServer = new HookServer({
+      onTrigger: () => {
+        // "timer" seul : on ignore les appels du hook (ex. laissé configuré après un
+        // changement de réglage) plutôt que de le désinstaller côté Claude Code.
+        if (storage.getSettings().triggerSource === "timer") return;
+        showExercise();
+      },
+    });
+    hookServer.start().catch((error) => {
+      console.error("[hook-server] échec du démarrage :", error.message);
+    });
 
     if (process.env.MASCOT_DEBUG_TRIGGER_ON_START === "1") {
       scheduler.triggerNow();
@@ -329,6 +346,13 @@ if (!gotSingleInstanceLock) {
       if (partial.intervalMinutes !== undefined) {
         scheduler.updateInterval(next.intervalMinutes);
       }
+      if (partial.triggerSource !== undefined) {
+        if (next.triggerSource === "hook") {
+          scheduler.stop();
+        } else if (!scheduler.isRunning()) {
+          scheduler.start();
+        }
+      }
       let autolaunchWarning = null;
       if (partial.autolaunch !== undefined) {
         autolaunchWarning = applyAutolaunch(next.autolaunch);
@@ -353,6 +377,7 @@ if (!gotSingleInstanceLock) {
 
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
+    hookServer?.stop();
   });
 
   // L'app tourne en arrière-plan : fermer une fenêtre ne quitte jamais l'app.

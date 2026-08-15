@@ -24,11 +24,17 @@ describe("Storage", () => {
     expect(settings.mode).toBe("notify");
     expect(settings.activeMascot).toBe("ronnie-coleman");
     expect(settings.theme).toBe("dark");
+    expect(settings.triggerSource).toBe("both");
   });
 
   it("met à jour le thème", () => {
     storage.updateSettings({ theme: "light" });
     expect(storage.getSettings().theme).toBe("light");
+  });
+
+  it("met à jour la source de déclenchement", () => {
+    storage.updateSettings({ triggerSource: "hook" });
+    expect(storage.getSettings().triggerSource).toBe("hook");
   });
 
   it("met à jour partiellement les réglages sans écraser le reste", () => {

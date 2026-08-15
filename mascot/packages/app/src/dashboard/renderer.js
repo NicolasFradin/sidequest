@@ -32,6 +32,7 @@ tabs.forEach((tab) => {
 const intervalRange = document.getElementById("interval-range");
 const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
+const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
 const mascotButtons = [...document.querySelectorAll("#mascot-options .mascot-option")];
 const autolaunchToggle = document.getElementById("autolaunch-toggle");
 const toast = document.getElementById("toast");
@@ -44,6 +45,9 @@ function applySettingsToUI(settings) {
   intervalRange.value = settings.intervalMinutes;
   intervalValue.textContent = formatInterval(settings.intervalMinutes);
   modeButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === settings.mode));
+  triggerSourceButtons.forEach((btn) =>
+    btn.classList.toggle("active", btn.dataset.triggerSource === settings.triggerSource)
+  );
   mascotButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mascot === settings.activeMascot));
   autolaunchToggle.checked = settings.autolaunch;
   applyTheme(settings.theme);
@@ -74,6 +78,9 @@ intervalRange.addEventListener("input", () => {
 intervalRange.addEventListener("change", () => save({ intervalMinutes: Number(intervalRange.value) }));
 
 modeButtons.forEach((btn) => btn.addEventListener("click", () => save({ mode: btn.dataset.mode })));
+triggerSourceButtons.forEach((btn) =>
+  btn.addEventListener("click", () => save({ triggerSource: btn.dataset.triggerSource }))
+);
 mascotButtons.forEach((btn) => btn.addEventListener("click", () => save({ activeMascot: btn.dataset.mascot })));
 autolaunchToggle.addEventListener("change", () => save({ autolaunch: autolaunchToggle.checked }));
 

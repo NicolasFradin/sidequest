@@ -54,6 +54,16 @@
         </div>
 
         <div class="card">
+          <label class="field-label">Source de déclenchement</label>
+          <div class="option-row" id="trigger-source-options">
+            <button class="option-btn" data-trigger-source="timer">Minuteur seul</button>
+            <button class="option-btn" data-trigger-source="hook">Hook Claude Code seul</button>
+            <button class="option-btn" data-trigger-source="both">Les deux</button>
+          </div>
+          <p class="field-hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des exercices. Les deux (défaut) : minuteur ET hook actifs.</p>
+        </div>
+
+        <div class="card">
           <label class="field-label">Mascotte</label>
           <div class="mascot-row" id="mascot-options">
             <button class="mascot-option" data-mascot="ronnie-coleman">
