@@ -214,8 +214,11 @@ function recordAndHide(status) {
     status,
     triggerType: "timer",
     verified: false,
-    mascot: currentMascot,
-    mode: currentMode,
+    // Filet de sécurité : mascot/mode ne devraient jamais être null ici (toujours réglés en
+    // même temps que currentExercise dans showExercise()), mais ces colonnes sont NOT NULL —
+    // mieux vaut un fallback silencieux qu'un crash de l'app sur un état inattendu.
+    mascot: currentMascot ?? storage.getSettings().activeMascot,
+    mode: currentMode ?? storage.getSettings().mode,
   });
   currentExercise = null;
   currentMascot = null;
