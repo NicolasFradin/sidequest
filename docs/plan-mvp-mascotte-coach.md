@@ -132,6 +132,10 @@ Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé direc
 - Activation de la vérification anti-triche (webcam) — schéma déjà prêt (`verified: bool`)
 - Détail du split Free/Premium final (voir tableau proposé en discussion, à ajuster)
 
+## 8bis. Problèmes connus (à ré-investiguer)
+
+- **Icône Dock macOS peu fiable** : en dev (`electron .`) comme sur l'app packagée non signée, l'icône custom du Dock apparaît de façon intermittente puis peut disparaître après quelques secondes (`app.dock.setIcon()` en dev, mais aussi le `.icns` natif du bundle packagé). Hypothèse la plus probable : comportement connu de macOS Icon Services/LaunchServices avec les apps **non signées** (`mac.identity: null` dans la config electron-builder, faute de compte Apple Developer payant) — à revérifier une fois l'app réellement signée/notariée. Non bloquant : la tray icon (menu bar) fonctionne de façon fiable dans tous les cas, c'est le point d'accès principal de l'app.
+
 ## 9. Charte graphique (adaptée du template fourni)
 
 Basée sur la charte "Ronnie Coleman App" fournie (pensée pour mobile), adaptée ici pour une app desktop (overlay + dashboard).

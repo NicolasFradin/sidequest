@@ -276,9 +276,12 @@ if (!gotSingleInstanceLock) {
       scheduler.triggerNow();
     }
 
-    if (process.platform === "darwin" && app.dock) {
-      // En dev (`electron .`), l'app n'a pas encore l'icône packagée (icns) — on force celle
-      // de la mascotte pour que le dock ne montre pas l'icône générique Electron.
+    if (process.platform === "darwin" && app.dock && !app.isPackaged) {
+      // Uniquement en dev (`electron .`) : l'app packagée a déjà la bonne icône via son
+      // .icns (fiable, bundle statique) — appeler setIcon() dessus l'écrase par un mécanisme
+      // runtime plus fragile qui finit par disparaître. En dev, l'icône générique Electron
+      // est remplacée par la mascotte (best-effort, peut être capricieux selon le cache
+      // d'icônes du Dock macOS — sans impact sur l'app packagée, ce qui compte vraiment).
       app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "ronnie-coleman.png"));
     }
 
