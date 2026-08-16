@@ -30,12 +30,13 @@ packages/core/src/
 
 `hook-server.ts` expose une classe `HookServer` (même esprit que `Scheduler` — logique pure, testable, aucune dépendance Electron) :
 - `start()` : écoute sur `127.0.0.1:54321` (port fixe exporté en constante).
-- `POST /trigger` → appelle un callback `onTrigger` (branché sur `scheduler.triggerNow()` côté `app`).
+- `POST /trigger` → appelle un callback `onTrigger` (déclenchement immédiat, modes `stop`/`start`).
+- `POST /turn-start` / `POST /turn-end` → callbacks `onTurnStart`/`onTurnEnd` (mode `thinking`, débounce géré côté `app`, voir sprint 6).
 - `stop()`.
 
-`claude-hook-installer.ts` expose deux fonctions pures (testables sans toucher au vrai fichier utilisateur — chemin injecté en paramètre) :
-- `isInstalled(settingsPath)` : vérifie si le hook `Stop` pointant vers notre endpoint est déjà présent.
-- `install(settingsPath)` / `uninstall(settingsPath)` : lit le JSON existant (le crée s'il n'existe pas), ajoute/retire uniquement notre entrée dans `hooks.Stop` sans toucher aux autres hooks déjà configurés par l'utilisateur, réécrit le fichier.
+`claude-hook-installer.ts` expose des fonctions pures (testables sans toucher au vrai fichier utilisateur — chemin injecté en paramètre) :
+- `isInstalled(settingsPath)` : vérifie si un de nos hooks (n'importe quel `hookTriggerMode`) est déjà présent.
+- `install(settingsPath, mode)` / `uninstall(settingsPath)` : lit le JSON existant (le crée s'il n'existe pas), installe la combinaison de hooks propre au `mode` demandé (`Stop` pour `stop`, `UserPromptSubmit` pour `start`, les deux pour `thinking`) en retirant d'abord proprement ceux d'un mode précédent, sans toucher aux autres hooks déjà configurés par l'utilisateur.
 
 ### 3.2 Câblage côté `app`
 
@@ -47,14 +48,15 @@ packages/core/src/
 
 Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 - Un statut ("Activé" / "Non activé", déterminé via `isInstalled()`).
-- Un bouton unique qui bascule : "Activer l'intégration" → appelle `install()` côté main process via IPC ; "Désactiver" → `uninstall()`.
+- Un sélecteur `hookTriggerMode` (fin de réponse / début de réponse / pendant que Claude réfléchit, voir sprint 6) — persisté même si l'intégration n'est pas encore activée ; si elle l'est déjà, changer le mode réinstalle automatiquement les bons hooks.
+- Un bouton unique qui bascule : "Activer l'intégration" → appelle `install(path, hookTriggerMode)` côté main process via IPC ; "Désactiver" → `uninstall()`.
 - Un lien vers la doc des [hooks Claude Code](https://docs.claude.com/en/docs/claude-code/hooks) pour les curieux, mais aucune manipulation JSON requise pour l'usage normal.
 
 ## 4. Périmètre fonctionnel
 
 **Inclus**
 - Serveur HTTP local dans `core`, démarré avec l'app
-- Déclenchement d'un exercice via hook `Stop` de Claude Code
+- Déclenchement d'un exercice via hook Claude Code, point de déclenchement au choix (`hookTriggerMode` : fin de réponse / début de réponse / pendant que Claude réfléchit — sprint 6)
 - Réglage timer / hook / les deux
 - Carte dashboard avec activation/désactivation automatique du hook (édition directe de `settings.json`)
 
@@ -71,6 +73,12 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 3. **Sprint 3 — Câblage app + réglage timer/hook/both** : instanciation de `HookServer` dans `main/index.js`, nouveau réglage `triggerSource` dans `Storage`/dashboard, pause du `Scheduler` quand `"hook"` seul.
 4. **Sprint 4 — Carte dashboard "Intégration Claude Code"** : statut + bouton activer/désactiver branché sur l'installeur, doc utilisateur (README).
 5. **Sprint 5 (optionnel)** — Pause intelligente pendant une session active + investigation support Codex + blocage réel de la session Claude Code en mode bloquant (voir section 4).
+6. **Sprint 6 (fait, 2026-08-16)** — Déclenchement pendant que Claude "réfléchit". Nouveau réglage dashboard `hookTriggerMode` (dans la carte "Intégration Claude Code") pour choisir le point de déclenchement :
+   - **`stop`** (défaut, comportement historique) — hook `Stop` installé, déclenchement à la fin de la réponse de Claude.
+   - **`start`** — hook `UserPromptSubmit` installé, déclenchement immédiat dès que l'utilisateur soumet son message (début du tour de Claude).
+   - **`thinking`** — hook `UserPromptSubmit` **et** `Stop` installés ensemble : `UserPromptSubmit` démarre un débounce de 8s (`THINKING_DEBOUNCE_MS` dans `main/index.js`) avant de proposer l'exercice, `Stop` l'annule si Claude a répondu avant ce délai. Répond à la question ouverte du point précédent ("éviter de spammer sur des échanges courts") sans avoir besoin de `PreToolUse`/`PostToolUse`.
+   - **Architecture** : `claude-hook-installer.ts` installe la combinaison de hooks propre à chaque mode (retire proprement les hooks du mode précédent avant d'installer le nouveau, sans toucher aux hooks tiers) ; `HookServer` (core) expose deux nouvelles routes `/turn-start` et `/turn-end` en plus de `/trigger` ; `main/index.js` porte la logique de débounce (`pendingThinkingTimer`) et réinstalle automatiquement les hooks si le mode change alors que l'intégration est déjà active.
+   - **Non traité pour l'instant** (repris tel quel du point précédent) : combinaison avec `PreToolUse`/`PostToolUse` pour distinguer un vrai travail long d'un aller-retour rapide (le débounce fixe de 8s suffit en première approche) ; cohabitation fine avec l'idée inverse du sprint 5 (pause pendant la frappe active) — les deux utilisent `UserPromptSubmit` mais à des fins différentes, pas encore réconciliées.
 
 ## 6. Suite
 

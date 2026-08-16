@@ -7,6 +7,13 @@ export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
 export type TriggerSource = "timer" | "hook" | "both";
 export type VisualTheme = "miami-80s" | "military-camo" | "dragonball" | "roman-empire";
+/**
+ * Quel évènement du cycle de vie Claude Code déclenche l'exercice :
+ * "stop" = fin de réponse (comportement historique), "start" = début du tour (dès la soumission
+ * du prompt), "thinking" = comme "start" mais seulement si Claude travaille encore après un
+ * court délai (évite de proposer l'exercice sur des échanges rapides) — voir plan V0.5 sprint 6.
+ */
+export type HookTriggerMode = "stop" | "start" | "thinking";
 
 export interface Settings {
   intervalMinutes: number;
@@ -21,6 +28,8 @@ export interface Settings {
   hookEveryN: number;
   /** Skin global (palette dashboard + mascottes associées) — indépendant du thème clair/foncé */
   visualTheme: VisualTheme;
+  /** Point de déclenchement du hook Claude Code installé — voir HookTriggerMode */
+  hookTriggerMode: HookTriggerMode;
 }
 
 export interface SessionRecord {
@@ -47,6 +56,7 @@ const DEFAULT_SETTINGS: Settings = {
   triggerSource: "both",
   hookEveryN: 1,
   visualTheme: "miami-80s",
+  hookTriggerMode: "stop",
 };
 
 interface SettingsRow {
@@ -129,6 +139,7 @@ export class Storage {
       triggerSource: (stored.triggerSource as TriggerSource) ?? DEFAULT_SETTINGS.triggerSource,
       hookEveryN: stored.hookEveryN ? Math.max(1, Number(stored.hookEveryN)) : DEFAULT_SETTINGS.hookEveryN,
       visualTheme: (stored.visualTheme as VisualTheme) ?? DEFAULT_SETTINGS.visualTheme,
+      hookTriggerMode: (stored.hookTriggerMode as HookTriggerMode) ?? DEFAULT_SETTINGS.hookTriggerMode,
     };
   }
 

@@ -5,32 +5,51 @@ import type { Server } from "node:http";
 export const HOOK_SERVER_PORT = 54321;
 
 export type HookServerOptions = {
-  /** Callback appelé à chaque POST /trigger */
+  /** Callback appelé à chaque POST /trigger (déclenchement immédiat — modes "stop" et "start") */
   onTrigger: () => void;
+  /**
+   * Callback appelé à chaque POST /turn-start (début de tour Claude, mode "thinking") — à
+   * l'appelant de gérer le débounce (proposer l'exercice seulement si le tour dure encore après
+   * un délai, annulé par onTurnEnd). Optionnel, no-op par défaut.
+   */
+  onTurnStart?: () => void;
+  /** Callback appelé à chaque POST /turn-end (fin de tour Claude, mode "thinking") — sert à annuler le débounce démarré par onTurnStart. Optionnel, no-op par défaut. */
+  onTurnEnd?: () => void;
   /** Port d'écoute — 0 pour laisser l'OS en assigner un (utile en test). Défaut : HOOK_SERVER_PORT. */
   port?: number;
 };
 
 /**
  * Serveur HTTP local minimal, écoute sur 127.0.0.1 uniquement. Reçoit les appels des hooks
- * Claude Code (`curl -X POST http://127.0.0.1:54321/trigger`) pour déclencher un exercice
- * immédiatement, indépendamment du Scheduler à minuteur. Logique pure, testable sans Electron.
+ * Claude Code (`curl -X POST http://127.0.0.1:54321/trigger`, `/turn-start`, `/turn-end`) pour
+ * déclencher un exercice indépendamment du Scheduler à minuteur. Logique pure, testable sans
+ * Electron.
  */
 export class HookServer {
   readonly port: number;
   private readonly onTrigger: () => void;
+  private readonly onTurnStart: () => void;
+  private readonly onTurnEnd: () => void;
   private server: Server | null = null;
 
   constructor(options: HookServerOptions) {
     this.port = options.port ?? HOOK_SERVER_PORT;
     this.onTrigger = options.onTrigger;
+    this.onTurnStart = options.onTurnStart ?? (() => {});
+    this.onTurnEnd = options.onTurnEnd ?? (() => {});
   }
 
   start(): Promise<void> {
     return new Promise((resolve, reject) => {
+      const routes: Record<string, () => void> = {
+        "/trigger": this.onTrigger,
+        "/turn-start": this.onTurnStart,
+        "/turn-end": this.onTurnEnd,
+      };
       const server = createServer((req, res) => {
-        if (req.method === "POST" && req.url === "/trigger") {
-          this.onTrigger();
+        const handler = req.method === "POST" ? routes[req.url ?? ""] : undefined;
+        if (handler) {
+          handler();
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ ok: true }));
           return;
