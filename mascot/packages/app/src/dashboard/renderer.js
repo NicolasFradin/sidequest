@@ -13,6 +13,30 @@ themeToggle.addEventListener("click", async () => {
   await window.dashboardAPI.updateSettings({ theme: nextTheme });
 });
 
+const MASCOT_LABELS = {
+  "ronnie-coleman": "Ronnie Coleman",
+  "miami-80s": "Miami 80s",
+  "arnold-80s": "Arnold 80s",
+  sergeant: "Sergent",
+  goku: "Goku",
+  centurion: "Centurion",
+};
+const MASCOT_IMAGES = {
+  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
+  "miami-80s": "../../assets/mascots/miami-80s.png",
+  "arnold-80s": "../../assets/mascots/arnold-80s.png",
+  sergeant: "../../assets/mascots/sergeant.png",
+  goku: "../../assets/mascots/goku.png",
+  centurion: "../../assets/mascots/centurion.png",
+};
+/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
+const MASCOTS_BY_THEME = {
+  "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
+  "military-camo": ["sergeant"],
+  dragonball: ["goku"],
+  "roman-empire": ["centurion"],
+};
+
 const tabs = [...document.querySelectorAll(".nav-item")];
 const panels = {
   settings: document.getElementById("panel-settings"),
@@ -34,7 +58,7 @@ const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
 const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
 const hookTriggerModeButtons = [...document.querySelectorAll("#hook-trigger-mode-options .option-btn")];
-const mascotButtons = [...document.querySelectorAll("#mascot-options .mascot-option")];
+const mascotOptionsContainer = document.getElementById("mascot-options");
 const visualThemeButtons = [...document.querySelectorAll("#visual-theme-options .visual-theme-bubble")];
 const hookEveryNInput = document.getElementById("hook-every-n-input");
 const autolaunchToggle = document.getElementById("autolaunch-toggle");
@@ -44,7 +68,33 @@ function formatInterval(minutes) {
   return minutes < 1 ? `${Math.round(minutes * 60)} sec` : `${minutes} min`;
 }
 
+/** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif. */
+function renderMascotOptions(visualTheme, activeMascot) {
+  const mascotIds = MASCOTS_BY_THEME[visualTheme] ?? MASCOTS_BY_THEME["miami-80s"];
+  mascotOptionsContainer.innerHTML = "";
+  mascotIds.forEach((mascotId) => {
+    const btn = document.createElement("button");
+    btn.className = "mascot-option";
+    btn.classList.toggle("active", mascotId === activeMascot);
+    btn.dataset.mascot = mascotId;
+
+    const img = document.createElement("img");
+    img.src = MASCOT_IMAGES[mascotId];
+    img.alt = MASCOT_LABELS[mascotId] ?? mascotId;
+
+    const label = document.createElement("span");
+    label.textContent = MASCOT_LABELS[mascotId] ?? mascotId;
+
+    btn.append(img, label);
+    btn.addEventListener("click", () => save({ activeMascot: mascotId }));
+    mascotOptionsContainer.appendChild(btn);
+  });
+}
+
+let currentSettings = null;
+
 function applySettingsToUI(settings) {
+  currentSettings = settings;
   intervalRange.value = settings.intervalMinutes;
   intervalValue.textContent = formatInterval(settings.intervalMinutes);
   modeButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === settings.mode));
@@ -54,7 +104,7 @@ function applySettingsToUI(settings) {
   hookTriggerModeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.hookTriggerMode === settings.hookTriggerMode)
   );
-  mascotButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mascot === settings.activeMascot));
+  renderMascotOptions(settings.visualTheme, settings.activeMascot);
   visualThemeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.visualTheme === settings.visualTheme)
   );
@@ -101,9 +151,18 @@ triggerSourceButtons.forEach((btn) =>
 hookTriggerModeButtons.forEach((btn) =>
   btn.addEventListener("click", () => save({ hookTriggerMode: btn.dataset.hookTriggerMode }))
 );
-mascotButtons.forEach((btn) => btn.addEventListener("click", () => save({ activeMascot: btn.dataset.mascot })));
 visualThemeButtons.forEach((btn) =>
-  btn.addEventListener("click", () => save({ visualTheme: btn.dataset.visualTheme }))
+  btn.addEventListener("click", () => {
+    const nextTheme = btn.dataset.visualTheme;
+    const validMascots = MASCOTS_BY_THEME[nextTheme] ?? [];
+    const partial = { visualTheme: nextTheme };
+    // La mascotte active n'existe pas forcément dans le nouveau thème (ex. "sergeant" n'a de
+    // sens que pour "military-camo") — on bascule alors sur la première mascotte du thème.
+    if (!validMascots.includes(currentSettings?.activeMascot)) {
+      partial.activeMascot = validMascots[0];
+    }
+    save(partial);
+  })
 );
 autolaunchToggle.addEventListener("change", () => save({ autolaunch: autolaunchToggle.checked }));
 
@@ -151,11 +210,6 @@ const historyEmpty = document.getElementById("history-empty");
 
 const STATUS_LABELS = { done: "Fait", skipped: "Passé", missed: "Manqué" };
 const MODE_LABELS = { notify: "Notification douce", gate: "Blocage réel", mixed: "Mixte" };
-const MASCOT_LABELS = { "ronnie-coleman": "Ronnie Coleman", "miami-80s": "Miami 80s" };
-const MASCOT_IMAGES = {
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
-};
 
 function dayKey(timestamp) {
   return timestamp.slice(0, 10);

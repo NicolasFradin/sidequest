@@ -26,21 +26,20 @@ Le MVP propose 2 mascottes indépendantes du thème clair/foncé du dashboard. C
 
 ## 4. Périmètre fonctionnel
 
-**Inclus (cette itération)**
+**Inclus (au fil des sprints 1 à 3, tous faits)**
 - 4 bulles de sélection dans la sidebar, fond texturé par thème (couleurs uniquement)
 - Réglage `visualTheme` persisté en base et reflété par l'état `.active` de la bulle sélectionnée
+- Reskin des couleurs d'accent du dashboard par thème (`--accent-*` via `[data-visual-theme]`)
+- Mascottes dédiées par thème, sélecteur du dashboard filtré selon le thème global actif
 
-**Exclus (à faire plus tard)**
-- Reskin réel des couleurs du dashboard par thème (nouvelle palette CSS par thème, façon `data-theme`)
-- Mascottes dédiées par thème (Military camo, Dragonball, Roman Empire) — l'utilisateur fournira les assets plus tard
-- Filtrage du sélecteur de mascotte selon le thème global actif
-- Overlay mascotte adapté visuellement au thème choisi
+**Exclus (à faire plus tard, sprint 4)**
+- Overlay mascotte adapté visuellement au thème choisi (aujourd'hui seul le dashboard est reskinné)
 
 ## 5. Sprints de développement
 
 1. **Sprint 1 (fait, 2026-08-16)** — Réglage `visualTheme` dans `core`, bulles de sélection dans le dashboard (UI + persistance uniquement, sans reskin).
 2. **Sprint 2 (fait, 2026-08-16)** — Palette de couleurs dédiée par thème appliquée au dashboard. L'utilisateur a fourni des templates de charte graphique (`docs/branding/<theme>/style-guide*.png`) pour les 4 thèmes (Miami 80's, Military camo, Roman Empire, puis Dragonball ajouté après coup) — voir section 3.1 pour le détail des couleurs extraites. Portée : uniquement les 4 tokens d'accent (`--accent-teal`, `--accent-magenta`, `--accent-gold`, `--accent-blue`), surchargés via `[data-visual-theme]` dans `style.css`, indépendamment du clair/foncé (`--bg-*`/`--text-*` restent pilotés par `[data-theme]`).
-3. **Sprint 3 (à venir)** — Intégration des mascottes dédiées par thème une fois les assets fournis (candidates déjà présentes : `mascot-sergeant.png` pour Military camo, `mascot-arnold-80s.png` pour Miami 80's, `mascot-dragonball.png` pour Dragonball — voir `docs/branding/README.md`) ; le sélecteur de mascotte se filtre selon le thème global actif. Roman Empire n'a toujours pas de mascotte fournie.
+3. **Sprint 3 (fait, 2026-08-16)** — Intégration des mascottes dédiées par thème. Les 4 candidates (`mascot-sergeant.png`, `mascot-arnold-80s.png`, `mascot-dragonball.png`, et `mascot-roman_empire.png` fournie entre-temps) sont copiées dans `app/assets/mascots/` (`sergeant`, `arnold-80s`, `goku`, `centurion`). Le sélecteur de mascotte du dashboard (`renderer.js`, `MASCOTS_BY_THEME`) est désormais rendu dynamiquement selon le `visualTheme` actif — miami-80s en propose 3 (Ronnie Coleman, Miami 80s, Arnold 80s), les 3 autres thèmes en ont 1 chacun pour l'instant. Changer de thème réassigne automatiquement `activeMascot` sur la première mascotte du nouveau thème si l'actuelle n'y appartient pas. L'overlay (`overlay/renderer.js`) connaît toutes les mascottes, indépendamment du thème actif au moment de l'affichage.
 4. **Sprint 4 (à venir)** — Reskin de l'overlay mascotte (`app/src/overlay/`) par thème, aujourd'hui non concerné par le sprint 2 (dashboard uniquement).
 
 ### 3.1 Couleurs extraites des templates (sprint 2)

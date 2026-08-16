@@ -1,6 +1,10 @@
 const mascotImages = {
   "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
   "miami-80s": "../../assets/mascots/miami-80s.png",
+  "arnold-80s": "../../assets/mascots/arnold-80s.png",
+  sergeant: "../../assets/mascots/sergeant.png",
+  goku: "../../assets/mascots/goku.png",
+  centurion: "../../assets/mascots/centurion.png",
 };
 
 const mascotImg = document.getElementById("mascot-img");
