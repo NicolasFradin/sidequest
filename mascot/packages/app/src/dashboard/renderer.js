@@ -34,6 +34,7 @@ const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
 const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
 const mascotButtons = [...document.querySelectorAll("#mascot-options .mascot-option")];
+const visualThemeButtons = [...document.querySelectorAll("#visual-theme-options .visual-theme-bubble")];
 const hookEveryNInput = document.getElementById("hook-every-n-input");
 const autolaunchToggle = document.getElementById("autolaunch-toggle");
 const toast = document.getElementById("toast");
@@ -50,9 +51,13 @@ function applySettingsToUI(settings) {
     btn.classList.toggle("active", btn.dataset.triggerSource === settings.triggerSource)
   );
   mascotButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mascot === settings.activeMascot));
+  visualThemeButtons.forEach((btn) =>
+    btn.classList.toggle("active", btn.dataset.visualTheme === settings.visualTheme)
+  );
   hookEveryNInput.value = settings.hookEveryN;
   autolaunchToggle.checked = settings.autolaunch;
   applyTheme(settings.theme);
+  document.documentElement.dataset.visualTheme = settings.visualTheme;
 }
 
 let toastTimeout;
@@ -90,6 +95,9 @@ triggerSourceButtons.forEach((btn) =>
   btn.addEventListener("click", () => save({ triggerSource: btn.dataset.triggerSource }))
 );
 mascotButtons.forEach((btn) => btn.addEventListener("click", () => save({ activeMascot: btn.dataset.mascot })));
+visualThemeButtons.forEach((btn) =>
+  btn.addEventListener("click", () => save({ visualTheme: btn.dataset.visualTheme }))
+);
 autolaunchToggle.addEventListener("change", () => save({ autolaunch: autolaunchToggle.checked }));
 
 const onboardingBanner = document.getElementById("onboarding-banner");

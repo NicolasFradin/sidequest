@@ -62,6 +62,7 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 - Support Codex (mécanisme de hooks à vérifier — pas encore fait)
 - Pause automatique pendant une session active (hook `UserPromptSubmit`/`SessionStart` pour ne pas interrompre en pleine frappe) — voir sprint 4, optionnel
 - Authentification/sécurisation du endpoint local (non nécessaire tant que c'est loopback-only)
+- Blocage réel de la session Claude Code (pas juste l'UI de la mascotte) tant que l'exercice n'est pas marqué fait, en mode bloquant : le hook `Stop` renverrait une décision de blocage (`{"decision": "block", ...}`) tant que `/trigger` n'a pas reçu de confirmation `done`, forçant Claude Code à ne pas rendre la main. À valider : impact UX si l'utilisateur veut juste terminer un tour rapide, et fiabilité du polling/callback entre le hook (qui timeout probablement) et l'état de l'overlay.
 
 ## 5. Sprints de développement
 
@@ -69,7 +70,7 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 2. **Sprint 2 — Installeur automatique** : `claude-hook-installer.ts` (`isInstalled`/`install`/`uninstall`), tests unitaires sur fichier temporaire (fusion idempotente, préserve les hooks existants de l'utilisateur).
 3. **Sprint 3 — Câblage app + réglage timer/hook/both** : instanciation de `HookServer` dans `main/index.js`, nouveau réglage `triggerSource` dans `Storage`/dashboard, pause du `Scheduler` quand `"hook"` seul.
 4. **Sprint 4 — Carte dashboard "Intégration Claude Code"** : statut + bouton activer/désactiver branché sur l'installeur, doc utilisateur (README).
-5. **Sprint 5 (optionnel)** — Pause intelligente pendant une session active + investigation support Codex.
+5. **Sprint 5 (optionnel)** — Pause intelligente pendant une session active + investigation support Codex + blocage réel de la session Claude Code en mode bloquant (voir section 4).
 
 ## 6. Suite
 
