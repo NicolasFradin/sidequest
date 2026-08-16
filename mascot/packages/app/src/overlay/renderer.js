@@ -3,6 +3,7 @@ const mascotImages = {
   "miami-80s": "../../assets/mascots/miami-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
+  "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
   goku: "../../assets/mascots/goku.png",
   centurion: "../../assets/mascots/centurion.png",
 };

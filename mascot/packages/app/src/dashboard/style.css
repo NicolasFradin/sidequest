@@ -59,7 +59,10 @@
    permet à un thème d'utiliser un dégradé de CTA plus sombre/saturé (texte clair dessus) plutôt
    que de se limiter à des teintes pastel avec texte sombre. Miami 80's = palette par défaut
    ci-dessus, pas de bloc dédié nécessaire. */
-:root[data-visual-theme="military-camo"] {
+/* Military camo est pour l'instant le seul thème avec une déclinaison claire/sombre distincte
+   (pilote du sprint 5, voir plan-theme-global.md) : sombre = camo forêt, clair = camo désertique,
+   d'après les deux chartes graphiques fournies (style-guide-dark.png / style-guide-light.png). */
+:root[data-visual-theme="military-camo"][data-theme="dark"] {
   /* Vert plus franc (olive/lime) que le sea-green initial, qui restait visuellement trop proche
      du cyan/teal déjà omniprésent dans l'UI par défaut — le changement de teinte était réel mais
      imperceptible à l'usage. */
@@ -69,6 +72,17 @@
   --accent-blue: #1a1a1a;
   --btn-primary-text: #f2ead4;
   --border-card: color-mix(in srgb, var(--accent-teal) 28%, transparent);
+  --border-option: var(--accent-teal);
+  --bg-card: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-card));
+  --bg-elevated: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-elevated));
+}
+
+:root[data-visual-theme="military-camo"][data-theme="light"] {
+  --accent-teal: #8b5e3c;
+  --accent-magenta: #a67c52;
+  --accent-gold: #d9c6a3;
+  --accent-blue: #2e58bc;
+  --border-card: color-mix(in srgb, var(--accent-teal) 20%, transparent);
   --border-option: var(--accent-teal);
   --bg-card: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-card));
   --bg-elevated: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-elevated));
@@ -202,6 +216,16 @@ html, body {
     radial-gradient(circle at 68% 22%, #c9a227 0 38%, transparent 39%),
     radial-gradient(circle at 38% 72%, #7cb342 0 42%, transparent 43%),
     radial-gradient(circle at 82% 68%, #a0522d 0 32%, transparent 33%);
+}
+
+/* La bulle elle-même bascule aussi entre camo forêt (sombre) et désertique (clair). */
+:root[data-theme="light"] .visual-theme-military-camo {
+  background-color: #f5e8d0;
+  background-image:
+    radial-gradient(circle at 20% 30%, #3e3a34 0 40%, transparent 41%),
+    radial-gradient(circle at 68% 22%, #d9c6a3 0 40%, transparent 41%),
+    radial-gradient(circle at 38% 72%, #8c9b7a 0 42%, transparent 43%),
+    radial-gradient(circle at 82% 68%, #a67c52 0 34%, transparent 35%);
 }
 
 .visual-theme-dragonball {
