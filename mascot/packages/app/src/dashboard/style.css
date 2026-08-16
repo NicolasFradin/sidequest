@@ -340,6 +340,10 @@ html, body {
   accent-color: var(--accent-magenta);
 }
 
+.hook-trigger-mode-row {
+  margin-top: 16px;
+}
+
 .hook-every-n-row {
   margin-top: 16px;
   gap: 8px;

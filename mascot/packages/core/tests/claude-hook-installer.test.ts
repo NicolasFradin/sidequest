@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { isInstalled, install, uninstall, CLAUDE_HOOK_COMMAND } from "../src/claude-hook-installer.js";
+import {
+  isInstalled,
+  install,
+  uninstall,
+  CLAUDE_HOOK_COMMAND,
+  CLAUDE_HOOK_TURN_START_COMMAND,
+  CLAUDE_HOOK_TURN_END_COMMAND,
+} from "../src/claude-hook-installer.js";
 
 describe("claude-hook-installer", () => {
   let dir: string;
@@ -93,5 +100,54 @@ describe("claude-hook-installer", () => {
 
     uninstall(settingsPath);
     expect(isInstalled(settingsPath)).toBe(false);
+  });
+
+  it('mode "start" installe un hook UserPromptSubmit plutôt que Stop', () => {
+    install(settingsPath, "start");
+
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.UserPromptSubmit).toHaveLength(1);
+    expect(parsed.hooks.UserPromptSubmit[0].hooks[0]).toEqual({
+      type: "command",
+      command: CLAUDE_HOOK_COMMAND,
+    });
+    expect(parsed.hooks.Stop).toBeUndefined();
+    expect(isInstalled(settingsPath)).toBe(true);
+  });
+
+  it('mode "thinking" installe un hook UserPromptSubmit (début) et un hook Stop (fin) distincts', () => {
+    install(settingsPath, "thinking");
+
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.UserPromptSubmit[0].hooks[0].command).toBe(CLAUDE_HOOK_TURN_START_COMMAND);
+    expect(parsed.hooks.Stop[0].hooks[0].command).toBe(CLAUDE_HOOK_TURN_END_COMMAND);
+  });
+
+  it("changer de mode retire proprement les hooks du mode précédent", () => {
+    install(settingsPath, "thinking");
+    install(settingsPath, "stop");
+
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.Stop).toHaveLength(1);
+    expect(parsed.hooks.Stop[0].hooks[0].command).toBe(CLAUDE_HOOK_COMMAND);
+    expect(parsed.hooks.UserPromptSubmit).toHaveLength(0);
+  });
+
+  it("le changement de mode préserve les hooks UserPromptSubmit d'un autre outil", () => {
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({
+        hooks: {
+          UserPromptSubmit: [{ hooks: [{ type: "command", command: "echo not-ours" }] }],
+        },
+      })
+    );
+
+    install(settingsPath, "thinking");
+    install(settingsPath, "stop");
+
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.UserPromptSubmit).toHaveLength(1);
+    expect(parsed.hooks.UserPromptSubmit[0].hooks[0].command).toBe("echo not-ours");
   });
 });

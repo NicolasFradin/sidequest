@@ -1,9 +1,36 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { HOOK_SERVER_PORT } from "./hook-server.js";
+import type { HookTriggerMode } from "./storage.js";
 
-/** Commande installée dans le hook Stop de Claude Code — sert aussi de signature pour la retrouver. */
-export const CLAUDE_HOOK_COMMAND = `curl -s -X POST http://127.0.0.1:${HOOK_SERVER_PORT}/trigger`;
+const CURL = (route: string) => `curl -s -X POST http://127.0.0.1:${HOOK_SERVER_PORT}${route}`;
+
+/** Commande du déclenchement immédiat — modes "stop" (hook Stop) et "start" (hook UserPromptSubmit). */
+export const CLAUDE_HOOK_COMMAND = CURL("/trigger");
+/** Commandes du mode "thinking" — début/fin de tour, pour le débounce côté HookServer. */
+export const CLAUDE_HOOK_TURN_START_COMMAND = CURL("/turn-start");
+export const CLAUDE_HOOK_TURN_END_COMMAND = CURL("/turn-end");
+
+/** Toutes les commandes qu'on a pu installer, tous modes confondus — sert à les reconnaître/retirer. */
+const OUR_COMMANDS = new Set([CLAUDE_HOOK_COMMAND, CLAUDE_HOOK_TURN_START_COMMAND, CLAUDE_HOOK_TURN_END_COMMAND]);
+
+/** Évènements Claude Code sur lesquels on est susceptible d'avoir installé un hook, tous modes confondus. */
+const OUR_EVENTS = ["Stop", "UserPromptSubmit"] as const;
+
+/** Pour un mode donné, la liste des (évènement, commande) à installer. */
+function entriesForMode(mode: HookTriggerMode): { event: (typeof OUR_EVENTS)[number]; command: string }[] {
+  switch (mode) {
+    case "stop":
+      return [{ event: "Stop", command: CLAUDE_HOOK_COMMAND }];
+    case "start":
+      return [{ event: "UserPromptSubmit", command: CLAUDE_HOOK_COMMAND }];
+    case "thinking":
+      return [
+        { event: "UserPromptSubmit", command: CLAUDE_HOOK_TURN_START_COMMAND },
+        { event: "Stop", command: CLAUDE_HOOK_TURN_END_COMMAND },
+      ];
+  }
+}
 
 interface HookCommandEntry {
   type: string;
@@ -18,7 +45,6 @@ interface HookGroup {
 
 interface ClaudeSettings {
   hooks?: {
-    Stop?: HookGroup[];
     [event: string]: HookGroup[] | undefined;
   };
   [key: string]: unknown;
@@ -36,54 +62,70 @@ function writeSettings(settingsPath: string, settings: ClaudeSettings): void {
 }
 
 function isOurCommand(entry: HookCommandEntry): boolean {
-  return entry.type === "command" && entry.command === CLAUDE_HOOK_COMMAND;
+  return entry.type === "command" && OUR_COMMANDS.has(entry.command);
 }
 
-/** Vrai si notre hook Stop est déjà présent dans `settingsPath`. */
+/** Vrai si un de nos hooks (n'importe quel mode) est déjà présent dans `settingsPath`. */
 export function isInstalled(settingsPath: string): boolean {
   const settings = readSettings(settingsPath);
-  const stopGroups = settings.hooks?.Stop ?? [];
-  return stopGroups.some((group) => group.hooks.some(isOurCommand));
+  return OUR_EVENTS.some((event) => (settings.hooks?.[event] ?? []).some((group) => group.hooks.some(isOurCommand)));
 }
 
 /**
- * Ajoute notre hook Stop dans `settingsPath` (créé si absent). Idempotent — n'ajoute rien si
- * déjà présent — et ne touche à aucun autre réglage ou hook déjà configuré par l'utilisateur.
+ * Retire tous nos hooks (n'importe quel mode) de `settingsPath` — no-op si le fichier n'existe
+ * pas ou si aucun de nos hooks n'y est présent. Préserve tous les autres hooks/groupes déjà
+ * présents. Retourne les settings modifiés (à réécrire par l'appelant) ou `null` si rien à faire.
  */
-export function install(settingsPath: string): void {
-  if (isInstalled(settingsPath)) return;
+function withoutOurHooks(settings: ClaudeSettings): { settings: ClaudeSettings; changed: boolean } {
+  let changed = false;
+  if (!settings.hooks) return { settings, changed };
 
-  const settings = readSettings(settingsPath);
+  for (const event of OUR_EVENTS) {
+    const groups = settings.hooks[event];
+    if (!groups) continue;
+
+    const filtered: HookGroup[] = [];
+    for (const group of groups) {
+      const keptHooks = group.hooks.filter((entry) => {
+        const isOurs = isOurCommand(entry);
+        if (isOurs) changed = true;
+        return !isOurs;
+      });
+      if (keptHooks.length > 0) filtered.push({ ...group, hooks: keptHooks });
+    }
+    settings.hooks[event] = filtered;
+  }
+
+  return { settings, changed };
+}
+
+/**
+ * Installe les hooks Claude Code correspondant à `mode` dans `settingsPath` (créé si absent).
+ * Idempotent — retire d'abord nos éventuels hooks d'un mode précédent avant d'installer ceux du
+ * nouveau mode, pour permettre de changer de mode proprement. Ne touche à aucun autre réglage ou
+ * hook déjà configuré par l'utilisateur.
+ */
+export function install(settingsPath: string, mode: HookTriggerMode = "stop"): void {
+  const { settings } = withoutOurHooks(readSettings(settingsPath));
   settings.hooks ??= {};
-  settings.hooks.Stop ??= [];
-  settings.hooks.Stop.push({ hooks: [{ type: "command", command: CLAUDE_HOOK_COMMAND }] });
+
+  for (const { event, command } of entriesForMode(mode)) {
+    settings.hooks[event] ??= [];
+    settings.hooks[event]!.push({ hooks: [{ type: "command", command }] });
+  }
 
   writeSettings(settingsPath, settings);
 }
 
 /**
- * Retire notre hook Stop de `settingsPath`. Idempotent — no-op si le fichier n'existe pas ou
- * si notre hook n'y est pas — et préserve tous les autres hooks/groupes déjà présents.
+ * Retire tous nos hooks (n'importe quel mode) de `settingsPath`. Idempotent — no-op si le
+ * fichier n'existe pas ou si aucun de nos hooks n'y est présent — et préserve tous les autres
+ * hooks/groupes déjà présents.
  */
 export function uninstall(settingsPath: string): void {
   if (!existsSync(settingsPath)) return;
 
-  const settings = readSettings(settingsPath);
-  const stopGroups = settings.hooks?.Stop;
-  if (!stopGroups) return;
-
-  let changed = false;
-  const filtered: HookGroup[] = [];
-  for (const group of stopGroups) {
-    const keptHooks = group.hooks.filter((entry) => {
-      const isOurs = isOurCommand(entry);
-      if (isOurs) changed = true;
-      return !isOurs;
-    });
-    if (keptHooks.length > 0) filtered.push({ ...group, hooks: keptHooks });
-  }
-
+  const { settings, changed } = withoutOurHooks(readSettings(settingsPath));
   if (!changed) return;
-  settings.hooks!.Stop = filtered;
   writeSettings(settingsPath, settings);
 }

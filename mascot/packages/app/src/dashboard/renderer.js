@@ -33,6 +33,7 @@ const intervalRange = document.getElementById("interval-range");
 const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
 const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
+const hookTriggerModeButtons = [...document.querySelectorAll("#hook-trigger-mode-options .option-btn")];
 const mascotButtons = [...document.querySelectorAll("#mascot-options .mascot-option")];
 const visualThemeButtons = [...document.querySelectorAll("#visual-theme-options .visual-theme-bubble")];
 const hookEveryNInput = document.getElementById("hook-every-n-input");
@@ -49,6 +50,9 @@ function applySettingsToUI(settings) {
   modeButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === settings.mode));
   triggerSourceButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.triggerSource === settings.triggerSource)
+  );
+  hookTriggerModeButtons.forEach((btn) =>
+    btn.classList.toggle("active", btn.dataset.hookTriggerMode === settings.hookTriggerMode)
   );
   mascotButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mascot === settings.activeMascot));
   visualThemeButtons.forEach((btn) =>
@@ -93,6 +97,9 @@ hookEveryNInput.addEventListener("change", () => {
 modeButtons.forEach((btn) => btn.addEventListener("click", () => save({ mode: btn.dataset.mode })));
 triggerSourceButtons.forEach((btn) =>
   btn.addEventListener("click", () => save({ triggerSource: btn.dataset.triggerSource }))
+);
+hookTriggerModeButtons.forEach((btn) =>
+  btn.addEventListener("click", () => save({ hookTriggerMode: btn.dataset.hookTriggerMode }))
 );
 mascotButtons.forEach((btn) => btn.addEventListener("click", () => save({ activeMascot: btn.dataset.mascot })));
 visualThemeButtons.forEach((btn) =>

@@ -39,6 +39,10 @@ let scheduler = null;
 let hookServer = null;
 /** Nombre d'appels du hook reçus depuis le dernier déclenchement (voir hookEveryN) */
 let hookCallCount = 0;
+/** Timer en attente en mode hookTriggerMode "thinking" (annulé par onTurnEnd si Claude répond vite) */
+let pendingThinkingTimer = null;
+/** Ne proposer l'exercice en mode "thinking" que si Claude travaille encore après ce délai */
+const THINKING_DEBOUNCE_MS = 8000;
 let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
@@ -318,20 +322,40 @@ if (!gotSingleInstanceLock) {
       scheduler.start();
     }
 
+    function maybeTriggerFromHook() {
+      const currentSettings = storage.getSettings();
+      // "timer" seul : on ignore les appels du hook (ex. laissé configuré après un
+      // changement de réglage) plutôt que de le désinstaller côté Claude Code.
+      if (currentSettings.triggerSource === "timer") return;
+
+      // hookEveryN = 1 (défaut) déclenche à chaque appel. > 1 = une réponse Claude sur N,
+      // pour ne pas interrompre trop souvent sur des sessions avec beaucoup d'allers-retours.
+      hookCallCount += 1;
+      if (hookCallCount < currentSettings.hookEveryN) return;
+      hookCallCount = 0;
+
+      showExercise();
+    }
+
     hookServer = new HookServer({
-      onTrigger: () => {
-        const currentSettings = storage.getSettings();
-        // "timer" seul : on ignore les appels du hook (ex. laissé configuré après un
-        // changement de réglage) plutôt que de le désinstaller côté Claude Code.
-        if (currentSettings.triggerSource === "timer") return;
-
-        // hookEveryN = 1 (défaut) déclenche à chaque appel. > 1 = une réponse Claude sur N,
-        // pour ne pas interrompre trop souvent sur des sessions avec beaucoup d'allers-retours.
-        hookCallCount += 1;
-        if (hookCallCount < currentSettings.hookEveryN) return;
-        hookCallCount = 0;
-
-        showExercise();
+      // Modes "stop" et "start" : déclenchement immédiat (hook Stop ou UserPromptSubmit installé
+      // en conséquence côté claude-hook-installer, un seul des deux à la fois).
+      onTrigger: maybeTriggerFromHook,
+      // Mode "thinking" : début de tour (UserPromptSubmit) — on ne propose l'exercice que si
+      // Claude travaille encore après THINKING_DEBOUNCE_MS, pour ne pas interrompre un aller-retour rapide.
+      onTurnStart: () => {
+        if (pendingThinkingTimer) clearTimeout(pendingThinkingTimer);
+        pendingThinkingTimer = setTimeout(() => {
+          pendingThinkingTimer = null;
+          maybeTriggerFromHook();
+        }, THINKING_DEBOUNCE_MS);
+      },
+      // Mode "thinking" : fin de tour (Stop) — annule la proposition si Claude a répondu avant le délai.
+      onTurnEnd: () => {
+        if (pendingThinkingTimer) {
+          clearTimeout(pendingThinkingTimer);
+          pendingThinkingTimer = null;
+        }
       },
     });
     hookServer.start().catch((error) => {
@@ -369,6 +393,18 @@ if (!gotSingleInstanceLock) {
       if (partial.hookEveryN !== undefined) {
         hookCallCount = 0;
       }
+      if (partial.hookTriggerMode !== undefined) {
+        hookCallCount = 0;
+        if (pendingThinkingTimer) {
+          clearTimeout(pendingThinkingTimer);
+          pendingThinkingTimer = null;
+        }
+        // Ne réinstalle que si l'intégration est déjà active, pour rester cohérent avec le
+        // statut affiché dans le dashboard — le changement de mode seul n'active pas l'intégration.
+        if (isClaudeHookInstalled(CLAUDE_SETTINGS_PATH)) {
+          installClaudeHook(CLAUDE_SETTINGS_PATH, next.hookTriggerMode);
+        }
+      }
       if (partial.triggerSource !== undefined) {
         if (next.triggerSource === "hook") {
           scheduler.stop();
@@ -395,7 +431,7 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));
     ipcMain.handle("dashboard:hook-install", () => {
-      installClaudeHook(CLAUDE_SETTINGS_PATH);
+      installClaudeHook(CLAUDE_SETTINGS_PATH, storage.getSettings().hookTriggerMode);
       return isClaudeHookInstalled(CLAUDE_SETTINGS_PATH);
     });
     ipcMain.handle("dashboard:hook-uninstall", () => {
@@ -410,6 +446,7 @@ if (!gotSingleInstanceLock) {
 
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
+    if (pendingThinkingTimer) clearTimeout(pendingThinkingTimer);
     hookServer?.stop();
   });
 
