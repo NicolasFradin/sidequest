@@ -113,7 +113,8 @@ Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé direc
 | Version | Contenu |
 |---|---|
 | V0.5 | Hooks Claude Code / Codex (déclenchement contextuel, façon claude-gym) — voir [`plan-v0.5-hooks-claude-code.md`](plan-v0.5-hooks-claude-code.md) |
-| V0.5+ | Mascottes animées dans l'overlay (au repos + pendant l'exercice) — à trancher entre GIF simple (rapide, cohérent avec le pixel art actuel) et animation plus poussée (spritesheet, squelette) selon le temps dispo |
+| V0.5.1 | Thèmes globaux / skins (palette dashboard + mascottes par thème : Miami 80's, Military camo, Dragonball, Roman Empire) — non planifiée initialement, démarrée en cours de route — voir [`plan-theme-global.md`](plan-theme-global.md) |
+| V0.5+ | Mascottes animées dans l'overlay (au repos + pendant l'exercice) — 3 méthodes envisagées, à trancher selon le temps dispo : (1) animation CSS `@keyframes` sur l'`<img>` existant (rebond/respiration en idle, zéro nouvel asset, le plus rapide) ; (2) frames PNG multiples swappées en JS (`setInterval` sur `mascotImg.src`, façon sprite dessiné à la main) ; (3) [Rive](https://rive.app) (`.riv`) piloté en state machine (`idle` / `exercice-proposé` / `fait` / `skip` / `bloquant`), branché sur les événements déjà exposés par `mascotAPI` — option la plus riche mais demande de vectoriser les mascottes |
 | V1 | Génération d'exercices via API Claude, programmes personnalisés |
 | V1.5 | Registre de packs installable (`mascot install pack-yoga`), encore gratuit |
 | V2 | Backend : comptes, leaderboard FR/monde (score composite, champ `verified` activé), skins premium |

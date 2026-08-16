@@ -1,18 +1,28 @@
 # Branding & Charte graphique
 
-Ce dossier centralise les assets visuels de référence pour le projet (voir `docs/plan-mvp-mascotte-coach.md`, section 9 pour le détail des tokens : palette, typographies, composants).
+Ce dossier centralise les assets visuels de référence pour le projet, **organisés par thème global (skin)** — voir [`docs/plan-theme-global.md`](../plan-theme-global.md) pour le plan de la feature, et `docs/plan-mvp-mascotte-coach.md` section 9 pour le détail des tokens de base (palette, typographies, composants).
 
-## Contenu
+## Structure
 
-- `style-guide.png` — Charte graphique de référence (couleurs, typographies, composants UI, iconographie, exemples d'écrans). Pensée à l'origine pour mobile, adaptée pour le dashboard/overlay desktop dans le plan (section 9).
-- `mascots/mascot-ronnie-coleman.png` — Mascotte "Ronnie Coleman", thème Miami Vice 80s, style pixel art 8-bit/16-bit.
-- `mascots/mascot-miami-80s.png` — Mascotte "Miami 80s", même style graphique.
+- `miami-80s/` — thème par défaut, style Miami Vice / GTA Vice City. Déjà entièrement implémenté (couleurs dans `app/src/dashboard/style.css`, mascottes dans `app/assets/mascots/`).
+  - `style-guide-dark.png` / `style-guide-light.png` — charte graphique de référence (couleurs, typographies, composants), variantes sombre/claire.
+  - `mascot-ronnie-coleman.png`, `mascot-miami-80s.png` — mascottes actuellement intégrées dans l'app.
+  - `mascot-arnold-80s.png` — mascotte candidate supplémentaire pour ce thème, pas encore intégrée dans l'app.
+- `military-camo/` — thème "1980s Military". Palette de couleurs intégrée dans le dashboard ; mascotte pas encore intégrée.
+  - `style-guide.png` — charte graphique de référence.
+  - `mascot-sergeant.png` — mascotte candidate, pas encore intégrée.
+- `roman-empire/` — thème "Roman Empire". Palette de couleurs intégrée dans le dashboard ; pas encore de mascotte fournie.
+  - `style-guide.png` — charte graphique de référence.
+- `dragonball/` — thème "Dragonball". Palette de couleurs intégrée dans le dashboard ; mascotte pas encore intégrée.
+  - `style-guide.png` — charte graphique de référence.
+  - `mascot-dragonball.png` — mascotte candidate, pas encore intégrée dans l'app.
 
 ## Utilisation prévue
 
-Ces images serviront de source pour :
-- Les sprites affichés dans l'overlay mascotte (`packages/app/overlay`)
+Ces images servent de source pour :
+- Les couleurs d'accent du dashboard par thème (`app/src/dashboard/style.css`, sélecteur `[data-visual-theme]`)
+- Les sprites affichés dans l'overlay mascotte (`app/src/overlay/`), une fois les mascottes candidates intégrées
 - Les icônes de tray et d'app (déclinaisons redimensionnées à prévoir : 16x16, 32x32, 256x256 pour le packaging Electron)
 - La sélection de mascotte dans le dashboard (réglages)
 
-Toute nouvelle mascotte ajoutée au projet doit respecter le même style (pixel art, palette néon Miami Vice, voir `style-guide.png`) pour rester cohérente.
+Toute nouvelle mascotte ajoutée à un thème doit respecter le style pixel art 8-bit/16-bit et la palette de couleurs de la charte graphique correspondante.

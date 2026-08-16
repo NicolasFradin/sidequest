@@ -6,6 +6,7 @@ export type TriggerType = "timer" | "hook";
 export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
 export type TriggerSource = "timer" | "hook" | "both";
+export type VisualTheme = "miami-80s" | "military-camo" | "dragonball" | "roman-empire";
 
 export interface Settings {
   intervalMinutes: number;
@@ -18,6 +19,8 @@ export interface Settings {
   triggerSource: TriggerSource;
   /** Ne déclencher qu'un hook Claude Code sur N (ex. 3 = une réponse sur trois) — défaut 1 (à chaque fois) */
   hookEveryN: number;
+  /** Skin global (palette dashboard + mascottes associées) — indépendant du thème clair/foncé */
+  visualTheme: VisualTheme;
 }
 
 export interface SessionRecord {
@@ -43,6 +46,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: "dark",
   triggerSource: "both",
   hookEveryN: 1,
+  visualTheme: "miami-80s",
 };
 
 interface SettingsRow {
@@ -124,6 +128,7 @@ export class Storage {
       theme: (stored.theme as Theme) ?? DEFAULT_SETTINGS.theme,
       triggerSource: (stored.triggerSource as TriggerSource) ?? DEFAULT_SETTINGS.triggerSource,
       hookEveryN: stored.hookEveryN ? Math.max(1, Number(stored.hookEveryN)) : DEFAULT_SETTINGS.hookEveryN,
+      visualTheme: (stored.visualTheme as VisualTheme) ?? DEFAULT_SETTINGS.visualTheme,
     };
   }
 
