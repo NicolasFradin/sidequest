@@ -11,7 +11,7 @@ Les 4 thèmes ont désormais leurs couleurs **et** leur(s) mascotte(s) intégré
   - `mascot-ronnie-coleman.png`, `mascot-miami-80s.png`, `mascot-arnold-80s.png` — 3 mascottes intégrées dans l'app.
 - `military-camo/` — thème "1980s Military". Seul thème avec une déclinaison claire/sombre distincte pour l'instant (pilote du sprint 5, voir `plan-theme-global.md`) : sombre = camo forêt, clair = camo désertique ("Desert Ops").
   - `style-guide-dark.png` (camo forêt) / `style-guide-light.png` (camo désertique) — chartes graphiques de référence.
-  - `mascot-sergeant.png` (forêt) et `mascot-sergeant-desert.png` (désert) — 2 mascottes intégrées dans l'app, sélectionnables librement (pas couplées automatiquement au mode clair/sombre).
+  - `mascot-sergeant.png` (forêt) et `mascot-sergeant-desert.png` (désert) — 2 images pour la même mascotte logique (`sergeant`), affichage résolu automatiquement selon le mode clair/sombre (`MASCOT_LIGHT_VARIANTS` dans `renderer.js`), pas un choix séparé dans le sélecteur.
 - `roman-empire/` — thème "Roman Empire".
   - `style-guide.png` — charte graphique de référence.
   - `mascot-roman_empire.png` — mascotte intégrée dans l'app.

@@ -9,8 +9,8 @@ function applyTheme(theme) {
 themeToggle.addEventListener("click", async () => {
   const isDark = document.documentElement.dataset.theme === "dark";
   const nextTheme = isDark ? "light" : "dark";
-  applyTheme(nextTheme);
-  await window.dashboardAPI.updateSettings({ theme: nextTheme });
+  const next = await window.dashboardAPI.updateSettings({ theme: nextTheme });
+  applySettingsToUI(next);
 });
 
 const MASCOT_LABELS = {
@@ -34,10 +34,21 @@ const MASCOT_IMAGES = {
 /** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
 const MASCOTS_BY_THEME = {
   "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
-  "military-camo": ["sergeant", "sergeant-desert"],
+  "military-camo": ["sergeant"],
   dragonball: ["goku"],
   "roman-empire": ["centurion"],
 };
+/**
+ * Variante d'une mascotte à afficher en mode clair, si elle existe (sinon la mascotte normale
+ * sert pour les deux modes) — sert de base à resolveMascotImage(). Mécanisme générique, pas
+ * limité à Military camo, voir plan-theme-global.md sprint 5.
+ */
+const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
+
+function resolveMascotImage(mascotId, theme) {
+  const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
+  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
+}
 
 const tabs = [...document.querySelectorAll(".nav-item")];
 const panels = {
@@ -70,8 +81,9 @@ function formatInterval(minutes) {
   return minutes < 1 ? `${Math.round(minutes * 60)} sec` : `${minutes} min`;
 }
 
-/** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif. */
-function renderMascotOptions(visualTheme, activeMascot) {
+/** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif — l'aperçu de
+    chacune suit le mode clair/sombre (ex. sergent désertique en clair, forêt en sombre). */
+function renderMascotOptions(visualTheme, activeMascot, theme) {
   const mascotIds = MASCOTS_BY_THEME[visualTheme] ?? MASCOTS_BY_THEME["miami-80s"];
   mascotOptionsContainer.innerHTML = "";
   mascotIds.forEach((mascotId) => {
@@ -81,7 +93,7 @@ function renderMascotOptions(visualTheme, activeMascot) {
     btn.dataset.mascot = mascotId;
 
     const img = document.createElement("img");
-    img.src = MASCOT_IMAGES[mascotId];
+    img.src = resolveMascotImage(mascotId, theme);
     img.alt = MASCOT_LABELS[mascotId] ?? mascotId;
 
     const label = document.createElement("span");
@@ -106,7 +118,7 @@ function applySettingsToUI(settings) {
   hookTriggerModeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.hookTriggerMode === settings.hookTriggerMode)
   );
-  renderMascotOptions(settings.visualTheme, settings.activeMascot);
+  renderMascotOptions(settings.visualTheme, settings.activeMascot, settings.theme);
   visualThemeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.visualTheme === settings.visualTheme)
   );

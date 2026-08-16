@@ -7,6 +7,13 @@ const mascotImages = {
   goku: "../../assets/mascots/goku.png",
   centurion: "../../assets/mascots/centurion.png",
 };
+/** Variante d'une mascotte à afficher en mode clair, si elle existe — voir plan-theme-global.md sprint 5. */
+const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
+
+function resolveMascotImage(mascotId, theme) {
+  const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
+  return mascotImages[variantId ?? mascotId] ?? mascotImages["ronnie-coleman"];
+}
 
 const mascotImg = document.getElementById("mascot-img");
 const exerciseLabel = document.getElementById("exercise-label");
@@ -15,8 +22,11 @@ const btnSkip = document.getElementById("btn-skip");
 const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
 
+let currentMascotId = null;
+
 window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking }) => {
-  mascotImg.src = mascotImages[mascot] ?? mascotImages["ronnie-coleman"];
+  currentMascotId = mascot;
+  mascotImg.src = resolveMascotImage(mascot, theme ?? "dark");
   exerciseLabel.textContent = exercise.label;
   document.documentElement.dataset.theme = theme ?? "dark";
   btnSkip.hidden = Boolean(blocking);
@@ -25,6 +35,7 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking }) => {
 
 window.mascotAPI.onThemeChanged((theme) => {
   document.documentElement.dataset.theme = theme;
+  if (currentMascotId) mascotImg.src = resolveMascotImage(currentMascotId, theme);
 });
 
 btnDone.addEventListener("click", () => window.mascotAPI.markDone());
