@@ -50,21 +50,28 @@
   --toast-warning-text: #8a6d00;
 }
 
-/* Thèmes globaux (skins) : surchargent les couleurs d'accent ET les bordures de carte
+/* Thèmes globaux (skins) : surchargent les couleurs d'accent, les bordures de carte
    (--border-card/--border-option, sinon toujours teintées teal par défaut ci-dessus quel que
-   soit le thème — c'est ce qui rendait le changement de thème peu visible), indépendamment du
-   clair/foncé (--bg-*/--text-* restent pilotés par [data-theme]). --btn-primary-text permet à un
-   thème d'utiliser un dégradé de CTA plus sombre/saturé (texte clair dessus) plutôt que de se
-   limiter à des teintes pastel avec texte sombre. Miami 80's = palette par défaut ci-dessus, pas
-   de bloc dédié nécessaire. */
+   soit le thème) ET maintenant --bg-card/--bg-elevated (légèrement teintés vers l'accent du
+   thème via color-mix() en se basant sur la valeur déjà cascadée par [data-theme], donc sans
+   rien casser en clair comme en sombre) — les tokens d'accent seuls ne suffisaient pas à rendre
+   le changement de thème visible, noyés dans un fond de carte resté générique. --btn-primary-text
+   permet à un thème d'utiliser un dégradé de CTA plus sombre/saturé (texte clair dessus) plutôt
+   que de se limiter à des teintes pastel avec texte sombre. Miami 80's = palette par défaut
+   ci-dessus, pas de bloc dédié nécessaire. */
 :root[data-visual-theme="military-camo"] {
-  --accent-teal: #2e8b57;
-  --accent-magenta: #8b5a2b;
-  --accent-gold: #a9824a;
+  /* Vert plus franc (olive/lime) que le sea-green initial, qui restait visuellement trop proche
+     du cyan/teal déjà omniprésent dans l'UI par défaut — le changement de teinte était réel mais
+     imperceptible à l'usage. */
+  --accent-teal: #7cb342;
+  --accent-magenta: #a0522d;
+  --accent-gold: #c9a227;
   --accent-blue: #1a1a1a;
   --btn-primary-text: #f2ead4;
-  --border-card: color-mix(in srgb, var(--accent-teal) 18%, transparent);
+  --border-card: color-mix(in srgb, var(--accent-teal) 28%, transparent);
   --border-option: var(--accent-teal);
+  --bg-card: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-card));
+  --bg-elevated: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-elevated));
 }
 
 :root[data-visual-theme="dragonball"] {
@@ -74,6 +81,8 @@
   --accent-blue: #1e3a8a;
   --border-card: color-mix(in srgb, var(--accent-magenta) 18%, transparent);
   --border-option: var(--accent-teal);
+  --bg-card: color-mix(in srgb, var(--accent-magenta) 8%, var(--bg-card));
+  --bg-elevated: color-mix(in srgb, var(--accent-magenta) 8%, var(--bg-elevated));
 }
 
 :root[data-visual-theme="roman-empire"] {
@@ -83,6 +92,8 @@
   --accent-blue: #00c853;
   --border-card: color-mix(in srgb, var(--accent-gold) 20%, transparent);
   --border-option: var(--accent-teal);
+  --bg-card: color-mix(in srgb, var(--accent-gold) 8%, var(--bg-card));
+  --bg-elevated: color-mix(in srgb, var(--accent-gold) 8%, var(--bg-elevated));
 }
 
 html, body {
@@ -185,12 +196,12 @@ html, body {
 }
 
 .visual-theme-military-camo {
-  background-color: #4b5e3a;
+  background-color: #1a1a1a;
   background-image:
-    radial-gradient(circle at 20% 30%, #222222 0 45%, transparent 46%),
-    radial-gradient(circle at 68% 22%, #d7cda6 0 38%, transparent 39%),
-    radial-gradient(circle at 38% 72%, #2e8b57 0 42%, transparent 43%),
-    radial-gradient(circle at 82% 68%, #8b5a2b 0 32%, transparent 33%);
+    radial-gradient(circle at 20% 30%, #1a1a1a 0 45%, transparent 46%),
+    radial-gradient(circle at 68% 22%, #c9a227 0 38%, transparent 39%),
+    radial-gradient(circle at 38% 72%, #7cb342 0 42%, transparent 43%),
+    radial-gradient(circle at 82% 68%, #a0522d 0 32%, transparent 33%);
 }
 
 .visual-theme-dragonball {
