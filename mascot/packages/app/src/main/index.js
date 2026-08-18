@@ -342,8 +342,9 @@ if (!gotSingleInstanceLock) {
      *   pendingHookRespond et appelé plus tard par recordAndHide() une fois l'exercice fait —
      *   c'est ça qui bloque réellement la session Claude Code, pas juste l'UI de la mascotte.
      *   En mode "thinking", le débounce (onTurnStart ci-dessous) appelle un respond() no-op :
-     *   /turn-start a déjà répondu immédiatement, ce déclenchement différé ne peut plus bloquer
-     *   le hook qui l'a initié (limitation connue, voir plan-v0.5-hooks-claude-code.md sprint 6).
+     *   /turn-start a déjà répondu immédiatement 8s plus tôt, ce déclenchement différé ne peut
+     *   plus bloquer le hook qui l'a initié — c'est onTurnEnd (Stop) qui prend le relais dans ce
+     *   cas, voir plus bas.
      */
     function maybeTriggerFromHook(respond) {
       const currentSettings = storage.getSettings();
@@ -388,11 +389,27 @@ if (!gotSingleInstanceLock) {
           maybeTriggerFromHook(() => {});
         }, THINKING_DEBOUNCE_MS);
       },
-      // Mode "thinking" : fin de tour (Stop) — annule la proposition si Claude a répondu avant le délai.
-      onTurnEnd: () => {
+      // Mode "thinking" : fin de tour (Stop).
+      onTurnEnd: (respond) => {
         if (pendingThinkingTimer) {
+          // Claude a fini avant la fin du débounce : rien n'a été déclenché, on annule et on
+          // rend la main tout de suite — c'est justement le but du mode "thinking" (ne jamais
+          // retarder un échange rapide).
           clearTimeout(pendingThinkingTimer);
           pendingThinkingTimer = null;
+          respond();
+          return;
+        }
+        // Le débounce a peut-être déjà déclenché un exercice avant que Claude ait fini — s'il
+        // est encore bloquant et pas terminé, on retient la réponse comme pour /trigger :
+        // recordAndHide() la libérera une fois l'exercice fait. Claude a donc pu démarrer son
+        // tour instantanément dans tous les cas, mais ne récupère la main à la fin que si
+        // l'exercice (bloquant) déclenché entre-temps est terminé.
+        if (currentExercise && currentBlocking) {
+          if (pendingHookRespond) pendingHookRespond(); // filet de sécurité, ne devrait pas arriver
+          pendingHookRespond = respond;
+        } else {
+          respond();
         }
       },
     });

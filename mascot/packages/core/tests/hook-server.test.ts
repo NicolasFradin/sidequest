@@ -67,8 +67,8 @@ describe("HookServer", () => {
     expect(onTurnStart).toHaveBeenCalledOnce();
   });
 
-  it("appelle onTurnEnd sur POST /turn-end et répond 200", async () => {
-    const onTurnEnd = vi.fn();
+  it("appelle onTurnEnd sur POST /turn-end et répond 200 quand respond() est appelé", async () => {
+    const onTurnEnd = vi.fn((respond: () => void) => respond());
     server = new HookServer({ onTrigger: () => {}, onTurnEnd, port: 0 });
     await server.start();
 
@@ -78,11 +78,40 @@ describe("HookServer", () => {
     expect(onTurnEnd).toHaveBeenCalledOnce();
   });
 
+  it("retient la réponse à /turn-end tant que respond() n'est pas appelé (mode thinking bloquant)", async () => {
+    let release: () => void = () => {};
+    const onTurnEnd = vi.fn((respond: () => void) => {
+      release = respond;
+    });
+    server = new HookServer({ onTrigger: () => {}, onTurnEnd, port: 0 });
+    await server.start();
+
+    const fetchPromise = fetch(`http://127.0.0.1:${server.getPort()}/turn-end`, { method: "POST" });
+    let settled = false;
+    fetchPromise.then(() => (settled = true));
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(settled).toBe(false);
+
+    release();
+    const res = await fetchPromise;
+    expect(res.status).toBe(200);
+  });
+
   it("/turn-start répond 200 sans planter si le callback n'est pas fourni", async () => {
     server = new HookServer({ onTrigger: () => {}, port: 0 });
     await server.start();
 
     const res = await fetch(`http://127.0.0.1:${server.getPort()}/turn-start`, { method: "POST" });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("/turn-end répond 200 sans planter si le callback n'est pas fourni", async () => {
+    server = new HookServer({ onTrigger: () => {}, port: 0 });
+    await server.start();
+
+    const res = await fetch(`http://127.0.0.1:${server.getPort()}/turn-end`, { method: "POST" });
 
     expect(res.status).toBe(200);
   });

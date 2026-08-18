@@ -20,8 +20,14 @@ export type HookServerOptions = {
    * "thinking", volontairement — voir plan-v0.5-hooks-claude-code.md). Optionnel, no-op par défaut.
    */
   onTurnStart?: () => void;
-  /** Callback appelé à chaque POST /turn-end (fin de tour Claude, mode "thinking") — sert à annuler le débounce démarré par onTurnStart. Optionnel, no-op par défaut. */
-  onTurnEnd?: () => void;
+  /**
+   * Callback appelé à chaque POST /turn-end (fin de tour Claude, mode "thinking") — sert à
+   * annuler le débounce démarré par onTurnStart. Reçoit aussi `respond()`, comme onTrigger : si
+   * le débounce a déjà déclenché un exercice bloquant encore en attente au moment où Claude a
+   * fini, l'appelant peut retenir la réponse jusqu'à ce qu'il soit fait, plutôt que de répondre
+   * tout de suite. Répond automatiquement si non fourni (comportement historique).
+   */
+  onTurnEnd?: (respond: () => void) => void;
   /** Port d'écoute — 0 pour laisser l'OS en assigner un (utile en test). Défaut : HOOK_SERVER_PORT. */
   port?: number;
 };
@@ -36,14 +42,14 @@ export class HookServer {
   readonly port: number;
   private readonly onTrigger: (respond: () => void) => void;
   private readonly onTurnStart: () => void;
-  private readonly onTurnEnd: () => void;
+  private readonly onTurnEnd: (respond: () => void) => void;
   private server: Server | null = null;
 
   constructor(options: HookServerOptions) {
     this.port = options.port ?? HOOK_SERVER_PORT;
     this.onTrigger = options.onTrigger;
     this.onTurnStart = options.onTurnStart ?? (() => {});
-    this.onTurnEnd = options.onTurnEnd ?? (() => {});
+    this.onTurnEnd = options.onTurnEnd ?? ((respond) => respond());
   }
 
   start(): Promise<void> {
@@ -70,8 +76,7 @@ export class HookServer {
           return;
         }
         if (req.url === "/turn-end") {
-          this.onTurnEnd();
-          respondOk();
+          this.onTurnEnd(respondOk);
           return;
         }
 
