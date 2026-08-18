@@ -5,12 +5,19 @@ import type { Server } from "node:http";
 export const HOOK_SERVER_PORT = 54321;
 
 export type HookServerOptions = {
-  /** Callback appelé à chaque POST /trigger (déclenchement immédiat — modes "stop" et "start") */
-  onTrigger: () => void;
+  /**
+   * Callback appelé à chaque POST /trigger (modes "stop" et "start"), reçoit `respond()` à
+   * appeler pour renvoyer la réponse HTTP — permet à l'appelant de la retenir (donc de retenir
+   * `curl`, donc le hook Claude Code, donc la main de l'utilisateur) tant qu'un exercice
+   * bloquant qu'il vient de déclencher n'est pas marqué fait, plutôt que de répondre tout de
+   * suite. Pour un déclenchement non bloquant, l'appelant doit juste appeler `respond()` de suite.
+   */
+  onTrigger: (respond: () => void) => void;
   /**
    * Callback appelé à chaque POST /turn-start (début de tour Claude, mode "thinking") — à
    * l'appelant de gérer le débounce (proposer l'exercice seulement si le tour dure encore après
-   * un délai, annulé par onTurnEnd). Optionnel, no-op par défaut.
+   * un délai, annulé par onTurnEnd). Répond toujours immédiatement (pas de blocage en mode
+   * "thinking", volontairement — voir plan-v0.5-hooks-claude-code.md). Optionnel, no-op par défaut.
    */
   onTurnStart?: () => void;
   /** Callback appelé à chaque POST /turn-end (fin de tour Claude, mode "thinking") — sert à annuler le débounce démarré par onTurnStart. Optionnel, no-op par défaut. */
@@ -27,7 +34,7 @@ export type HookServerOptions = {
  */
 export class HookServer {
   readonly port: number;
-  private readonly onTrigger: () => void;
+  private readonly onTrigger: (respond: () => void) => void;
   private readonly onTurnStart: () => void;
   private readonly onTurnEnd: () => void;
   private server: Server | null = null;
@@ -41,22 +48,43 @@ export class HookServer {
 
   start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const routes: Record<string, () => void> = {
-        "/trigger": this.onTrigger,
-        "/turn-start": this.onTurnStart,
-        "/turn-end": this.onTurnEnd,
-      };
       const server = createServer((req, res) => {
-        const handler = req.method === "POST" ? routes[req.url ?? ""] : undefined;
-        if (handler) {
-          handler();
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ ok: true }));
+        if (req.method !== "POST") {
+          res.writeHead(404);
+          res.end();
           return;
         }
+
+        const respondOk = () => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true }));
+        };
+
+        if (req.url === "/trigger") {
+          this.onTrigger(respondOk);
+          return;
+        }
+        if (req.url === "/turn-start") {
+          this.onTurnStart();
+          respondOk();
+          return;
+        }
+        if (req.url === "/turn-end") {
+          this.onTurnEnd();
+          respondOk();
+          return;
+        }
+
         res.writeHead(404);
         res.end();
       });
+
+      // Un exercice bloquant peut retenir la réponse à /trigger de nombreuses minutes (le temps
+      // que l'utilisateur le fasse) — désactive les timeouts par défaut de Node qui couperaient
+      // la connexion prématurément. Le vrai garde-fou est le champ `timeout` du hook Claude Code
+      // lui-même (voir claude-hook-installer.ts).
+      server.timeout = 0;
+      server.requestTimeout = 0;
 
       server.once("error", reject);
       server.listen(this.port, "127.0.0.1", () => {

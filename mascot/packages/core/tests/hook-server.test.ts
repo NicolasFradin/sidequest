@@ -25,8 +25,8 @@ describe("HookServer", () => {
     expect(server.getPort()).toBeGreaterThan(0);
   });
 
-  it("appelle onTrigger sur POST /trigger et répond 200", async () => {
-    const onTrigger = vi.fn();
+  it("appelle onTrigger sur POST /trigger et répond 200 quand respond() est appelé", async () => {
+    const onTrigger = vi.fn((respond: () => void) => respond());
     server = new HookServer({ onTrigger, port: 0 });
     await server.start();
 
@@ -34,6 +34,26 @@ describe("HookServer", () => {
 
     expect(res.status).toBe(200);
     expect(onTrigger).toHaveBeenCalledOnce();
+  });
+
+  it("retient la réponse HTTP tant que respond() n'est pas appelé (déclenchement bloquant)", async () => {
+    let release: () => void = () => {};
+    const onTrigger = vi.fn((respond: () => void) => {
+      release = respond;
+    });
+    server = new HookServer({ onTrigger, port: 0 });
+    await server.start();
+
+    const fetchPromise = fetch(`http://127.0.0.1:${server.getPort()}/trigger`, { method: "POST" });
+    let settled = false;
+    fetchPromise.then(() => (settled = true));
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(settled).toBe(false);
+
+    release();
+    const res = await fetchPromise;
+    expect(res.status).toBe(200);
   });
 
   it("appelle onTurnStart sur POST /turn-start et répond 200", async () => {

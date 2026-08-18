@@ -60,11 +60,13 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 - Réglage timer / hook / les deux
 - Carte dashboard avec activation/désactivation automatique du hook (édition directe de `settings.json`)
 
+**Correction UX à intégrer**
+- Sur la popup mascotte, cliquer sur "Fait" ou "Passer" ne doit **jamais** ouvrir le dashboard — uniquement fermer la popup. Vérifié dans le code actuel (`recordAndHide()`, `main/index.js`) : c'est déjà le cas, seul le bouton réglages (engrenage) ouvre le dashboard via `open-dashboard`. Exigence documentée ici pour ne pas être réintroduite par erreur lors des sprints à venir.
+
 **Exclus (à revoir plus tard si pertinent)**
 - Support Codex (mécanisme de hooks à vérifier — pas encore fait)
 - Pause automatique pendant une session active (hook `UserPromptSubmit`/`SessionStart` pour ne pas interrompre en pleine frappe) — voir sprint 4, optionnel
 - Authentification/sécurisation du endpoint local (non nécessaire tant que c'est loopback-only)
-- Blocage réel de la session Claude Code (pas juste l'UI de la mascotte) tant que l'exercice n'est pas marqué fait, en mode bloquant : le hook `Stop` renverrait une décision de blocage (`{"decision": "block", ...}`) tant que `/trigger` n'a pas reçu de confirmation `done`, forçant Claude Code à ne pas rendre la main. À valider : impact UX si l'utilisateur veut juste terminer un tour rapide, et fiabilité du polling/callback entre le hook (qui timeout probablement) et l'état de l'overlay.
 
 ## 5. Sprints de développement
 
@@ -72,13 +74,19 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 2. **Sprint 2 — Installeur automatique** : `claude-hook-installer.ts` (`isInstalled`/`install`/`uninstall`), tests unitaires sur fichier temporaire (fusion idempotente, préserve les hooks existants de l'utilisateur).
 3. **Sprint 3 — Câblage app + réglage timer/hook/both** : instanciation de `HookServer` dans `main/index.js`, nouveau réglage `triggerSource` dans `Storage`/dashboard, pause du `Scheduler` quand `"hook"` seul.
 4. **Sprint 4 — Carte dashboard "Intégration Claude Code"** : statut + bouton activer/désactiver branché sur l'installeur, doc utilisateur (README).
-5. **Sprint 5 (optionnel)** — Pause intelligente pendant une session active + investigation support Codex + blocage réel de la session Claude Code en mode bloquant (voir section 4).
+5. **Sprint 5 (optionnel, partiellement fait)** — Pause intelligente pendant une session active (pas fait) + investigation support Codex (pas fait) + blocage réel de la session Claude Code en mode bloquant (**fait**, voir sprint 7).
 6. **Sprint 6 (fait, 2026-08-16)** — Déclenchement pendant que Claude "réfléchit". Nouveau réglage dashboard `hookTriggerMode` (dans la carte "Intégration Claude Code") pour choisir le point de déclenchement :
    - **`stop`** (défaut, comportement historique) — hook `Stop` installé, déclenchement à la fin de la réponse de Claude.
    - **`start`** — hook `UserPromptSubmit` installé, déclenchement immédiat dès que l'utilisateur soumet son message (début du tour de Claude).
    - **`thinking`** — hook `UserPromptSubmit` **et** `Stop` installés ensemble : `UserPromptSubmit` démarre un débounce de 8s (`THINKING_DEBOUNCE_MS` dans `main/index.js`) avant de proposer l'exercice, `Stop` l'annule si Claude a répondu avant ce délai. Répond à la question ouverte du point précédent ("éviter de spammer sur des échanges courts") sans avoir besoin de `PreToolUse`/`PostToolUse`.
    - **Architecture** : `claude-hook-installer.ts` installe la combinaison de hooks propre à chaque mode (retire proprement les hooks du mode précédent avant d'installer le nouveau, sans toucher aux hooks tiers) ; `HookServer` (core) expose deux nouvelles routes `/turn-start` et `/turn-end` en plus de `/trigger` ; `main/index.js` porte la logique de débounce (`pendingThinkingTimer`) et réinstalle automatiquement les hooks si le mode change alors que l'intégration est déjà active.
    - **Non traité pour l'instant** (repris tel quel du point précédent) : combinaison avec `PreToolUse`/`PostToolUse` pour distinguer un vrai travail long d'un aller-retour rapide (le débounce fixe de 8s suffit en première approche) ; cohabitation fine avec l'idée inverse du sprint 5 (pause pendant la frappe active) — les deux utilisent `UserPromptSubmit` mais à des fins différentes, pas encore réconciliées.
+7. **Sprint 7 (fait, 2026-08-18)** — Blocage réel de la session Claude Code en mode bloquant (pas juste l'UI de la mascotte). Mécanisme finalement plus simple que ce qu'envisageait le plan initial (pas de JSON `{"decision": "block"}` renvoyé par le hook) : le serveur local **retient la réponse HTTP** du hook `/trigger` tant que l'exercice qu'il vient de déclencher est bloquant (`mode: "gate"`, ou `"mixed"` avec dette > 0) et n'est pas marqué fait — `curl` (donc le hook Claude Code, donc la main rendue à l'utilisateur dans son terminal) reste en attente jusque-là.
+   - **`HookServer`** (`hook-server.ts`) : `onTrigger` prend désormais un callback `respond()` à appeler pour renvoyer la réponse HTTP, au lieu de répondre automatiquement — permet à l'appelant de la retenir. `server.timeout`/`server.requestTimeout` mis à `0` (les timeouts par défaut de Node couperaient sinon la connexion avant que l'utilisateur ait fini).
+   - **`claude-hook-installer.ts`** : les hooks des modes `stop`/`start` (les seuls qui passent par `/trigger`, donc les seuls concernés) sont installés avec un champ `timeout: 600` (secondes) — sinon Claude Code tuerait le hook après son défaut de 60s, bien avant qu'un exercice ait une chance d'être terminé. Pas nécessaire pour le mode `thinking` (`/turn-start`/`/turn-end` répondent toujours immédiatement).
+   - **`main/index.js`** : `showExercise()` retourne désormais `blocking` ; `maybeTriggerFromHook(respond)` stocke `respond` dans `pendingHookRespond` si l'exercice déclenché est bloquant (sinon l'appelle tout de suite) ; `recordAndHide()` l'appelle (et le vide) une fois l'exercice marqué fait — comme le skip est déjà ignoré en mode bloquant (filet de sécurité existant), c'est la seule porte de sortie. Libéré aussi si l'app quitte pendant qu'un exercice bloquant est en attente (`will-quit`), pour ne pas laisser le hook pendre indéfiniment.
+   - **Limitation connue, assumée** : le mode `hookTriggerMode: "thinking"` ne bloque pas la session même si l'exercice déclenché est bloquant — `/turn-start` a déjà répondu immédiatement au moment où le débounce déclenche réellement l'exercice, il n'y a plus de hook en attente à retenir. Blocage réel disponible uniquement en modes `stop`/`start`.
+   - **Question UX du point précédent** ("impact si l'utilisateur veut juste terminer un tour rapide") : non résolue à ce stade, assumée comme comportement voulu du mode bloquant (`gate`/`mixed`+dette) — c'est justement le but de ce mode, cohérent avec le blocage déjà existant de l'UI de l'overlay (bouton "Passer" masqué).
 
 ## 6. Suite
 
