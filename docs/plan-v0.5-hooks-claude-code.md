@@ -52,6 +52,20 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
 - Un bouton unique qui bascule : "Activer l'intégration" → appelle `install(path, hookTriggerMode)` côté main process via IPC ; "Désactiver" → `uninstall()`.
 - Un lien vers la doc des [hooks Claude Code](https://docs.claude.com/en/docs/claude-code/hooks) pour les curieux, mais aucune manipulation JSON requise pour l'usage normal.
 
+### 3.4 Récapitulatif des cas de déclenchement
+
+Toutes les façons de déclencher un exercice aujourd'hui, et ce que chacune bloque effectivement :
+
+| Déclencheur | Évènement | Condition / délai | Bloque l'UI overlay (bouton "Passer" masqué) | Bloque la session Claude Code (terminal) |
+|---|---|---|---|---|
+| Minuteur (`Scheduler`) | toutes les `intervalMinutes` minutes | aucune | Oui si mode `gate`, ou `mixed` + dette > 0 | Non — jamais, ce n'est pas un hook |
+| Bouton manuel (dashboard "🎲 Générer un exercice", ou menu tray "Déclencher un exercice maintenant") | clic utilisateur | aucune | idem (selon mode) | Non |
+| Hook `Stop` (`hookTriggerMode: "stop"`) | fin de réponse Claude | immédiat (sous réserve de `hookEveryN`) | idem (selon mode) | Oui si blocage — `/trigger` retient sa réponse |
+| Hook `UserPromptSubmit` (`hookTriggerMode: "start"`) | début de tour Claude | immédiat (sous réserve de `hookEveryN`) | idem (selon mode) | Oui si blocage — `/trigger` retient sa réponse |
+| Hook `UserPromptSubmit` + `Stop` (`hookTriggerMode: "thinking"`) | début de tour, exercice affiché seulement si Claude travaille encore après `THINKING_DEBOUNCE_MS` (8s fixes, voir sprint 8 pour une anticipation plus fine) | débounce 8s | idem (selon mode) | Oui si blocage — Claude démarre instantanément (`/turn-start` ne bloque jamais), mais `/turn-end` retient sa réponse si l'exercice déclenché entre-temps est encore en attente |
+
+Rappels : `triggerSource` (`timer`/`hook`/`both`) détermine si les déclencheurs hook sont pris en compte du tout (`"timer"` seul → tout appel de hook répond immédiatement sans rien déclencher). `hookEveryN` (défaut 1) ne s'applique qu'aux déclencheurs hook, pas au minuteur ni au bouton manuel. Le mode (`notify`/`gate`/`mixed`) est un réglage global, identique quel que soit le déclencheur.
+
 ## 4. Périmètre fonctionnel
 
 **Inclus**
@@ -87,6 +101,11 @@ Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
    - **`main/index.js`** : `showExercise()` retourne désormais `blocking` ; `maybeTriggerFromHook(respond)` stocke `respond` dans `pendingHookRespond` si l'exercice déclenché est bloquant (sinon l'appelle tout de suite) ; `recordAndHide()` l'appelle (et le vide) une fois l'exercice marqué fait — comme le skip est déjà ignoré en mode bloquant (filet de sécurité existant), c'est la seule porte de sortie. Libéré aussi si l'app quitte pendant qu'un exercice bloquant est en attente (`will-quit`), pour ne pas laisser le hook pendre indéfiniment.
    - **Mode `thinking` couvert aussi, via `/turn-end`** (ajouté après un premier passage qui l'excluait) : `/turn-start` ne bloque jamais (sinon chaque tour, même rapide, serait retardé au démarrage — irait à l'encontre du but du mode). En revanche `onTurnEnd` (Stop) reçoit désormais lui aussi un `respond()` : si le débounce a fini par déclencher un exercice bloquant et qu'il n'est pas encore terminé au moment où Claude a fini de travailler, la réponse à `/turn-end` est retenue (même mécanisme `pendingHookRespond`, réutilisé) jusqu'à ce que l'utilisateur le termine. Résultat : Claude démarre toujours instantanément, mais ne rend la main qu'une fois l'exercice fait s'il a fini par se déclencher. `HookServer.onTurnEnd` a donc la même signature `(respond) => void` que `onTrigger`.
    - **Question UX du point précédent** ("impact si l'utilisateur veut juste terminer un tour rapide") : non résolue à ce stade, assumée comme comportement voulu du mode bloquant (`gate`/`mixed`+dette) — c'est justement le but de ce mode, cohérent avec le blocage déjà existant de l'UI de l'overlay (bouton "Passer" masqué).
+8. **Sprint 8 (optionnel, idée non implémentée)** — Anticiper la durée du tour plutôt qu'un délai fixe. Aujourd'hui le mode `thinking` utilise un seuil codé en dur (`THINKING_DEBOUNCE_MS = 8000`) : aucune vraie anticipation, juste un délai arbitraire avant de considérer que Claude "travaille encore". Pistes envisagées, à trancher/prioriser le jour où on s'y attaque :
+   - **Compter les appels d'outils en cours de tour** (hooks `PreToolUse`/`PostToolUse`, déjà identifiés comme piste non explorée au sprint 6) — plusieurs appels d'outils enchaînés sont un signal fort de travail long, indépendamment du temps écoulé. Possibilité de déclencher au premier des deux seuils atteints (ex. 8s **ou** 3 appels d'outils).
+   - **Historique réel des durées de tour** — logger la durée effective de chaque tour (début `UserPromptSubmit` → fin `Stop`) en plus de ce qui est déjà stocké par `recordSession`, puis calculer une moyenne/médiane glissante pour ajuster `THINKING_DEBOUNCE_MS` dynamiquement plutôt qu'une constante globale.
+   - **Heuristique sur le contenu du prompt** (mots-clés type "refactor"/"implémente" vs question simple) — évoquée puis écartée, jugée trop fragile/peu fiable pour être utile en l'état.
+   - Portée à définir : pilote sur une seule heuristique (probablement la première, la plus simple à greffer sur l'architecture hooks déjà en place) plutôt que de combiner les trois d'entrée de jeu.
 
 ## 6. Suite
 
