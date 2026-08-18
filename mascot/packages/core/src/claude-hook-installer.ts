@@ -17,13 +17,24 @@ const OUR_COMMANDS = new Set([CLAUDE_HOOK_COMMAND, CLAUDE_HOOK_TURN_START_COMMAN
 /** Évènements Claude Code sur lesquels on est susceptible d'avoir installé un hook, tous modes confondus. */
 const OUR_EVENTS = ["Stop", "UserPromptSubmit"] as const;
 
-/** Pour un mode donné, la liste des (évènement, commande) à installer. */
-function entriesForMode(mode: HookTriggerMode): { event: (typeof OUR_EVENTS)[number]; command: string }[] {
+/**
+ * Timeout (secondes) du hook `/trigger` (modes "stop"/"start") — le serveur local peut retenir sa
+ * réponse tant qu'un exercice bloquant déclenché n'est pas marqué fait (voir hook-server.ts),
+ * donc le hook Claude Code doit avoir le temps d'attendre au lieu d'être tué après le défaut
+ * (60s). Pas nécessaire pour /turn-start /turn-end (mode "thinking") qui répondent toujours
+ * immédiatement, jamais bloquants.
+ */
+export const HOOK_TIMEOUT_SECONDS = 600;
+
+/** Pour un mode donné, la liste des (évènement, commande, timeout éventuel) à installer. */
+function entriesForMode(
+  mode: HookTriggerMode
+): { event: (typeof OUR_EVENTS)[number]; command: string; timeout?: number }[] {
   switch (mode) {
     case "stop":
-      return [{ event: "Stop", command: CLAUDE_HOOK_COMMAND }];
+      return [{ event: "Stop", command: CLAUDE_HOOK_COMMAND, timeout: HOOK_TIMEOUT_SECONDS }];
     case "start":
-      return [{ event: "UserPromptSubmit", command: CLAUDE_HOOK_COMMAND }];
+      return [{ event: "UserPromptSubmit", command: CLAUDE_HOOK_COMMAND, timeout: HOOK_TIMEOUT_SECONDS }];
     case "thinking":
       return [
         { event: "UserPromptSubmit", command: CLAUDE_HOOK_TURN_START_COMMAND },
@@ -109,9 +120,11 @@ export function install(settingsPath: string, mode: HookTriggerMode = "stop"): v
   const { settings } = withoutOurHooks(readSettings(settingsPath));
   settings.hooks ??= {};
 
-  for (const { event, command } of entriesForMode(mode)) {
+  for (const { event, command, timeout } of entriesForMode(mode)) {
     settings.hooks[event] ??= [];
-    settings.hooks[event]!.push({ hooks: [{ type: "command", command }] });
+    const entry: HookCommandEntry = { type: "command", command };
+    if (timeout !== undefined) entry.timeout = timeout;
+    settings.hooks[event]!.push({ hooks: [entry] });
   }
 
   writeSettings(settingsPath, settings);

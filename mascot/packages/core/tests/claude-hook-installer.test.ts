@@ -9,6 +9,7 @@ import {
   CLAUDE_HOOK_COMMAND,
   CLAUDE_HOOK_TURN_START_COMMAND,
   CLAUDE_HOOK_TURN_END_COMMAND,
+  HOOK_TIMEOUT_SECONDS,
 } from "../src/claude-hook-installer.js";
 
 describe("claude-hook-installer", () => {
@@ -36,7 +37,11 @@ describe("claude-hook-installer", () => {
 
     const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
     expect(parsed.hooks.Stop).toHaveLength(1);
-    expect(parsed.hooks.Stop[0].hooks[0]).toEqual({ type: "command", command: CLAUDE_HOOK_COMMAND });
+    expect(parsed.hooks.Stop[0].hooks[0]).toEqual({
+      type: "command",
+      command: CLAUDE_HOOK_COMMAND,
+      timeout: HOOK_TIMEOUT_SECONDS,
+    });
   });
 
   it("install est idempotent (n'ajoute pas de doublon)", () => {
@@ -110,17 +115,30 @@ describe("claude-hook-installer", () => {
     expect(parsed.hooks.UserPromptSubmit[0].hooks[0]).toEqual({
       type: "command",
       command: CLAUDE_HOOK_COMMAND,
+      timeout: HOOK_TIMEOUT_SECONDS,
     });
     expect(parsed.hooks.Stop).toBeUndefined();
     expect(isInstalled(settingsPath)).toBe(true);
   });
 
-  it('mode "thinking" installe un hook UserPromptSubmit (début) et un hook Stop (fin) distincts', () => {
+  it('mode "thinking" installe un hook UserPromptSubmit (début) et un hook Stop (fin) distincts, sans timeout (jamais bloquant)', () => {
     install(settingsPath, "thinking");
 
     const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
     expect(parsed.hooks.UserPromptSubmit[0].hooks[0].command).toBe(CLAUDE_HOOK_TURN_START_COMMAND);
+    expect(parsed.hooks.UserPromptSubmit[0].hooks[0].timeout).toBeUndefined();
     expect(parsed.hooks.Stop[0].hooks[0].command).toBe(CLAUDE_HOOK_TURN_END_COMMAND);
+    expect(parsed.hooks.Stop[0].hooks[0].timeout).toBeUndefined();
+  });
+
+  it('mode "stop"/"start" installent un timeout généreux, pour laisser le temps à un exercice bloquant', () => {
+    install(settingsPath, "stop");
+    let parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.Stop[0].hooks[0].timeout).toBe(HOOK_TIMEOUT_SECONDS);
+
+    install(settingsPath, "start");
+    parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    expect(parsed.hooks.UserPromptSubmit[0].hooks[0].timeout).toBe(HOOK_TIMEOUT_SECONDS);
   });
 
   it("changer de mode retire proprement les hooks du mode précédent", () => {

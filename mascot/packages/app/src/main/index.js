@@ -43,6 +43,12 @@ let hookCallCount = 0;
 let pendingThinkingTimer = null;
 /** Ne proposer l'exercice en mode "thinking" que si Claude travaille encore après ce délai */
 const THINKING_DEBOUNCE_MS = 8000;
+/**
+ * `respond()` du hook /trigger en attente tant qu'un exercice bloquant qu'il a déclenché n'est
+ * pas marqué fait — l'appeler renvoie enfin la réponse HTTP à curl, ce qui rend la main au hook
+ * Claude Code (donc à l'utilisateur dans son terminal). Voir showExercise()/recordAndHide().
+ */
+let pendingHookRespond = null;
 let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
@@ -208,7 +214,7 @@ function showExercise() {
     // La fenêtre overlay n'a pas fini son premier chargement (cas rare, ex: triggerNow()
     // appelé juste après le démarrage de l'app) — on met en attente, did-finish-load enverra.
     pendingPayload = payload;
-    return;
+    return blocking;
   }
 
   overlayWindow.webContents.send("show-exercise", payload);
@@ -217,6 +223,7 @@ function showExercise() {
   } else {
     overlayWindow.showInactive();
   }
+  return blocking;
 }
 
 function recordAndHide(status) {
@@ -243,6 +250,13 @@ function recordAndHide(status) {
   currentMode = null;
   currentBlocking = false;
   overlayWindow.hide();
+
+  // Libère le hook Claude Code retenu par ce même exercice (mode "stop"/"start" bloquant, voir
+  // maybeTriggerFromHook) — no-op si l'exercice ne venait pas d'un hook ou n'était pas bloquant.
+  if (pendingHookRespond) {
+    pendingHookRespond();
+    pendingHookRespond = null;
+  }
 }
 
 function createTray() {
@@ -322,19 +336,44 @@ if (!gotSingleInstanceLock) {
       scheduler.start();
     }
 
-    function maybeTriggerFromHook() {
+    /**
+     * @param {() => void} respond Renvoie la réponse HTTP au hook Claude Code (curl). Appelé tout
+     *   de suite si rien n'est déclenché ou si l'exercice n'est pas bloquant ; sinon retenu dans
+     *   pendingHookRespond et appelé plus tard par recordAndHide() une fois l'exercice fait —
+     *   c'est ça qui bloque réellement la session Claude Code, pas juste l'UI de la mascotte.
+     *   En mode "thinking", le débounce (onTurnStart ci-dessous) appelle un respond() no-op :
+     *   /turn-start a déjà répondu immédiatement 8s plus tôt, ce déclenchement différé ne peut
+     *   plus bloquer le hook qui l'a initié — c'est onTurnEnd (Stop) qui prend le relais dans ce
+     *   cas, voir plus bas.
+     */
+    function maybeTriggerFromHook(respond) {
       const currentSettings = storage.getSettings();
       // "timer" seul : on ignore les appels du hook (ex. laissé configuré après un
       // changement de réglage) plutôt que de le désinstaller côté Claude Code.
-      if (currentSettings.triggerSource === "timer") return;
+      if (currentSettings.triggerSource === "timer") {
+        respond();
+        return;
+      }
 
       // hookEveryN = 1 (défaut) déclenche à chaque appel. > 1 = une réponse Claude sur N,
       // pour ne pas interrompre trop souvent sur des sessions avec beaucoup d'allers-retours.
       hookCallCount += 1;
-      if (hookCallCount < currentSettings.hookEveryN) return;
+      if (hookCallCount < currentSettings.hookEveryN) {
+        respond();
+        return;
+      }
       hookCallCount = 0;
 
-      showExercise();
+      const blocking = showExercise();
+      if (blocking) {
+        // Un seul trigger bloquant à la fois : si un précédent traînait encore (ne devrait pas
+        // arriver, showExercise() écrase l'exercice courant), on le libère d'abord pour ne pas
+        // fuir la connexion HTTP qui l'attendait.
+        if (pendingHookRespond) pendingHookRespond();
+        pendingHookRespond = respond;
+      } else {
+        respond();
+      }
     }
 
     hookServer = new HookServer({
@@ -347,14 +386,30 @@ if (!gotSingleInstanceLock) {
         if (pendingThinkingTimer) clearTimeout(pendingThinkingTimer);
         pendingThinkingTimer = setTimeout(() => {
           pendingThinkingTimer = null;
-          maybeTriggerFromHook();
+          maybeTriggerFromHook(() => {});
         }, THINKING_DEBOUNCE_MS);
       },
-      // Mode "thinking" : fin de tour (Stop) — annule la proposition si Claude a répondu avant le délai.
-      onTurnEnd: () => {
+      // Mode "thinking" : fin de tour (Stop).
+      onTurnEnd: (respond) => {
         if (pendingThinkingTimer) {
+          // Claude a fini avant la fin du débounce : rien n'a été déclenché, on annule et on
+          // rend la main tout de suite — c'est justement le but du mode "thinking" (ne jamais
+          // retarder un échange rapide).
           clearTimeout(pendingThinkingTimer);
           pendingThinkingTimer = null;
+          respond();
+          return;
+        }
+        // Le débounce a peut-être déjà déclenché un exercice avant que Claude ait fini — s'il
+        // est encore bloquant et pas terminé, on retient la réponse comme pour /trigger :
+        // recordAndHide() la libérera une fois l'exercice fait. Claude a donc pu démarrer son
+        // tour instantanément dans tous les cas, mais ne récupère la main à la fin que si
+        // l'exercice (bloquant) déclenché entre-temps est terminé.
+        if (currentExercise && currentBlocking) {
+          if (pendingHookRespond) pendingHookRespond(); // filet de sécurité, ne devrait pas arriver
+          pendingHookRespond = respond;
+        } else {
+          respond();
         }
       },
     });
@@ -447,6 +502,12 @@ if (!gotSingleInstanceLock) {
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
     if (pendingThinkingTimer) clearTimeout(pendingThinkingTimer);
+    // Ne laisse pas un hook Claude Code retenu indéfiniment si l'app quitte pendant qu'un
+    // exercice bloquant est en attente — mieux vaut rendre la main tout de suite.
+    if (pendingHookRespond) {
+      pendingHookRespond();
+      pendingHookRespond = null;
+    }
     hookServer?.stop();
   });
 
