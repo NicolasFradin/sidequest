@@ -382,12 +382,22 @@ function renderPlansGrid() {
     name.className = "plan-card-name";
     name.textContent = plan.name;
     header.appendChild(name);
-    if (isActive) {
-      const badge = document.createElement("span");
-      badge.className = "status-badge installed";
-      badge.textContent = "Actif";
-      header.appendChild(badge);
+
+    const badges = document.createElement("div");
+    badges.className = "plan-card-badges";
+    if (isDefault) {
+      const defaultBadge = document.createElement("span");
+      defaultBadge.className = "status-badge default";
+      defaultBadge.textContent = "Défaut";
+      badges.appendChild(defaultBadge);
     }
+    if (isActive) {
+      const activeBadge = document.createElement("span");
+      activeBadge.className = "status-badge installed";
+      activeBadge.textContent = "Actif";
+      badges.appendChild(activeBadge);
+    }
+    header.appendChild(badges);
 
     const count = document.createElement("p");
     count.className = "plan-card-count";

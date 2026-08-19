@@ -515,8 +515,8 @@ html, body {
 }
 
 .plans-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -540,6 +540,12 @@ html, body {
 .plan-card-name {
   font-weight: 700;
   font-size: 15px;
+}
+
+.plan-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .plan-card-count {
@@ -765,6 +771,11 @@ html, body {
 .status-badge.not-installed {
   color: var(--text-secondary);
   border-color: var(--border-subtle);
+}
+
+.status-badge.default {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 .hook-status-row {
