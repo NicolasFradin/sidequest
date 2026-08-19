@@ -188,9 +188,15 @@ function applyAutolaunch(enabled) {
   }
 }
 
-/** Résout le programme actif : plan custom stocké en base, sinon pack JSON livré avec l'app. */
+/**
+ * Résout le programme actif : plan custom stocké en base, sinon pack JSON livré avec l'app.
+ * Replie sur le plan par défaut si le résultat n'a aucun exercice (ex. plan custom créé mais pas
+ * encore rempli, puis activé par erreur) — sinon pickRandomExercise() renvoie `undefined` et bloque
+ * silencieusement les boutons Fait/Passer (voire le hook Claude Code en mode bloquant).
+ */
 function loadActiveProgram(settings) {
-  return storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
+  const plan = storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
+  return plan.exercises.length > 0 ? plan : loadPack("sport-basic");
 }
 
 function showExercise() {

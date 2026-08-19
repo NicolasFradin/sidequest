@@ -442,6 +442,12 @@ html, body {
   transform: translateY(-1px);
 }
 
+.option-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .option-btn.active {
   background: linear-gradient(90deg, var(--accent-magenta), var(--accent-gold));
   color: var(--btn-primary-text);
