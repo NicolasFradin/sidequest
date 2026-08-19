@@ -419,7 +419,15 @@ function renderPlansGrid() {
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "option-btn option-btn-sm";
     toggleBtn.textContent = isActive ? "Désactiver" : "Activer";
-    toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
+    // Un plan sans exercice ne doit jamais pouvoir être activé (main/index.js s'en protège aussi
+    // en repliant sur le plan par défaut, mais autant ne pas laisser l'UI proposer l'action).
+    const isEmpty = plan.exercises.length === 0;
+    if (!isActive && isEmpty) {
+      toggleBtn.disabled = true;
+      toggleBtn.title = "Ajoute au moins un exercice avant d'activer ce plan.";
+    } else {
+      toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
+    }
 
     actions.append(openBtn, duplicateBtn, toggleBtn);
 
