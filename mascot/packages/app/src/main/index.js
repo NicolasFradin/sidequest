@@ -188,9 +188,14 @@ function applyAutolaunch(enabled) {
   }
 }
 
+/** Résout le programme actif : plan custom stocké en base, sinon pack JSON livré avec l'app. */
+function loadActiveProgram(settings) {
+  return storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
+}
+
 function showExercise() {
   const settings = storage.getSettings();
-  const pack = loadPack(settings.activeProgram);
+  const pack = loadActiveProgram(settings);
   const exercise = pickRandomExercise(pack);
   const debt = storage.getDebt();
   // gate = toujours bloquant. mixed = bloquant seulement si on a trop esquivé (dette > 0),
@@ -480,9 +485,20 @@ if (!gotSingleInstanceLock) {
     });
     ipcMain.handle("dashboard:get-sessions", () => storage.getSessions());
     ipcMain.handle("dashboard:get-streak", () => storage.getCurrentStreak());
-    ipcMain.handle("dashboard:get-exercises", () => loadPack(storage.getSettings().activeProgram).exercises);
+    ipcMain.handle("dashboard:get-exercises", () => loadActiveProgram(storage.getSettings()).exercises);
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
+
+    ipcMain.handle("dashboard:get-plans", () => ({
+      defaultPlan: loadPack("sport-basic"),
+      customPlans: storage.getPlans(),
+    }));
+    ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
+    ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
+    ipcMain.handle("dashboard:delete-plan", (_event, id) => {
+      storage.deletePlan(id);
+      return storage.getSettings();
+    });
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));
     ipcMain.handle("dashboard:hook-install", () => {

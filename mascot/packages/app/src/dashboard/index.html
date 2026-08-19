@@ -13,6 +13,9 @@
         <button class="nav-item active" data-tab="settings">
           <span class="nav-icon">⚙</span> Réglages
         </button>
+        <button class="nav-item" data-tab="plans">
+          <span class="nav-icon">📋</span> Plans
+        </button>
         <button class="nav-item" data-tab="history">
           <span class="nav-icon">📊</span> Historique
         </button>
@@ -103,6 +106,41 @@
             <p class="field-hint">Ouvre Mascot Coach automatiquement à la connexion.</p>
           </div>
           <input type="checkbox" id="autolaunch-toggle" class="toggle" />
+        </div>
+      </section>
+
+      <section class="tab-panel plans-panel" id="panel-plans">
+        <div id="plans-list-view">
+          <div class="page-header">
+            <h1 class="page-title">Plans d'entraînement</h1>
+            <button id="new-plan-btn" class="page-action">+ Nouveau plan</button>
+          </div>
+          <div class="plans-grid" id="plans-grid"></div>
+        </div>
+
+        <div id="plan-edit-view" hidden>
+          <div class="page-header">
+            <button id="plan-back-btn" class="page-icon-btn" title="Retour">←</button>
+            <h1 class="page-title" id="plan-edit-title">Plan</h1>
+          </div>
+
+          <div class="card">
+            <label class="field-label" for="plan-name-input">Nom du plan</label>
+            <input type="text" id="plan-name-input" class="text-input" />
+          </div>
+
+          <div class="card">
+            <label class="field-label">Exercices</label>
+            <div class="plan-exercises-list" id="plan-exercises-list"></div>
+            <button id="plan-add-exercise-btn" class="option-btn">+ Ajouter un exercice</button>
+            <datalist id="exercise-category-options">
+              <option value="jambes"></option>
+              <option value="bras"></option>
+              <option value="abdos"></option>
+              <option value="cardio"></option>
+              <option value="étirement"></option>
+            </datalist>
+          </div>
         </div>
       </section>
 

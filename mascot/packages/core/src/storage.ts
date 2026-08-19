@@ -1,5 +1,7 @@
 import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
+import { randomUUID } from "node:crypto";
+import type { Exercise } from "./packs.js";
 
 export type SessionStatus = "done" | "skipped" | "missed";
 export type TriggerType = "timer" | "hook";
@@ -30,6 +32,12 @@ export interface Settings {
   visualTheme: VisualTheme;
   /** Point de déclenchement du hook Claude Code installé — voir HookTriggerMode */
   hookTriggerMode: HookTriggerMode;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  exercises: Exercise[];
 }
 
 export interface SessionRecord {
@@ -75,6 +83,12 @@ interface SessionRow {
   mode: string;
 }
 
+interface PlanRow {
+  id: string;
+  name: string;
+  exercises: string;
+}
+
 export class Storage {
   private readonly db: DatabaseType;
 
@@ -99,6 +113,12 @@ export class Storage {
         verified INTEGER NOT NULL DEFAULT 0,
         mascot TEXT NOT NULL DEFAULT 'ronnie-coleman',
         mode TEXT NOT NULL DEFAULT 'notify'
+      );
+
+      CREATE TABLE IF NOT EXISTS plans (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        exercises TEXT NOT NULL
       );
     `);
 
@@ -229,6 +249,46 @@ export class Storage {
       cursor.setDate(cursor.getDate() - 1);
     }
     return streak;
+  }
+
+  private rowToPlan(row: PlanRow): Plan {
+    return { id: row.id, name: row.name, exercises: JSON.parse(row.exercises) as Exercise[] };
+  }
+
+  getPlans(): Plan[] {
+    const rows = this.db.prepare("SELECT * FROM plans ORDER BY rowid ASC").all() as PlanRow[];
+    return rows.map((r) => this.rowToPlan(r));
+  }
+
+  getPlan(id: string): Plan | undefined {
+    const row = this.db.prepare("SELECT * FROM plans WHERE id = ?").get(id) as PlanRow | undefined;
+    return row ? this.rowToPlan(row) : undefined;
+  }
+
+  createPlan(name: string, exercises: Exercise[]): Plan {
+    const plan: Plan = { id: randomUUID(), name, exercises };
+    this.db
+      .prepare("INSERT INTO plans (id, name, exercises) VALUES (@id, @name, @exercises)")
+      .run({ id: plan.id, name: plan.name, exercises: JSON.stringify(plan.exercises) });
+    return plan;
+  }
+
+  updatePlan(id: string, partial: { name?: string; exercises?: Exercise[] }): Plan {
+    const existing = this.getPlan(id);
+    if (!existing) throw new Error(`Plan inconnu : ${id}`);
+    const next: Plan = { ...existing, ...partial };
+    this.db
+      .prepare("UPDATE plans SET name = @name, exercises = @exercises WHERE id = @id")
+      .run({ id: next.id, name: next.name, exercises: JSON.stringify(next.exercises) });
+    return next;
+  }
+
+  /** Si le plan supprimé était actif, `activeProgram` revient au plan par défaut pour ne jamais pointer vers un id inexistant. */
+  deletePlan(id: string): void {
+    if (this.getSettings().activeProgram === id) {
+      this.updateSettings({ activeProgram: DEFAULT_SETTINGS.activeProgram });
+    }
+    this.db.prepare("DELETE FROM plans WHERE id = ?").run(id);
   }
 
   close(): void {

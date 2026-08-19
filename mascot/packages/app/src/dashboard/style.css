@@ -493,8 +493,140 @@ html, body {
   cursor: pointer;
 }
 
-.history-panel {
+.history-panel,
+.plans-panel {
   max-width: 720px;
+}
+
+.text-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.text-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-card-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.plan-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.plan-card-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.plan-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.option-btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.option-btn-danger {
+  border-color: var(--accent-magenta);
+  color: var(--accent-magenta);
+}
+
+.plan-exercises-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.plan-exercise-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.plan-exercise-row:last-child {
+  border-bottom: none;
+}
+
+.plan-exercise-row .text-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.plan-exercise-label {
+  flex: 2;
+}
+
+.plan-exercise-category {
+  flex: 1;
+}
+
+.plan-exercise-duration {
+  width: 64px;
+  text-align: center;
+}
+
+.plan-exercise-remove-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.plan-exercise-remove-btn:hover {
+  border-color: var(--accent-magenta);
+  color: var(--accent-magenta);
+}
+
+.plans-empty-hint {
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .stats-row {
@@ -639,6 +771,11 @@ html, body {
 .status-badge.not-installed {
   color: var(--text-secondary);
   border-color: var(--border-subtle);
+}
+
+.status-badge.default {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 .hook-status-row {
