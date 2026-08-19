@@ -349,6 +349,7 @@ const planNameInput = document.getElementById("plan-name-input");
 const planExercisesList = document.getElementById("plan-exercises-list");
 const planAddExerciseBtn = document.getElementById("plan-add-exercise-btn");
 const newPlanBtn = document.getElementById("new-plan-btn");
+const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
 
 let plansState = { defaultPlan: null, customPlans: [] };
@@ -429,7 +430,12 @@ function renderPlansGrid() {
       toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
     }
 
-    actions.append(openBtn, duplicateBtn, toggleBtn);
+    const exportBtn = document.createElement("button");
+    exportBtn.className = "option-btn option-btn-sm";
+    exportBtn.textContent = "Exporter";
+    exportBtn.addEventListener("click", () => exportPlan(plan.id));
+
+    actions.append(openBtn, duplicateBtn, toggleBtn, exportBtn);
 
     if (!isDefault) {
       const deleteBtn = document.createElement("button");
@@ -457,6 +463,23 @@ async function duplicatePlan(plan) {
   plansState.customPlans.push(created);
   openPlanEditor(created.id);
   showToast("Plan dupliqué");
+}
+
+async function exportPlan(id) {
+  const { exported } = await window.dashboardAPI.exportPlan(id);
+  if (exported) showToast("Plan exporté");
+}
+
+async function importPlan() {
+  const { imported, error, plan } = await window.dashboardAPI.importPlan();
+  if (error) {
+    showToast(error, "warning");
+    return;
+  }
+  if (!imported) return; // annulé par l'utilisateur, rien à faire
+  plansState.customPlans.push(plan);
+  openPlanEditor(plan.id);
+  showToast("Plan importé");
 }
 
 async function deletePlan(id) {
@@ -589,6 +612,8 @@ newPlanBtn.addEventListener("click", async () => {
   plansState.customPlans.push(created);
   openPlanEditor(created.id);
 });
+
+importPlanBtn.addEventListener("click", () => importPlan());
 
 planBackBtn.addEventListener("click", () => closePlanEditor());
 
