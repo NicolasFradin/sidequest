@@ -1,8 +1,9 @@
-import { app, BrowserWindow, Tray, Menu, screen, nativeImage, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, Tray, Menu, screen, nativeImage, ipcMain, globalShortcut, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { mkdirSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
+import { randomUUID } from "node:crypto";
 import {
   Scheduler,
   Storage,
@@ -504,6 +505,52 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {
       storage.deletePlan(id);
       return storage.getSettings();
+    });
+
+    ipcMain.handle("dashboard:export-plan", async (_event, id) => {
+      const plan = storage.getPlan(id) ?? (id === "sport-basic" ? loadPack("sport-basic") : null);
+      if (!plan) return { exported: false };
+
+      const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
+        title: "Exporter le plan",
+        defaultPath: `${plan.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,
+        filters: [{ name: "Plan Mascot Coach (JSON)", extensions: ["json"] }],
+      });
+      if (canceled || !filePath) return { exported: false };
+
+      writeFileSync(filePath, JSON.stringify({ name: plan.name, exercises: plan.exercises }, null, 2), "utf-8");
+      return { exported: true };
+    });
+
+    ipcMain.handle("dashboard:import-plan", async () => {
+      const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
+        title: "Importer un plan",
+        filters: [{ name: "Plan Mascot Coach (JSON)", extensions: ["json"] }],
+        properties: ["openFile"],
+      });
+      if (canceled || filePaths.length === 0) return { imported: false, error: null };
+
+      let data;
+      try {
+        data = JSON.parse(readFileSync(filePaths[0], "utf-8"));
+      } catch {
+        return { imported: false, error: "Ce fichier n'est pas un JSON valide." };
+      }
+      if (typeof data.name !== "string" || !data.name.trim() || !Array.isArray(data.exercises)) {
+        return { imported: false, error: "Ce fichier n'a pas le format d'un plan Mascot Coach (nom + exercices attendus)." };
+      }
+
+      // Tolérant sur la forme de chaque exercice (fichier potentiellement édité à la main) :
+      // ré-assigne un id si absent/invalide plutôt que de rejeter tout le fichier.
+      const exercises = data.exercises.map((e) => ({
+        id: typeof e?.id === "string" && e.id ? e.id : randomUUID(),
+        label: String(e?.label ?? ""),
+        durationSec: Number(e?.durationSec) > 0 ? Number(e.durationSec) : 30,
+        category: String(e?.category ?? ""),
+      }));
+
+      const plan = storage.createPlan(data.name.trim(), exercises);
+      return { imported: true, plan };
     });
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));

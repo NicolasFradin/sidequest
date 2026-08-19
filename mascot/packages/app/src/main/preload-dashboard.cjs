@@ -15,4 +15,6 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   createPlan: (name, exercises) => ipcRenderer.invoke("dashboard:create-plan", { name, exercises }),
   updatePlan: (id, partial) => ipcRenderer.invoke("dashboard:update-plan", { id, partial }),
   deletePlan: (id) => ipcRenderer.invoke("dashboard:delete-plan", id),
+  exportPlan: (id) => ipcRenderer.invoke("dashboard:export-plan", id),
+  importPlan: () => ipcRenderer.invoke("dashboard:import-plan"),
 });
