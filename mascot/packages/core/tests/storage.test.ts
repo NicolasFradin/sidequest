@@ -177,3 +177,75 @@ describe("Storage", () => {
     expect(storage.getCurrentStreak()).toBe(0);
   });
 });
+
+describe("Storage — plans custom", () => {
+  let storage: Storage;
+
+  beforeEach(() => {
+    storage = new Storage(":memory:");
+  });
+
+  afterEach(() => {
+    storage.close();
+  });
+
+  const exercises = [{ id: "burpee-10", label: "10 burpees", durationSec: 30, category: "cardio" }];
+
+  it("retourne une liste vide sans plan créé", () => {
+    expect(storage.getPlans()).toEqual([]);
+  });
+
+  it("crée un plan et le relit", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    expect(created.id).toBeTruthy();
+    expect(created.name).toBe("Mon plan");
+    expect(created.exercises).toEqual(exercises);
+
+    expect(storage.getPlan(created.id)).toEqual(created);
+    expect(storage.getPlans()).toEqual([created]);
+  });
+
+  it("retourne undefined pour un plan inconnu", () => {
+    expect(storage.getPlan("inexistant")).toBeUndefined();
+  });
+
+  it("met à jour le nom et les exercices d'un plan sans écraser le reste", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    const updated = storage.updatePlan(created.id, { name: "Plan renommé" });
+    expect(updated.name).toBe("Plan renommé");
+    expect(updated.exercises).toEqual(exercises);
+
+    const newExercises = [{ id: "squat-20", label: "20 squats", durationSec: 40, category: "jambes" }];
+    const updated2 = storage.updatePlan(created.id, { exercises: newExercises });
+    expect(updated2.name).toBe("Plan renommé");
+    expect(updated2.exercises).toEqual(newExercises);
+  });
+
+  it("lève une erreur en mettant à jour un plan inconnu", () => {
+    expect(() => storage.updatePlan("inexistant", { name: "x" })).toThrow();
+  });
+
+  it("supprime un plan", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    storage.deletePlan(created.id);
+    expect(storage.getPlan(created.id)).toBeUndefined();
+    expect(storage.getPlans()).toEqual([]);
+  });
+
+  it("supprimer le plan actif remet activeProgram au plan par défaut", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    storage.updateSettings({ activeProgram: created.id });
+    expect(storage.getSettings().activeProgram).toBe(created.id);
+
+    storage.deletePlan(created.id);
+    expect(storage.getSettings().activeProgram).toBe("sport-basic");
+  });
+
+  it("supprimer un plan non actif ne touche pas activeProgram", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    storage.updateSettings({ activeProgram: "sport-basic" });
+
+    storage.deletePlan(created.id);
+    expect(storage.getSettings().activeProgram).toBe("sport-basic");
+  });
+});

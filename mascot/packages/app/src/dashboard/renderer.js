@@ -53,6 +53,7 @@ function resolveMascotImage(mascotId, theme) {
 const tabs = [...document.querySelectorAll(".nav-item")];
 const panels = {
   settings: document.getElementById("panel-settings"),
+  plans: document.getElementById("panel-plans"),
   history: document.getElementById("panel-history"),
 };
 
@@ -63,6 +64,7 @@ tabs.forEach((tab) => {
       panel.classList.toggle("active", key === tab.dataset.tab)
     );
     if (tab.dataset.tab === "history") refreshHistory();
+    if (tab.dataset.tab === "plans") refreshPlans();
   });
 });
 
@@ -334,3 +336,245 @@ const refreshHistoryBtn = document.getElementById("refresh-history");
 refreshHistoryBtn.addEventListener("click", () => refreshHistory());
 
 refreshHistory();
+
+// --- Plans d'entraînement personnalisés ---
+
+const DEFAULT_PLAN_ID = "sport-basic";
+
+const plansGrid = document.getElementById("plans-grid");
+const plansListView = document.getElementById("plans-list-view");
+const planEditView = document.getElementById("plan-edit-view");
+const planEditTitle = document.getElementById("plan-edit-title");
+const planNameInput = document.getElementById("plan-name-input");
+const planExercisesList = document.getElementById("plan-exercises-list");
+const planAddExerciseBtn = document.getElementById("plan-add-exercise-btn");
+const newPlanBtn = document.getElementById("new-plan-btn");
+const planBackBtn = document.getElementById("plan-back-btn");
+
+let plansState = { defaultPlan: null, customPlans: [] };
+/** Plan en cours d'édition (copie locale) : { id, name, exercises, isDefault } */
+let editingPlan = null;
+
+function allPlans() {
+  return plansState.defaultPlan ? [plansState.defaultPlan, ...plansState.customPlans] : plansState.customPlans;
+}
+
+function findPlan(id) {
+  return allPlans().find((p) => p.id === id);
+}
+
+function planExerciseCountLabel(plan) {
+  return `${plan.exercises.length} exercice${plan.exercises.length > 1 ? "s" : ""}`;
+}
+
+function renderPlansGrid() {
+  plansGrid.innerHTML = "";
+  allPlans().forEach((plan) => {
+    const isDefault = plan.id === DEFAULT_PLAN_ID;
+    const isActive = currentSettings?.activeProgram === plan.id;
+
+    const card = document.createElement("div");
+    card.className = "plan-card";
+
+    const header = document.createElement("div");
+    header.className = "plan-card-header";
+    const name = document.createElement("span");
+    name.className = "plan-card-name";
+    name.textContent = plan.name;
+    header.appendChild(name);
+    if (isActive) {
+      const badge = document.createElement("span");
+      badge.className = "status-badge installed";
+      badge.textContent = "Actif";
+      header.appendChild(badge);
+    }
+
+    const count = document.createElement("p");
+    count.className = "plan-card-count";
+    count.textContent = planExerciseCountLabel(plan);
+
+    const actions = document.createElement("div");
+    actions.className = "plan-card-actions";
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "option-btn option-btn-sm";
+    openBtn.textContent = "Ouvrir";
+    openBtn.addEventListener("click", () => openPlanEditor(plan.id));
+
+    const duplicateBtn = document.createElement("button");
+    duplicateBtn.className = "option-btn option-btn-sm";
+    duplicateBtn.textContent = "Dupliquer";
+    duplicateBtn.addEventListener("click", () => duplicatePlan(plan));
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "option-btn option-btn-sm";
+    toggleBtn.textContent = isActive ? "Désactiver" : "Activer";
+    toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
+
+    actions.append(openBtn, duplicateBtn, toggleBtn);
+
+    if (!isDefault) {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "option-btn option-btn-sm option-btn-danger";
+      deleteBtn.textContent = "Supprimer";
+      deleteBtn.addEventListener("click", () => deletePlan(plan.id));
+      actions.appendChild(deleteBtn);
+    }
+
+    card.append(header, count, actions);
+    plansGrid.appendChild(card);
+  });
+}
+
+async function activatePlan(id) {
+  await save({ activeProgram: id });
+  renderPlansGrid();
+}
+
+async function duplicatePlan(plan) {
+  const created = await window.dashboardAPI.createPlan(
+    `${plan.name} (copie)`,
+    structuredClone(plan.exercises)
+  );
+  plansState.customPlans.push(created);
+  openPlanEditor(created.id);
+  showToast("Plan dupliqué");
+}
+
+async function deletePlan(id) {
+  if (!confirm("Supprimer ce plan ? Cette action est irréversible.")) return;
+  const nextSettings = await window.dashboardAPI.deletePlan(id);
+  plansState.customPlans = plansState.customPlans.filter((p) => p.id !== id);
+  applySettingsToUI(nextSettings);
+  renderPlansGrid();
+  showToast("Plan supprimé");
+}
+
+function openPlanEditor(id) {
+  const plan = findPlan(id);
+  if (!plan) return;
+  editingPlan = {
+    id: plan.id,
+    name: plan.name,
+    exercises: structuredClone(plan.exercises),
+    isDefault: plan.id === DEFAULT_PLAN_ID,
+  };
+  planEditTitle.textContent = plan.name;
+  planNameInput.value = plan.name;
+  planNameInput.disabled = editingPlan.isDefault;
+  planAddExerciseBtn.hidden = editingPlan.isDefault;
+  renderPlanExercises();
+  plansListView.hidden = true;
+  planEditView.hidden = false;
+}
+
+function closePlanEditor() {
+  editingPlan = null;
+  planEditView.hidden = true;
+  plansListView.hidden = false;
+  renderPlansGrid();
+}
+
+function renderPlanExercises() {
+  planExercisesList.innerHTML = "";
+
+  editingPlan.exercises.forEach((exercise, index) => {
+    const row = document.createElement("div");
+    row.className = "plan-exercise-row";
+
+    const labelInput = document.createElement("input");
+    labelInput.type = "text";
+    labelInput.className = "text-input plan-exercise-label";
+    labelInput.placeholder = "Nom de l'exercice";
+    labelInput.value = exercise.label;
+    labelInput.disabled = editingPlan.isDefault;
+    labelInput.addEventListener("change", () => updateExerciseField(index, "label", labelInput.value));
+
+    const categoryInput = document.createElement("input");
+    categoryInput.type = "text";
+    categoryInput.className = "text-input plan-exercise-category";
+    categoryInput.placeholder = "Catégorie";
+    categoryInput.setAttribute("list", "exercise-category-options");
+    categoryInput.value = exercise.category;
+    categoryInput.disabled = editingPlan.isDefault;
+    categoryInput.addEventListener("change", () => updateExerciseField(index, "category", categoryInput.value));
+
+    const durationInput = document.createElement("input");
+    durationInput.type = "number";
+    durationInput.min = "5";
+    durationInput.step = "5";
+    durationInput.className = "text-input plan-exercise-duration";
+    durationInput.value = exercise.durationSec;
+    durationInput.disabled = editingPlan.isDefault;
+    durationInput.addEventListener("change", () =>
+      updateExerciseField(index, "durationSec", Math.max(5, Number(durationInput.value) || 5))
+    );
+
+    row.append(labelInput, categoryInput, durationInput);
+
+    if (!editingPlan.isDefault) {
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "plan-exercise-remove-btn";
+      removeBtn.textContent = "✕";
+      removeBtn.title = "Supprimer cet exercice";
+      removeBtn.addEventListener("click", () => removeExercise(index));
+      row.appendChild(removeBtn);
+    }
+
+    planExercisesList.appendChild(row);
+  });
+
+  if (editingPlan.exercises.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "plans-empty-hint";
+    empty.textContent = "Aucun exercice pour l'instant.";
+    planExercisesList.appendChild(empty);
+  }
+}
+
+async function persistEditingPlan() {
+  const updated = await window.dashboardAPI.updatePlan(editingPlan.id, {
+    name: editingPlan.name,
+    exercises: editingPlan.exercises,
+  });
+  const idx = plansState.customPlans.findIndex((p) => p.id === updated.id);
+  if (idx !== -1) plansState.customPlans[idx] = updated;
+  showToast("Enregistré");
+}
+
+function updateExerciseField(index, field, value) {
+  editingPlan.exercises[index][field] = value;
+  persistEditingPlan();
+}
+
+function removeExercise(index) {
+  editingPlan.exercises.splice(index, 1);
+  renderPlanExercises();
+  persistEditingPlan();
+}
+
+planAddExerciseBtn.addEventListener("click", () => {
+  editingPlan.exercises.push({ id: crypto.randomUUID(), label: "", durationSec: 30, category: "" });
+  renderPlanExercises();
+  persistEditingPlan();
+});
+
+planNameInput.addEventListener("change", () => {
+  editingPlan.name = planNameInput.value.trim() || "Plan sans nom";
+  planNameInput.value = editingPlan.name;
+  planEditTitle.textContent = editingPlan.name;
+  persistEditingPlan();
+});
+
+newPlanBtn.addEventListener("click", async () => {
+  const created = await window.dashboardAPI.createPlan("Nouveau plan", []);
+  plansState.customPlans.push(created);
+  openPlanEditor(created.id);
+});
+
+planBackBtn.addEventListener("click", () => closePlanEditor());
+
+async function refreshPlans() {
+  plansState = await window.dashboardAPI.getPlans();
+  renderPlansGrid();
+}
