@@ -1,30 +1,30 @@
-# Branding & Charte graphique
+# Branding & Style Guide
 
-Ce dossier centralise les assets visuels de référence pour le projet, **organisés par thème global (skin)** — voir [`docs/plan-theme-global.md`](../plan-theme-global.md) pour le plan de la feature, et `docs/plan-mvp-mascotte-coach.md` section 9 pour le détail des tokens de base (palette, typographies, composants).
+This folder centralizes the project's reference visual assets, **organized by global theme (skin)** — see [`docs/plan-theme-global.md`](../plan-theme-global.md) for the feature plan, and `docs/plan-mvp-mascotte-coach.md` section 9 for the base design tokens (palette, typography, components).
 
 ## Structure
 
-Les 4 thèmes ont désormais leurs couleurs **et** leur(s) mascotte(s) intégrées dans l'app (`app/assets/mascots/`, sélectionnées dynamiquement selon le thème actif dans le dashboard — `MASCOTS_BY_THEME` dans `app/src/dashboard/renderer.js`).
+All 4 themes now have their colors **and** their mascot(s) integrated into the app (`app/assets/mascots/`, dynamically selected based on the active theme in the dashboard — `MASCOTS_BY_THEME` in `app/src/dashboard/renderer.js`).
 
-- `miami-80s/` — thème par défaut, style Miami Vice / GTA Vice City.
-  - `style-guide-dark.png` / `style-guide-light.png` — charte graphique de référence, variantes sombre/claire.
-  - `mascot-ronnie-coleman.png`, `mascot-miami-80s.png`, `mascot-arnold-80s.png` — 3 mascottes intégrées dans l'app.
-- `military-camo/` — thème "1980s Military". Seul thème avec une déclinaison claire/sombre distincte pour l'instant (pilote du sprint 5, voir `plan-theme-global.md`) : sombre = camo forêt, clair = camo désertique ("Desert Ops").
-  - `style-guide-dark.png` (camo forêt) / `style-guide-light.png` (camo désertique) — chartes graphiques de référence.
-  - `mascot-sergeant.png` (forêt) et `mascot-sergeant-desert.png` (désert) — 2 images pour la même mascotte logique (`sergeant`), affichage résolu automatiquement selon le mode clair/sombre (`MASCOT_LIGHT_VARIANTS` dans `renderer.js`), pas un choix séparé dans le sélecteur.
-- `roman-empire/` — thème "Roman Empire".
-  - `style-guide.png` — charte graphique de référence.
-  - `mascot-roman_empire.png` — mascotte intégrée dans l'app.
-- `dragonball/` — thème "Dragonball".
-  - `style-guide.png` — charte graphique de référence.
-  - `mascot-dragonball.png` — mascotte intégrée dans l'app.
+- `miami-80s/` — default theme, Miami Vice / GTA Vice City style.
+  - `style-guide-dark.png` / `style-guide-light.png` — reference style guide, dark/light variants.
+  - `mascot-ronnie-coleman.png`, `mascot-miami-80s.png`, `mascot-arnold-80s.png` — 3 mascots integrated into the app.
+- `military-camo/` — "1980s Military" theme. Currently the only theme with a distinct light/dark variant (piloted in sprint 5, see `plan-theme-global.md`): dark = forest camo, light = desert camo ("Desert Ops").
+  - `style-guide-dark.png` (forest camo) / `style-guide-light.png` (desert camo) — reference style guides.
+  - `mascot-sergeant.png` (forest) and `mascot-sergeant-desert.png` (desert) — 2 images for the same logical mascot (`sergeant`), display automatically resolved based on light/dark mode (`MASCOT_LIGHT_VARIANTS` in `renderer.js`), not a separate choice in the selector.
+- `roman-empire/` — "Roman Empire" theme.
+  - `style-guide.png` — reference style guide.
+  - `mascot-roman_empire.png` — integrated mascot.
+- `dragonball/` — "Dragonball" theme.
+  - `style-guide.png` — reference style guide.
+  - `mascot-dragonball.png` — integrated mascot.
 
-## Utilisation prévue
+## Intended use
 
-Ces images servent de source pour :
-- Les couleurs d'accent du dashboard par thème (`app/src/dashboard/style.css`, sélecteur `[data-visual-theme]`)
-- La sélection de mascotte dans le dashboard, filtrée par thème actif (`app/src/dashboard/renderer.js`)
-- Les sprites affichés dans l'overlay mascotte (`app/src/overlay/renderer.js`)
-- Les icônes de tray et d'app (déclinaisons redimensionnées à prévoir : 16x16, 32x32, 256x256 pour le packaging Electron) — pas encore fait, toutes les mascottes n'ont qu'une seule résolution source pour l'instant
+These images are the source for:
+- The dashboard's accent colors per theme (`app/src/dashboard/style.css`, `[data-visual-theme]` selector)
+- The mascot selector in the dashboard, filtered by active theme (`app/src/dashboard/renderer.js`)
+- The sprites shown in the mascot overlay (`app/src/overlay/renderer.js`)
+- Tray and app icons (resized variants to prepare: 16x16, 32x32, 256x256 for Electron packaging) — not done yet, every mascot only has a single source resolution for now
 
-Toute nouvelle mascotte ajoutée à un thème doit respecter le style pixel art 8-bit/16-bit et la palette de couleurs de la charte graphique correspondante.
+Any new mascot added to a theme must follow the 8-bit/16-bit pixel-art style and the matching style guide's color palette.

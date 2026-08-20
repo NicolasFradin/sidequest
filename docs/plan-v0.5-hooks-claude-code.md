@@ -1,112 +1,112 @@
-# Plan de développement V0.5 — Hooks Claude Code
+# V0.5 Development Plan — Claude Code Hooks
 
-**Repo local** : `/Users/nicolas/perso/ClaudeCodeGym`
-**Prérequis** : MVP (voir [`plan-mvp-mascotte-coach.md`](plan-mvp-mascotte-coach.md)) livré et mergé dans `master`.
+**Local repo**: `/Users/nicolas/perso/ClaudeCodeGym`
+**Prerequisite**: MVP (see [`plan-mvp-mascotte-coach.md`](plan-mvp-mascotte-coach.md)) shipped and merged into `master`.
 
 ## 1. Vision
 
-Le MVP déclenche la mascotte sur un simple minuteur mural (toutes les 30 min par défaut), sans lien avec ce que fait réellement l'utilisateur. La V0.5 remplace/complète ce minuteur par un déclenchement **contextuel** : la mascotte apparaît quand Claude Code termine sa réponse, c'est-à-dire exactement au moment où commence le temps mort — façon `claude-gym` (l'inspiration citée dans le plan MVP, section 1).
+The MVP triggers the mascot on a plain wall-clock timer (every 30 min by default), with no link to what the user is actually doing. V0.5 replaces/complements this timer with a **contextual** trigger: the mascot appears when Claude Code finishes its response, i.e. exactly when idle time begins — `claude-gym`-style (the inspiration cited in the MVP plan, section 1).
 
-Codex est mentionné dans la vision long terme du plan MVP, mais son système de hooks n'a pas été vérifié — cette version se concentre sur Claude Code, Codex reste une extension possible si son mécanisme s'y prête (à valider en sprint 5 de cette version).
+Codex is mentioned in the MVP plan's long-term vision, but its hook system hasn't been verified — this version focuses on Claude Code, Codex remains a possible extension if its mechanism turns out to fit (to be validated in sprint 5 of this version).
 
-## 2. Décisions de cadrage
+## 2. Locked-in decisions
 
-- **Mécanisme** : les [hooks Claude Code](https://docs.claude.com/en/docs/claude-code/hooks) (commandes shell configurées dans `settings.json`, exécutées automatiquement à certains évènements du cycle de vie d'une session). Pas de lecture/tail de logs locaux (contrairement à ce que le plan MVP envisageait dans `core/hooks/`) — les hooks poussent l'info activement, plus fiable qu'un lecteur de logs qui doit deviner le format/l'emplacement des logs.
-- **Hook principal** : `Stop` — se déclenche quand Claude Code termine sa réponse et rend la main, exactement le début du temps mort qu'on veut occuper.
-- **Transport** : un petit serveur HTTP local (`127.0.0.1:54321`, port fixe codé en dur) exposé par le process principal Electron déjà en tray. Le hook appelle juste `curl` — pas besoin de publier de CLI ni de dépendance Node côté hook, la commande shell suffit. Port fixe plutôt que dynamique+fichier de découverte (option envisagée puis écartée) : élimine toute la complexité de lecture de fichier côté hook pour un risque de collision négligeable sur un outil desktop perso.
-- **Sécurité** : liaison loopback uniquement, aucune authentification au MVP de cette version (outil 100% local, même modèle de confiance qu'un `Stop` hook qui peut déjà exécuter n'importe quelle commande shell sur la machine — le risque additionnel d'un endpoint HTTP local non authentifié est négligeable en comparaison).
-- **Cohabitation avec le timer** : le timer classique (`Scheduler`) reste actif par défaut ; le hook vient s'ajouter comme déclenchement supplémentaire, pas un remplacement forcé. Réglage dashboard pour choisir : timer seul / hook seul / les deux (comportement par défaut).
-- **Installation du hook** : automatique plutôt que manuelle (option "copier-coller le JSON" envisagée puis écartée, inspirée de la manière dont [graphify](https://github.com/Graphify-Labs/graphify) s'auto-enregistre dans les CLIs détectées) — un bouton dans le dashboard édite directement `~/.claude/settings.json` (fusion idempotente, sans écraser les hooks existants de l'utilisateur).
+- **Mechanism**: [Claude Code hooks](https://docs.claude.com/en/docs/claude-code/hooks) (shell commands configured in `settings.json`, automatically executed on certain session lifecycle events). No local log tailing (unlike what the MVP plan originally envisioned in `core/hooks/`) — hooks actively push info, more reliable than a log reader that has to guess the log format/location.
+- **Main hook**: `Stop` — fires when Claude Code finishes its response and hands control back, exactly the start of the idle time we want to fill.
+- **Transport**: a small local HTTP server (`127.0.0.1:54321`, hardcoded fixed port) exposed by the main Electron process already running in the tray. The hook just calls `curl` — no need to publish a CLI or add a Node dependency on the hook side, the shell command is enough. Fixed port rather than dynamic+discovery-file (considered then dropped): eliminates all file-reading complexity on the hook side for a negligible collision risk on a personal desktop tool.
+- **Security**: loopback binding only, no authentication in this version's MVP (a fully local tool, same trust model as a `Stop` hook that can already run any shell command on the machine — the additional risk of an unauthenticated local HTTP endpoint is negligible in comparison).
+- **Coexistence with the timer**: the classic timer (`Scheduler`) stays active by default; the hook is an additional trigger, not a forced replacement. Dashboard setting to choose: timer only / hook only / both (default behavior).
+- **Hook installation**: automatic rather than manual (a "copy-paste the JSON" option was considered then dropped, inspired by how [graphify](https://github.com/Graphify-Labs/graphify) self-registers into detected CLIs) — a dashboard button directly edits `~/.claude/settings.json` (idempotent merge, without overwriting the user's existing hooks).
 
-## 3. Architecture technique
+## 3. Technical architecture
 
-### 3.1 Nouveau module dans `core`
+### 3.1 New module in `core`
 
 ```
 packages/core/src/
-├── hook-server.ts            # serveur HTTP local (node:http natif, pas de dépendance externe)
-└── claude-hook-installer.ts  # lit/écrit ~/.claude/settings.json (fusion idempotente)
+├── hook-server.ts            # local HTTP server (native node:http, no external dependency)
+└── claude-hook-installer.ts  # reads/writes ~/.claude/settings.json (idempotent merge)
 ```
 
-`hook-server.ts` expose une classe `HookServer` (même esprit que `Scheduler` — logique pure, testable, aucune dépendance Electron) :
-- `start()` : écoute sur `127.0.0.1:54321` (port fixe exporté en constante).
-- `POST /trigger` → appelle un callback `onTrigger` (déclenchement immédiat, modes `stop`/`start`).
-- `POST /turn-start` / `POST /turn-end` → callbacks `onTurnStart`/`onTurnEnd` (mode `thinking`, débounce géré côté `app`, voir sprint 6).
+`hook-server.ts` exposes a `HookServer` class (same spirit as `Scheduler` — pure logic, testable, no Electron dependency):
+- `start()`: listens on `127.0.0.1:54321` (fixed port exported as a constant).
+- `POST /trigger` → calls an `onTrigger` callback (immediate trigger, `stop`/`start` modes).
+- `POST /turn-start` / `POST /turn-end` → `onTurnStart`/`onTurnEnd` callbacks (`thinking` mode, debounce handled on the `app` side, see sprint 6).
 - `stop()`.
 
-`claude-hook-installer.ts` expose des fonctions pures (testables sans toucher au vrai fichier utilisateur — chemin injecté en paramètre) :
-- `isInstalled(settingsPath)` : vérifie si un de nos hooks (n'importe quel `hookTriggerMode`) est déjà présent.
-- `install(settingsPath, mode)` / `uninstall(settingsPath)` : lit le JSON existant (le crée s'il n'existe pas), installe la combinaison de hooks propre au `mode` demandé (`Stop` pour `stop`, `UserPromptSubmit` pour `start`, les deux pour `thinking`) en retirant d'abord proprement ceux d'un mode précédent, sans toucher aux autres hooks déjà configurés par l'utilisateur.
+`claude-hook-installer.ts` exposes pure functions (testable without touching the real user file — path injected as a parameter):
+- `isInstalled(settingsPath)`: checks whether one of our hooks (any `hookTriggerMode`) is already present.
+- `install(settingsPath, mode)` / `uninstall(settingsPath)`: reads the existing JSON (creates it if missing), installs the hook combination specific to the requested `mode` (`Stop` for `stop`, `UserPromptSubmit` for `start`, both for `thinking`), first cleanly removing any previous mode's hooks, without touching other hooks the user already configured.
 
-### 3.2 Câblage côté `app`
+### 3.2 Wiring on the `app` side
 
-- `main/index.js` instancie `HookServer` à côté du `Scheduler` existant, démarré/arrêté en même temps que l'app.
-- Nouveau réglage `settings.triggerSource` (`"timer"` / `"hook"` / `"both"`, défaut `"both"`) : quand `"hook"` seul, le `Scheduler` classique est mis en pause (`scheduler.stop()`) et seul `/trigger` déclenche des exercices.
-- Dashboard (onglet Réglages) : nouveau sélecteur pour ce réglage, même style que le sélecteur de mode existant.
+- `main/index.js` instantiates `HookServer` alongside the existing `Scheduler`, started/stopped along with the app.
+- New setting `settings.triggerSource` (`"timer"` / `"hook"` / `"both"`, default `"both"`): when `"hook"` only, the classic `Scheduler` is paused (`scheduler.stop()`) and only `/trigger` fires exercises.
+- Dashboard (Settings tab): new selector for this setting, same style as the existing mode selector.
 
-### 3.3 Configuration côté utilisateur
+### 3.3 User-facing configuration
 
-Une carte dédiée dans le dashboard ("Intégration Claude Code") affiche :
-- Un statut ("Activé" / "Non activé", déterminé via `isInstalled()`).
-- Un sélecteur `hookTriggerMode` (fin de réponse / début de réponse / pendant que Claude réfléchit, voir sprint 6) — persisté même si l'intégration n'est pas encore activée ; si elle l'est déjà, changer le mode réinstalle automatiquement les bons hooks.
-- Un bouton unique qui bascule : "Activer l'intégration" → appelle `install(path, hookTriggerMode)` côté main process via IPC ; "Désactiver" → `uninstall()`.
-- Un lien vers la doc des [hooks Claude Code](https://docs.claude.com/en/docs/claude-code/hooks) pour les curieux, mais aucune manipulation JSON requise pour l'usage normal.
+A dedicated dashboard card ("Claude Code integration") shows:
+- A status ("Enabled" / "Not enabled", determined via `isInstalled()`).
+- A `hookTriggerMode` selector (end of response / start of response / while Claude is thinking, see sprint 6) — persisted even if the integration isn't enabled yet; if it's already enabled, changing the mode automatically reinstalls the right hooks.
+- A single toggle button: "Enable integration" → calls `install(path, hookTriggerMode)` on the main process via IPC; "Disable" → `uninstall()`.
+- A link to the [Claude Code hooks docs](https://docs.claude.com/en/docs/claude-code/hooks) for the curious, but no JSON editing required for normal use.
 
-### 3.4 Récapitulatif des cas de déclenchement
+### 3.4 Trigger case summary
 
-Toutes les façons de déclencher un exercice aujourd'hui, et ce que chacune bloque effectivement :
+Every way to trigger an exercise today, and what each one actually blocks:
 
-| Déclencheur | Évènement | Condition / délai | Bloque l'UI overlay (bouton "Passer" masqué) | Bloque la session Claude Code (terminal) |
+| Trigger | Event | Condition / delay | Blocks the overlay UI (Skip button hidden) | Blocks the Claude Code session (terminal) |
 |---|---|---|---|---|
-| Minuteur (`Scheduler`) | toutes les `intervalMinutes` minutes | aucune | Oui si mode `gate`, ou `mixed` + dette > 0 | Non — jamais, ce n'est pas un hook |
-| Bouton manuel (dashboard "🎲 Générer un exercice", ou menu tray "Déclencher un exercice maintenant") | clic utilisateur | aucune | idem (selon mode) | Non |
-| Hook `Stop` (`hookTriggerMode: "stop"`) | fin de réponse Claude | immédiat (sous réserve de `hookEveryN`) | idem (selon mode) | Oui si blocage — `/trigger` retient sa réponse |
-| Hook `UserPromptSubmit` (`hookTriggerMode: "start"`) | début de tour Claude | immédiat (sous réserve de `hookEveryN`) | idem (selon mode) | Oui si blocage — `/trigger` retient sa réponse |
-| Hook `UserPromptSubmit` + `Stop` (`hookTriggerMode: "thinking"`) | début de tour, exercice affiché seulement si Claude travaille encore après `THINKING_DEBOUNCE_MS` (8s fixes, voir sprint 8 pour une anticipation plus fine) | débounce 8s | idem (selon mode) | Oui si blocage — Claude démarre instantanément (`/turn-start` ne bloque jamais), mais `/turn-end` retient sa réponse si l'exercice déclenché entre-temps est encore en attente |
+| Timer (`Scheduler`) | every `intervalMinutes` minutes | none | Yes if `gate` mode, or `mixed` + debt > 0 | No — never, it's not a hook |
+| Manual button (dashboard "🎲 Generate an exercise", or tray menu "Trigger an exercise now") | user click | none | same (depends on mode) | No |
+| `Stop` hook (`hookTriggerMode: "stop"`) | end of Claude's response | immediate (subject to `hookEveryN`) | same (depends on mode) | Yes if blocking — `/trigger` holds its response |
+| `UserPromptSubmit` hook (`hookTriggerMode: "start"`) | start of Claude's turn | immediate (subject to `hookEveryN`) | same (depends on mode) | Yes if blocking — `/trigger` holds its response |
+| `UserPromptSubmit` + `Stop` hook (`hookTriggerMode: "thinking"`) | start of turn, exercise shown only if Claude is still working after `THINKING_DEBOUNCE_MS` (fixed 8s, see sprint 8 for finer anticipation) | 8s debounce | same (depends on mode) | Yes if blocking — Claude starts instantly (`/turn-start` never blocks), but `/turn-end` holds its response if the exercise triggered in the meantime is still pending |
 
-Rappels : `triggerSource` (`timer`/`hook`/`both`) détermine si les déclencheurs hook sont pris en compte du tout (`"timer"` seul → tout appel de hook répond immédiatement sans rien déclencher). `hookEveryN` (défaut 1) ne s'applique qu'aux déclencheurs hook, pas au minuteur ni au bouton manuel. Le mode (`notify`/`gate`/`mixed`) est un réglage global, identique quel que soit le déclencheur.
+Reminders: `triggerSource` (`timer`/`hook`/`both`) determines whether hook triggers are considered at all (`"timer"` only → every hook call responds immediately without triggering anything). `hookEveryN` (default 1) only applies to hook triggers, not the timer or the manual button. Mode (`notify`/`gate`/`mixed`) is a global setting, the same regardless of trigger source.
 
-## 4. Périmètre fonctionnel
+## 4. Functional scope
 
-**Inclus**
-- Serveur HTTP local dans `core`, démarré avec l'app
-- Déclenchement d'un exercice via hook Claude Code, point de déclenchement au choix (`hookTriggerMode` : fin de réponse / début de réponse / pendant que Claude réfléchit — sprint 6)
-- Réglage timer / hook / les deux
-- Carte dashboard avec activation/désactivation automatique du hook (édition directe de `settings.json`)
+**Included**
+- Local HTTP server in `core`, started with the app
+- Exercise trigger via Claude Code hook, choice of trigger point (`hookTriggerMode`: end of response / start of response / while Claude is thinking — sprint 6)
+- Timer / hook / both setting
+- Dashboard card with automatic hook enable/disable (direct `settings.json` editing)
 
-**Correction UX à intégrer**
-- Sur la popup mascotte, cliquer sur "Fait" ou "Passer" ne doit **jamais** ouvrir le dashboard — uniquement fermer la popup. Vérifié dans le code actuel (`recordAndHide()`, `main/index.js`) : c'est déjà le cas, seul le bouton réglages (engrenage) ouvre le dashboard via `open-dashboard`. Exigence documentée ici pour ne pas être réintroduite par erreur lors des sprints à venir.
+**UX fix to bake in**
+- On the mascot popup, clicking "Done" or "Skip" must **never** open the dashboard — only close the popup. Verified in the current code (`recordAndHide()`, `main/index.js`): already the case, only the settings (gear) button opens the dashboard via `open-dashboard`. Requirement documented here so it isn't accidentally reintroduced in a future sprint.
 
-**Exclus (à revoir plus tard si pertinent)**
-- Support Codex (mécanisme de hooks à vérifier — pas encore fait)
-- Pause automatique pendant une session active (hook `UserPromptSubmit`/`SessionStart` pour ne pas interrompre en pleine frappe) — voir sprint 4, optionnel
-- Authentification/sécurisation du endpoint local (non nécessaire tant que c'est loopback-only)
+**Excluded (to revisit later if relevant)**
+- Codex support (hook mechanism to be verified — not done yet)
+- Automatic pause during an active session (`UserPromptSubmit`/`SessionStart` hook to avoid interrupting mid-typing) — see sprint 4, optional
+- Authentication/hardening of the local endpoint (not needed as long as it's loopback-only)
 
-## 5. Sprints de développement
+## 5. Development sprints
 
-1. **Sprint 1 — Serveur IPC local** : `HookServer` dans `core` (`node:http` natif, port fixe), tests unitaires (démarrage, `/trigger` déclenche le callback). Testable en isolation sans Electron.
-2. **Sprint 2 — Installeur automatique** : `claude-hook-installer.ts` (`isInstalled`/`install`/`uninstall`), tests unitaires sur fichier temporaire (fusion idempotente, préserve les hooks existants de l'utilisateur).
-3. **Sprint 3 — Câblage app + réglage timer/hook/both** : instanciation de `HookServer` dans `main/index.js`, nouveau réglage `triggerSource` dans `Storage`/dashboard, pause du `Scheduler` quand `"hook"` seul.
-4. **Sprint 4 — Carte dashboard "Intégration Claude Code"** : statut + bouton activer/désactiver branché sur l'installeur, doc utilisateur (README).
-5. **Sprint 5 (optionnel, partiellement fait)** — Pause intelligente pendant une session active (pas fait) + investigation support Codex (pas fait) + blocage réel de la session Claude Code en mode bloquant (**fait**, voir sprint 7).
-6. **Sprint 6 (fait, 2026-08-16)** — Déclenchement pendant que Claude "réfléchit". Nouveau réglage dashboard `hookTriggerMode` (dans la carte "Intégration Claude Code") pour choisir le point de déclenchement :
-   - **`stop`** (défaut, comportement historique) — hook `Stop` installé, déclenchement à la fin de la réponse de Claude.
-   - **`start`** — hook `UserPromptSubmit` installé, déclenchement immédiat dès que l'utilisateur soumet son message (début du tour de Claude).
-   - **`thinking`** — hook `UserPromptSubmit` **et** `Stop` installés ensemble : `UserPromptSubmit` démarre un débounce de 8s (`THINKING_DEBOUNCE_MS` dans `main/index.js`) avant de proposer l'exercice, `Stop` l'annule si Claude a répondu avant ce délai. Répond à la question ouverte du point précédent ("éviter de spammer sur des échanges courts") sans avoir besoin de `PreToolUse`/`PostToolUse`.
-   - **Architecture** : `claude-hook-installer.ts` installe la combinaison de hooks propre à chaque mode (retire proprement les hooks du mode précédent avant d'installer le nouveau, sans toucher aux hooks tiers) ; `HookServer` (core) expose deux nouvelles routes `/turn-start` et `/turn-end` en plus de `/trigger` ; `main/index.js` porte la logique de débounce (`pendingThinkingTimer`) et réinstalle automatiquement les hooks si le mode change alors que l'intégration est déjà active.
-   - **Non traité pour l'instant** (repris tel quel du point précédent) : combinaison avec `PreToolUse`/`PostToolUse` pour distinguer un vrai travail long d'un aller-retour rapide (le débounce fixe de 8s suffit en première approche) ; cohabitation fine avec l'idée inverse du sprint 5 (pause pendant la frappe active) — les deux utilisent `UserPromptSubmit` mais à des fins différentes, pas encore réconciliées.
-7. **Sprint 7 (fait, 2026-08-18)** — Blocage réel de la session Claude Code en mode bloquant (pas juste l'UI de la mascotte). Mécanisme finalement plus simple que ce qu'envisageait le plan initial (pas de JSON `{"decision": "block"}` renvoyé par le hook) : le serveur local **retient la réponse HTTP** du hook `/trigger` tant que l'exercice qu'il vient de déclencher est bloquant (`mode: "gate"`, ou `"mixed"` avec dette > 0) et n'est pas marqué fait — `curl` (donc le hook Claude Code, donc la main rendue à l'utilisateur dans son terminal) reste en attente jusque-là.
-   - **`HookServer`** (`hook-server.ts`) : `onTrigger` prend désormais un callback `respond()` à appeler pour renvoyer la réponse HTTP, au lieu de répondre automatiquement — permet à l'appelant de la retenir. `server.timeout`/`server.requestTimeout` mis à `0` (les timeouts par défaut de Node couperaient sinon la connexion avant que l'utilisateur ait fini).
-   - **`claude-hook-installer.ts`** : les hooks des modes `stop`/`start` (qui passent par `/trigger`) sont installés avec un champ `timeout: 600` (secondes) — sinon Claude Code tuerait le hook après son défaut de 60s, bien avant qu'un exercice ait une chance d'être terminé. Pas de timeout ajouté pour le mode `thinking` (voir point suivant, `/turn-start` ne bloque jamais).
-   - **`main/index.js`** : `showExercise()` retourne désormais `blocking` ; `maybeTriggerFromHook(respond)` stocke `respond` dans `pendingHookRespond` si l'exercice déclenché est bloquant (sinon l'appelle tout de suite) ; `recordAndHide()` l'appelle (et le vide) une fois l'exercice marqué fait — comme le skip est déjà ignoré en mode bloquant (filet de sécurité existant), c'est la seule porte de sortie. Libéré aussi si l'app quitte pendant qu'un exercice bloquant est en attente (`will-quit`), pour ne pas laisser le hook pendre indéfiniment.
-   - **Mode `thinking` couvert aussi, via `/turn-end`** (ajouté après un premier passage qui l'excluait) : `/turn-start` ne bloque jamais (sinon chaque tour, même rapide, serait retardé au démarrage — irait à l'encontre du but du mode). En revanche `onTurnEnd` (Stop) reçoit désormais lui aussi un `respond()` : si le débounce a fini par déclencher un exercice bloquant et qu'il n'est pas encore terminé au moment où Claude a fini de travailler, la réponse à `/turn-end` est retenue (même mécanisme `pendingHookRespond`, réutilisé) jusqu'à ce que l'utilisateur le termine. Résultat : Claude démarre toujours instantanément, mais ne rend la main qu'une fois l'exercice fait s'il a fini par se déclencher. `HookServer.onTurnEnd` a donc la même signature `(respond) => void` que `onTrigger`.
-   - **Question UX du point précédent** ("impact si l'utilisateur veut juste terminer un tour rapide") : non résolue à ce stade, assumée comme comportement voulu du mode bloquant (`gate`/`mixed`+dette) — c'est justement le but de ce mode, cohérent avec le blocage déjà existant de l'UI de l'overlay (bouton "Passer" masqué).
-8. **Sprint 8 (optionnel, idée non implémentée)** — Anticiper la durée du tour plutôt qu'un délai fixe. Aujourd'hui le mode `thinking` utilise un seuil codé en dur (`THINKING_DEBOUNCE_MS = 8000`) : aucune vraie anticipation, juste un délai arbitraire avant de considérer que Claude "travaille encore". Pistes envisagées, à trancher/prioriser le jour où on s'y attaque :
-   - **Compter les appels d'outils en cours de tour** (hooks `PreToolUse`/`PostToolUse`, déjà identifiés comme piste non explorée au sprint 6) — plusieurs appels d'outils enchaînés sont un signal fort de travail long, indépendamment du temps écoulé. Possibilité de déclencher au premier des deux seuils atteints (ex. 8s **ou** 3 appels d'outils).
-   - **Historique réel des durées de tour** — logger la durée effective de chaque tour (début `UserPromptSubmit` → fin `Stop`) en plus de ce qui est déjà stocké par `recordSession`, puis calculer une moyenne/médiane glissante pour ajuster `THINKING_DEBOUNCE_MS` dynamiquement plutôt qu'une constante globale.
-   - **Heuristique sur le contenu du prompt** (mots-clés type "refactor"/"implémente" vs question simple) — évoquée puis écartée, jugée trop fragile/peu fiable pour être utile en l'état.
-   - Portée à définir : pilote sur une seule heuristique (probablement la première, la plus simple à greffer sur l'architecture hooks déjà en place) plutôt que de combiner les trois d'entrée de jeu.
+1. **Sprint 1 — Local IPC server**: `HookServer` in `core` (native `node:http`, fixed port), unit tests (startup, `/trigger` fires the callback). Testable in isolation without Electron.
+2. **Sprint 2 — Automatic installer**: `claude-hook-installer.ts` (`isInstalled`/`install`/`uninstall`), unit tests against a temp file (idempotent merge, preserves the user's existing hooks).
+3. **Sprint 3 — App wiring + timer/hook/both setting**: `HookServer` instantiated in `main/index.js`, new `triggerSource` setting in `Storage`/dashboard, `Scheduler` paused when `"hook"` only.
+4. **Sprint 4 — "Claude Code integration" dashboard card**: status + enable/disable button wired to the installer, user docs (README).
+5. **Sprint 5 (optional, partially done)** — Smart pause during an active session (not done) + Codex support investigation (not done) + real Claude Code session blocking in blocking mode (**done**, see sprint 7).
+6. **Sprint 6 (done, 2026-08-16)** — Triggering while Claude is "thinking". New dashboard setting `hookTriggerMode` (in the "Claude Code integration" card) to choose the trigger point:
+   - **`stop`** (default, historical behavior) — `Stop` hook installed, triggers at the end of Claude's response.
+   - **`start`** — `UserPromptSubmit` hook installed, triggers immediately as soon as the user submits their message (start of Claude's turn).
+   - **`thinking`** — `UserPromptSubmit` **and** `Stop` installed together: `UserPromptSubmit` starts an 8s debounce (`THINKING_DEBOUNCE_MS` in `main/index.js`) before proposing the exercise, `Stop` cancels it if Claude answered before that delay. Answers the open question from the previous point ("avoid spamming on short exchanges") without needing `PreToolUse`/`PostToolUse`.
+   - **Architecture**: `claude-hook-installer.ts` installs the hook combination specific to each mode (cleanly removes the previous mode's hooks before installing the new one, without touching third-party hooks); `HookServer` (core) exposes two new routes `/turn-start` and `/turn-end` alongside `/trigger`; `main/index.js` carries the debounce logic (`pendingThinkingTimer`) and automatically reinstalls hooks if the mode changes while the integration is already active.
+   - **Not addressed for now** (carried over unchanged from the previous point): combining with `PreToolUse`/`PostToolUse` to distinguish genuinely long work from a quick back-and-forth (the fixed 8s debounce is good enough as a first pass); fine-grained coexistence with sprint 5's opposite idea (pause during active typing) — both use `UserPromptSubmit` but for different purposes, not yet reconciled.
+7. **Sprint 7 (done, 2026-08-18)** — Real Claude Code session blocking in blocking mode (not just the mascot UI). The mechanism ended up simpler than the initial plan envisioned (no `{"decision": "block"}` JSON returned by the hook): the local server **holds the HTTP response** of the `/trigger` hook as long as the exercise it just triggered is blocking (`mode: "gate"`, or `"mixed"` with debt > 0) and hasn't been marked done — `curl` (so the Claude Code hook, so control returned to the user in their terminal) stays pending until then.
+   - **`HookServer`** (`hook-server.ts`): `onTrigger` now takes a `respond()` callback to call to send the HTTP response, instead of auto-responding — lets the caller hold it. `server.timeout`/`server.requestTimeout` set to `0` (Node's default timeouts would otherwise cut the connection before the user finishes).
+   - **`claude-hook-installer.ts`**: `stop`/`start` mode hooks (which go through `/trigger`) are installed with a `timeout: 600` field (seconds) — otherwise Claude Code would kill the hook after its default 60s, well before an exercise has any chance of being completed. No timeout added for `thinking` mode (see next point, `/turn-start` never blocks).
+   - **`main/index.js`**: `showExercise()` now returns `blocking`; `maybeTriggerFromHook(respond)` stores `respond` in `pendingHookRespond` if the triggered exercise is blocking (otherwise calls it right away); `recordAndHide()` calls it (and clears it) once the exercise is marked done — since skip is already ignored in blocking mode (existing safety net), that's the only way out. Also released if the app quits while a blocking exercise is pending (`will-quit`), so the hook isn't left hanging indefinitely.
+   - **`thinking` mode covered too, via `/turn-end`** (added after a first pass that excluded it): `/turn-start` never blocks (otherwise every turn, even a fast one, would be delayed at the start — defeating the point of this mode). `onTurnEnd` (Stop), however, now also receives a `respond()`: if the debounce ended up triggering a blocking exercise and it's not yet complete by the time Claude finishes working, the `/turn-end` response is held (same `pendingHookRespond` mechanism, reused) until the user completes it. Result: Claude always starts instantly, but only hands control back once the exercise is done if it ended up triggering. `HookServer.onTurnEnd` therefore has the same `(respond) => void` signature as `onTrigger`.
+   - **UX question from the previous point** ("impact if the user just wants to finish a quick turn"): unresolved at this stage, assumed to be intended behavior for blocking mode (`gate`/`mixed`+debt) — that's precisely the point of this mode, consistent with the overlay UI's existing blocking behavior (the "Skip" button already hidden).
+8. **Sprint 8 (optional, unimplemented idea)** — Anticipate turn length instead of a fixed delay. Today `thinking` mode uses a hardcoded threshold (`THINKING_DEBOUNCE_MS = 8000`): no real anticipation, just an arbitrary delay before assuming Claude is "still working." Ideas under consideration, to be decided/prioritized when we get to it:
+   - **Count tool calls during the turn** (`PreToolUse`/`PostToolUse` hooks, already identified as an unexplored path in sprint 6) — several chained tool calls are a strong signal of long-running work, independent of elapsed time. Could trigger on whichever of two thresholds is hit first (e.g. 8s **or** 3 tool calls).
+   - **Real turn-duration history** — log the actual duration of each turn (`UserPromptSubmit` start → `Stop` end) in addition to what `recordSession` already stores, then compute a rolling average/median to dynamically adjust `THINKING_DEBOUNCE_MS` instead of a global constant.
+   - **Prompt-content heuristic** (keywords like "refactor"/"implement" vs. a simple question) — considered then dropped, judged too fragile/unreliable to be useful as-is.
+   - Scope to define: pilot a single heuristic (probably the first, the simplest to bolt onto the existing hooks architecture) rather than combining all three from the start.
 
-## 6. Suite
+## 6. Next
 
-Une fois cette version livrée, retour à la roadmap générale du plan MVP (section 6) — prochaine étape naturelle : **V0.5+** (mascottes animées) ou **V1** (génération d'exercices via API Claude), selon la priorité du moment.
+Once this version ships, back to the general MVP plan roadmap (section 6) — the natural next step: **V0.5+** (animated mascots) or **V1** (exercise generation via the Claude API), depending on current priority.
