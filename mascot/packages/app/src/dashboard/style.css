@@ -191,12 +191,6 @@ html, body {
   height: 28px;
   border-radius: 50%;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-  background: var(--bg-elevated);
   border: 2px solid rgba(255, 255, 255, 0.15);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -209,6 +203,23 @@ html, body {
 .language-bubble.active {
   border-color: var(--bg-card);
   box-shadow: 0 0 0 2px var(--accent-teal);
+}
+
+/* Drapeaux dessinés en CSS pur (comme les bulles de thème) plutôt qu'en emoji — rendu fiable
+   quelle que soit la plateforme/police, alors que le glyphe emoji drapeau est capricieux
+   (souvent absent ou remplacé par un code pays sur Linux/certaines polices Windows). */
+.language-bubble-fr {
+  background: linear-gradient(90deg, #0055a4 0% 33.33%, #ffffff 33.33% 66.66%, #ef4135 66.66% 100%);
+}
+
+.language-bubble-en {
+  background-color: #b31942;
+  background-image:
+    linear-gradient(#0a3161, #0a3161),
+    repeating-linear-gradient(to bottom, #ffffff 0 14.28%, #b31942 14.28% 28.56%);
+  background-size: 45% 45%, 100% 100%;
+  background-position: top left, center;
+  background-repeat: no-repeat, no-repeat;
 }
 
 .visual-theme-row {
