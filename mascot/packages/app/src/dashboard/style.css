@@ -180,6 +180,37 @@ html, body {
   font-size: 15px;
 }
 
+.language-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.language-bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  background: var(--bg-elevated);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.language-bubble:hover {
+  transform: translateY(-2px);
+}
+
+.language-bubble.active {
+  border-color: var(--bg-card);
+  box-shadow: 0 0 0 2px var(--accent-teal);
+}
+
 .visual-theme-row {
   display: flex;
   gap: 8px;

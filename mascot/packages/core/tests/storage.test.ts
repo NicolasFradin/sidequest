@@ -26,6 +26,12 @@ describe("Storage", () => {
     expect(settings.theme).toBe("dark");
     expect(settings.triggerSource).toBe("both");
     expect(settings.hookEveryN).toBe(1);
+    expect(settings.language).toBe("fr");
+  });
+
+  it("met à jour la langue", () => {
+    storage.updateSettings({ language: "en" });
+    expect(storage.getSettings().language).toBe("en");
   });
 
   it("met à jour le thème", () => {

@@ -24,11 +24,14 @@ const blockingBadge = document.getElementById("blocking-badge");
 
 let currentMascotId = null;
 
-window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking }) => {
+window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking, language }) => {
   currentMascotId = mascot;
   mascotImg.src = resolveMascotImage(mascot, theme ?? "dark");
   exerciseLabel.textContent = exercise.label;
   document.documentElement.dataset.theme = theme ?? "dark";
+  document.documentElement.lang = language ?? "fr";
+  i18n.setLanguage(language ?? "fr");
+  i18n.applyStaticTranslations();
   btnSkip.hidden = Boolean(blocking);
   blockingBadge.hidden = !blocking;
 });
@@ -36,6 +39,12 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking }) => {
 window.mascotAPI.onThemeChanged((theme) => {
   document.documentElement.dataset.theme = theme;
   if (currentMascotId) mascotImg.src = resolveMascotImage(currentMascotId, theme);
+});
+
+window.mascotAPI.onLanguageChanged((language) => {
+  document.documentElement.lang = language;
+  i18n.setLanguage(language);
+  i18n.applyStaticTranslations();
 });
 
 btnDone.addEventListener("click", () => window.mascotAPI.markDone());
