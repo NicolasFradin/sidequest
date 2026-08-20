@@ -7,20 +7,21 @@
 </head>
 <body>
   <div class="card" id="card">
-    <button id="btn-settings" class="settings-btn" title="Réglages">⚙</button>
-    <div class="mini-timer" id="mini-timer" title="Temps écoulé"></div>
-    <div class="blocking-badge" id="blocking-badge" title="Séance obligatoire" hidden>🔒</div>
+    <button id="btn-settings" class="settings-btn" data-i18n-title="overlay.settings.title" title="Réglages">⚙</button>
+    <div class="mini-timer" id="mini-timer" data-i18n-title="overlay.timer.title" title="Temps écoulé"></div>
+    <div class="blocking-badge" id="blocking-badge" data-i18n-title="overlay.blocking.title" title="Séance obligatoire" hidden>🔒</div>
     <img id="mascot-img" class="mascot" src="" alt="Mascotte" />
     <div class="content">
-      <p class="label">C'est l'heure de bouger !</p>
+      <p class="label" data-i18n="overlay.label">C'est l'heure de bouger !</p>
       <p class="exercise" id="exercise-label">—</p>
       <div class="actions">
-        <button id="btn-done" class="btn btn-primary">C'est fait 💪</button>
-        <button id="btn-skip" class="btn btn-secondary">Passer</button>
+        <button id="btn-done" class="btn btn-primary" data-i18n="overlay.done">C'est fait 💪</button>
+        <button id="btn-skip" class="btn btn-secondary" data-i18n="overlay.skip">Passer</button>
       </div>
     </div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

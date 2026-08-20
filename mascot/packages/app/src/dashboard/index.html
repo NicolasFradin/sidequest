@@ -11,41 +11,45 @@
       <p class="brand">Mascot<br />Coach</p>
       <nav class="nav" id="tabs">
         <button class="nav-item active" data-tab="settings">
-          <span class="nav-icon">⚙</span> Réglages
+          <span class="nav-icon">⚙</span> <span data-i18n="nav.settings">Réglages</span>
         </button>
         <button class="nav-item" data-tab="plans">
-          <span class="nav-icon">📋</span> Plans
+          <span class="nav-icon">📋</span> <span data-i18n="nav.plans">Plans</span>
         </button>
         <button class="nav-item" data-tab="history">
-          <span class="nav-icon">📊</span> Historique
+          <span class="nav-icon">📊</span> <span data-i18n="nav.history">Historique</span>
         </button>
       </nav>
+      <div class="language-row" id="language-options">
+        <button class="language-bubble language-bubble-fr" data-language="fr" title="Français"></button>
+        <button class="language-bubble language-bubble-en" data-language="en" title="English"></button>
+      </div>
       <div class="visual-theme-row" id="visual-theme-options">
         <button class="visual-theme-bubble visual-theme-miami-80s" data-visual-theme="miami-80s" title="Miami 80's"></button>
         <button class="visual-theme-bubble visual-theme-military-camo" data-visual-theme="military-camo" title="Military camo"></button>
         <button class="visual-theme-bubble visual-theme-dragonball" data-visual-theme="dragonball" title="Dragonball"></button>
         <button class="visual-theme-bubble visual-theme-roman-empire" data-visual-theme="roman-empire" title="Roman Empire"></button>
       </div>
-      <button id="theme-toggle" class="theme-toggle" title="Changer de thème"><span id="theme-icon">🌙</span> Thème</button>
+      <button id="theme-toggle" class="theme-toggle" data-i18n-title="theme.toggle.title" title="Changer de thème"><span id="theme-icon">🌙</span> <span data-i18n="theme.button">Thème</span></button>
     </aside>
 
     <main class="content">
       <section class="tab-panel active" id="panel-settings">
         <div class="page-header">
-          <h1 class="page-title">Réglages</h1>
-          <button id="trigger-exercise" class="page-action" title="Générer un exercice maintenant">🎲 Générer un exercice</button>
+          <h1 class="page-title" data-i18n="nav.settings">Réglages</h1>
+          <button id="trigger-exercise" class="page-action" data-i18n="settings.triggerNow" data-i18n-title="settings.triggerNow.title" title="Générer un exercice maintenant">🎲 Générer un exercice</button>
         </div>
 
         <div class="onboarding-banner" id="onboarding-banner" hidden>
           <div>
-            <p class="onboarding-title">Bienvenue sur Mascot Coach 👋</p>
-            <p class="onboarding-text">Choisis ton intervalle, ta mascotte, et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.</p>
+            <p class="onboarding-title" data-i18n="onboarding.title">Bienvenue sur Mascot Coach 👋</p>
+            <p class="onboarding-text" data-i18n="onboarding.text">Choisis ton intervalle, ta mascotte, et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.</p>
           </div>
-          <button id="onboarding-dismiss" class="onboarding-dismiss">J'ai compris</button>
+          <button id="onboarding-dismiss" class="onboarding-dismiss" data-i18n="onboarding.dismiss">J'ai compris</button>
         </div>
 
         <div class="card">
-          <label class="field-label">Intervalle entre deux exercices</label>
+          <label class="field-label" data-i18n="interval.label">Intervalle entre deux exercices</label>
           <div class="interval-row">
             <input type="range" id="interval-range" min="1" max="120" step="1" />
             <span class="interval-value" id="interval-value">30 min</span>
@@ -53,57 +57,57 @@
         </div>
 
         <div class="card">
-          <label class="field-label">Mode</label>
+          <label class="field-label" data-i18n="mode.label">Mode</label>
           <div class="option-row" id="mode-options">
-            <button class="option-btn" data-mode="notify">Notification douce</button>
-            <button class="option-btn" data-mode="gate">Blocage réel</button>
-            <button class="option-btn" data-mode="mixed">Mixte</button>
+            <button class="option-btn" data-mode="notify" data-i18n="mode.notify">Notification douce</button>
+            <button class="option-btn" data-mode="gate" data-i18n="mode.gate">Blocage réel</button>
+            <button class="option-btn" data-mode="mixed" data-i18n="mode.mixed">Mixte</button>
           </div>
-          <p class="field-hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire l'exercice. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
+          <p class="field-hint" data-i18n-html="mode.hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire l'exercice. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
         </div>
 
         <div class="card">
-          <label class="field-label">Source de déclenchement</label>
+          <label class="field-label" data-i18n="triggerSource.label">Source de déclenchement</label>
           <div class="option-row" id="trigger-source-options">
-            <button class="option-btn" data-trigger-source="timer">Minuteur seul</button>
-            <button class="option-btn" data-trigger-source="hook">Hook Claude Code seul</button>
-            <button class="option-btn" data-trigger-source="both">Les deux</button>
+            <button class="option-btn" data-trigger-source="timer" data-i18n="triggerSource.timer">Minuteur seul</button>
+            <button class="option-btn" data-trigger-source="hook" data-i18n="triggerSource.hook">Hook Claude Code seul</button>
+            <button class="option-btn" data-trigger-source="both" data-i18n="triggerSource.both">Les deux</button>
           </div>
-          <p class="field-hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des exercices. Les deux (défaut) : minuteur ET hook actifs.</p>
+          <p class="field-hint" data-i18n="triggerSource.hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des exercices. Les deux (défaut) : minuteur ET hook actifs.</p>
         </div>
 
         <div class="card">
-          <label class="field-label">Intégration Claude Code</label>
+          <label class="field-label" data-i18n="claudeIntegration.label">Intégration Claude Code</label>
           <div class="hook-status-row">
             <span class="status-badge" id="hook-status-badge">…</span>
             <button class="option-btn" id="hook-toggle-btn">…</button>
           </div>
-          <p class="field-hint">Ajoute un hook à ta config Claude Code (<code>~/.claude/settings.json</code>) selon le point de déclenchement choisi ci-dessous. Ne touche à aucun autre réglage déjà présent dans ce fichier.</p>
+          <p class="field-hint" data-i18n-html="claudeIntegration.hint">Ajoute un hook à ta config Claude Code (<code>~/.claude/settings.json</code>) selon le point de déclenchement choisi ci-dessous. Ne touche à aucun autre réglage déjà présent dans ce fichier.</p>
 
           <div class="option-row hook-trigger-mode-row" id="hook-trigger-mode-options">
-            <button class="option-btn" data-hook-trigger-mode="stop">Fin de réponse</button>
-            <button class="option-btn" data-hook-trigger-mode="start">Début de réponse</button>
-            <button class="option-btn" data-hook-trigger-mode="thinking">Pendant que Claude réfléchit</button>
+            <button class="option-btn" data-hook-trigger-mode="stop" data-i18n="hookTriggerMode.stop">Fin de réponse</button>
+            <button class="option-btn" data-hook-trigger-mode="start" data-i18n="hookTriggerMode.start">Début de réponse</button>
+            <button class="option-btn" data-hook-trigger-mode="thinking" data-i18n="hookTriggerMode.thinking">Pendant que Claude réfléchit</button>
           </div>
-          <p class="field-hint">Fin de réponse : la mascotte apparaît quand Claude a fini (comportement historique). Début de réponse : dès que tu envoies ton message. Pendant que Claude réfléchit : seulement si Claude travaille encore après quelques secondes (n'interrompt pas les échanges rapides).</p>
+          <p class="field-hint" data-i18n="hookTriggerMode.hint">Fin de réponse : la mascotte apparaît quand Claude a fini (comportement historique). Début de réponse : dès que tu envoies ton message. Pendant que Claude réfléchit : seulement si Claude travaille encore après quelques secondes (n'interrompt pas les échanges rapides).</p>
 
           <div class="interval-row hook-every-n-row">
-            <label class="field-sublabel" for="hook-every-n-input">Se déclencher toutes les</label>
+            <label class="field-sublabel" for="hook-every-n-input" data-i18n="hookEveryN.prefix">Se déclencher toutes les</label>
             <input type="number" id="hook-every-n-input" min="1" step="1" value="1" />
-            <span class="field-sublabel">réponse(s) de Claude</span>
+            <span class="field-sublabel" data-i18n="hookEveryN.suffix">réponse(s) de Claude</span>
           </div>
         </div>
 
         <div class="card">
-          <label class="field-label">Mascotte</label>
+          <label class="field-label" data-i18n="mascot.label">Mascotte</label>
           <div class="mascot-row" id="mascot-options"></div>
-          <p class="field-hint">Les mascottes disponibles dépendent du thème choisi ci-dessus.</p>
+          <p class="field-hint" data-i18n="mascot.hint">Les mascottes disponibles dépendent du thème choisi ci-dessus.</p>
         </div>
 
         <div class="card toggle-row">
           <div>
-            <label class="field-label" for="autolaunch-toggle">Lancer au démarrage</label>
-            <p class="field-hint">Ouvre Mascot Coach automatiquement à la connexion.</p>
+            <label class="field-label" for="autolaunch-toggle" data-i18n="autolaunch.label">Lancer au démarrage</label>
+            <p class="field-hint" data-i18n="autolaunch.hint">Ouvre Mascot Coach automatiquement à la connexion.</p>
           </div>
           <input type="checkbox" id="autolaunch-toggle" class="toggle" />
         </div>
@@ -112,10 +116,10 @@
       <section class="tab-panel plans-panel" id="panel-plans">
         <div id="plans-list-view">
           <div class="page-header">
-            <h1 class="page-title">Plans d'entraînement</h1>
+            <h1 class="page-title" data-i18n="plans.pageTitle">Plans d'entraînement</h1>
             <div class="page-header-actions">
-              <button id="import-plan-btn" class="option-btn">Importer un plan</button>
-              <button id="new-plan-btn" class="page-action">+ Nouveau plan</button>
+              <button id="import-plan-btn" class="option-btn" data-i18n="plans.import">Importer un plan</button>
+              <button id="new-plan-btn" class="page-action" data-i18n="plans.new">+ Nouveau plan</button>
             </div>
           </div>
           <div class="plans-grid" id="plans-grid"></div>
@@ -123,19 +127,19 @@
 
         <div id="plan-edit-view" hidden>
           <div class="page-header">
-            <button id="plan-back-btn" class="page-icon-btn" title="Retour">←</button>
+            <button id="plan-back-btn" class="page-icon-btn" data-i18n-title="planEditor.backTitle" title="Retour">←</button>
             <h1 class="page-title" id="plan-edit-title">Plan</h1>
           </div>
 
           <div class="card">
-            <label class="field-label" for="plan-name-input">Nom du plan</label>
+            <label class="field-label" for="plan-name-input" data-i18n="planEditor.nameLabel">Nom du plan</label>
             <input type="text" id="plan-name-input" class="text-input" />
           </div>
 
           <div class="card">
-            <label class="field-label">Exercices</label>
+            <label class="field-label" data-i18n="planEditor.exercisesLabel">Exercices</label>
             <div class="plan-exercises-list" id="plan-exercises-list"></div>
-            <button id="plan-add-exercise-btn" class="option-btn">+ Ajouter un exercice</button>
+            <button id="plan-add-exercise-btn" class="option-btn" data-i18n="planEditor.addExercise">+ Ajouter un exercice</button>
             <datalist id="exercise-category-options">
               <option value="jambes"></option>
               <option value="bras"></option>
@@ -149,54 +153,55 @@
 
       <section class="tab-panel history-panel" id="panel-history">
         <div class="page-header">
-          <h1 class="page-title">Historique</h1>
-          <button id="refresh-history" class="page-icon-btn" title="Rafraîchir">🔄</button>
+          <h1 class="page-title" data-i18n="history.pageTitle">Historique</h1>
+          <button id="refresh-history" class="page-icon-btn" data-i18n-title="history.refresh.title" title="Rafraîchir">🔄</button>
         </div>
 
         <div class="stats-row">
           <div class="stat-tile">
             <p class="stat-value" id="stat-streak">—</p>
-            <p class="stat-label">🔥 Streak (jours)</p>
+            <p class="stat-label" data-i18n="history.stat.streak">🔥 Streak (jours)</p>
           </div>
           <div class="stat-tile">
             <p class="stat-value" id="stat-week">—</p>
-            <p class="stat-label">Séances cette semaine</p>
+            <p class="stat-label" data-i18n="history.stat.week">Séances cette semaine</p>
           </div>
           <div class="stat-tile">
             <p class="stat-value" id="stat-total">—</p>
-            <p class="stat-label">Séances au total</p>
+            <p class="stat-label" data-i18n="history.stat.total">Séances au total</p>
           </div>
           <div class="stat-tile">
             <p class="stat-value" id="stat-debt">—</p>
-            <p class="stat-label">⛓ Dette de séances</p>
+            <p class="stat-label" data-i18n="history.stat.debt">⛓ Dette de séances</p>
           </div>
         </div>
 
         <div class="card">
-          <label class="field-label">Volume / semaine (7 derniers jours)</label>
+          <label class="field-label" data-i18n="history.chart.label">Volume / semaine (7 derniers jours)</label>
           <div class="bar-chart" id="bar-chart"></div>
         </div>
 
         <div class="card history-table-card">
-          <label class="field-label">Séances récentes</label>
+          <label class="field-label" data-i18n="history.table.label">Séances récentes</label>
           <table class="history-table" id="history-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Exercice</th>
-                <th>Mascotte</th>
-                <th>Mode</th>
-                <th>Statut</th>
+                <th data-i18n="history.table.date">Date</th>
+                <th data-i18n="history.table.exercise">Exercice</th>
+                <th data-i18n="history.table.mascot">Mascotte</th>
+                <th data-i18n="history.table.mode">Mode</th>
+                <th data-i18n="history.table.status">Statut</th>
               </tr>
             </thead>
             <tbody id="history-table-body"></tbody>
           </table>
-          <p class="field-hint" id="history-empty" hidden>Aucune séance enregistrée pour l'instant.</p>
+          <p class="field-hint" id="history-empty" data-i18n="history.empty" hidden>Aucune séance enregistrée pour l'instant.</p>
         </div>
       </section>
     </main>
   </div>
   <div class="toast" id="toast"></div>
+  <script src="i18n.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

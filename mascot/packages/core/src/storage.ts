@@ -9,6 +9,8 @@ export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
 export type TriggerSource = "timer" | "hook" | "both";
 export type VisualTheme = "miami-80s" | "military-camo" | "dragonball" | "roman-empire";
+/** Langue de l'interface (dashboard + overlay + menu tray) — indépendante du thème clair/sombre et du skin visuel. */
+export type Language = "fr" | "en";
 /**
  * Quel évènement du cycle de vie Claude Code déclenche l'exercice :
  * "stop" = fin de réponse (comportement historique), "start" = début du tour (dès la soumission
@@ -32,6 +34,8 @@ export interface Settings {
   visualTheme: VisualTheme;
   /** Point de déclenchement du hook Claude Code installé — voir HookTriggerMode */
   hookTriggerMode: HookTriggerMode;
+  /** Langue de l'interface — voir Language */
+  language: Language;
 }
 
 export interface Plan {
@@ -65,6 +69,7 @@ const DEFAULT_SETTINGS: Settings = {
   hookEveryN: 1,
   visualTheme: "miami-80s",
   hookTriggerMode: "stop",
+  language: "fr",
 };
 
 interface SettingsRow {
@@ -160,6 +165,7 @@ export class Storage {
       hookEveryN: stored.hookEveryN ? Math.max(1, Number(stored.hookEveryN)) : DEFAULT_SETTINGS.hookEveryN,
       visualTheme: (stored.visualTheme as VisualTheme) ?? DEFAULT_SETTINGS.visualTheme,
       hookTriggerMode: (stored.hookTriggerMode as HookTriggerMode) ?? DEFAULT_SETTINGS.hookTriggerMode,
+      language: (stored.language as Language) ?? DEFAULT_SETTINGS.language,
     };
   }
 

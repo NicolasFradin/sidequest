@@ -50,6 +50,11 @@ function resolveMascotImage(mascotId, theme) {
   return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
 }
 
+const languageButtons = [...document.querySelectorAll("#language-options .language-bubble")];
+languageButtons.forEach((btn) =>
+  btn.addEventListener("click", () => save({ language: btn.dataset.language }))
+);
+
 const tabs = [...document.querySelectorAll(".nav-item")];
 const panels = {
   settings: document.getElementById("panel-settings"),
@@ -108,6 +113,7 @@ function renderMascotOptions(visualTheme, activeMascot, theme) {
 }
 
 let currentSettings = null;
+let lastAppliedLanguage = null;
 
 function applySettingsToUI(settings) {
   currentSettings = settings;
@@ -124,10 +130,25 @@ function applySettingsToUI(settings) {
   visualThemeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.visualTheme === settings.visualTheme)
   );
+  languageButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.language === settings.language));
   hookEveryNInput.value = settings.hookEveryN;
   autolaunchToggle.checked = settings.autolaunch;
   applyTheme(settings.theme);
   document.documentElement.dataset.visualTheme = settings.visualTheme;
+
+  i18n.setLanguage(settings.language);
+  document.documentElement.lang = settings.language;
+  i18n.applyStaticTranslations();
+  // Ré-applique la traduction des libellés générés dynamiquement en JS (pas couverts par
+  // data-i18n) uniquement quand la langue a réellement changé — évite du travail inutile
+  // (re-rendu de la liste de plans, re-fetch de l'historique) à chaque sauvegarde de réglage.
+  if (settings.language !== lastAppliedLanguage) {
+    lastAppliedLanguage = settings.language;
+    applyHookStatus(hookStatusBadge.classList.contains("installed"));
+    renderPlansGrid();
+    if (editingPlan) renderPlanExercises();
+    if (document.getElementById("panel-history").classList.contains("active")) refreshHistory();
+  }
 }
 
 let toastTimeout;
@@ -145,7 +166,7 @@ async function save(partial) {
   if (next.autolaunchWarning) {
     showToast(next.autolaunchWarning, "warning");
   } else {
-    showToast("Enregistré");
+    showToast(i18n.t("toast.saved"));
   }
 }
 
@@ -200,9 +221,9 @@ const hookStatusBadge = document.getElementById("hook-status-badge");
 const hookToggleBtn = document.getElementById("hook-toggle-btn");
 
 function applyHookStatus(installed) {
-  hookStatusBadge.textContent = installed ? "Activé" : "Non activé";
+  hookStatusBadge.textContent = installed ? i18n.t("hook.status.installed") : i18n.t("hook.status.notInstalled");
   hookStatusBadge.className = `status-badge ${installed ? "installed" : "not-installed"}`;
-  hookToggleBtn.textContent = installed ? "Désactiver" : "Activer l'intégration";
+  hookToggleBtn.textContent = installed ? i18n.t("hook.toggle.disable") : i18n.t("hook.toggle.enable");
 }
 
 hookToggleBtn.addEventListener("click", async () => {
@@ -211,7 +232,7 @@ hookToggleBtn.addEventListener("click", async () => {
     ? await window.dashboardAPI.uninstallHook()
     : await window.dashboardAPI.installHook();
   applyHookStatus(nowInstalled);
-  showToast(nowInstalled ? "Intégration Claude Code activée" : "Intégration Claude Code désactivée");
+  showToast(nowInstalled ? i18n.t("toast.hookEnabled") : i18n.t("toast.hookDisabled"));
 });
 
 window.dashboardAPI.isHookInstalled().then(applyHookStatus);
@@ -224,15 +245,19 @@ const barChart = document.getElementById("bar-chart");
 const historyTableBody = document.getElementById("history-table-body");
 const historyEmpty = document.getElementById("history-empty");
 
-const STATUS_LABELS = { done: "Fait", skipped: "Passé", missed: "Manqué" };
-const MODE_LABELS = { notify: "Notification douce", gate: "Blocage réel", mixed: "Mixte" };
+function statusLabel(status) {
+  return i18n.t(`status.${status}`);
+}
+function modeLabel(mode) {
+  return i18n.t(`mode.${mode}`);
+}
 
 function dayKey(timestamp) {
   return timestamp.slice(0, 10);
 }
 
 function formatDateTime(timestamp) {
-  return new Date(timestamp).toLocaleString("fr-FR", {
+  return new Date(timestamp).toLocaleString(i18n.getLocale(), {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -248,7 +273,7 @@ function renderBarChart(sessions) {
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
     const count = sessions.filter((s) => s.status === "done" && dayKey(s.timestamp) === key).length;
-    days.push({ label: d.toLocaleDateString("fr-FR", { weekday: "short" }), count });
+    days.push({ label: d.toLocaleDateString(i18n.getLocale(), { weekday: "short" }), count });
   }
   const max = Math.max(1, ...days.map((d) => d.count));
 
@@ -302,12 +327,12 @@ function renderHistoryTable(sessions, exerciseLabels) {
     mascotCell.appendChild(mascotWrap);
 
     const modeCell = document.createElement("td");
-    modeCell.textContent = MODE_LABELS[session.mode] ?? session.mode;
+    modeCell.textContent = modeLabel(session.mode) ?? session.mode;
 
     const statusCell = document.createElement("td");
     const badge = document.createElement("span");
     badge.className = `status-badge ${session.status}`;
-    badge.textContent = STATUS_LABELS[session.status] ?? session.status;
+    badge.textContent = statusLabel(session.status) ?? session.status;
     statusCell.appendChild(badge);
 
     row.append(dateCell, exerciseCell, mascotCell, modeCell, statusCell);
@@ -365,7 +390,7 @@ function findPlan(id) {
 }
 
 function planExerciseCountLabel(plan) {
-  return `${plan.exercises.length} exercice${plan.exercises.length > 1 ? "s" : ""}`;
+  return i18n.t("plans.count", plan.exercises.length);
 }
 
 function renderPlansGrid() {
@@ -389,13 +414,13 @@ function renderPlansGrid() {
     if (isDefault) {
       const defaultBadge = document.createElement("span");
       defaultBadge.className = "status-badge default";
-      defaultBadge.textContent = "Défaut";
+      defaultBadge.textContent = i18n.t("plans.badge.default");
       badges.appendChild(defaultBadge);
     }
     if (isActive) {
       const activeBadge = document.createElement("span");
       activeBadge.className = "status-badge installed";
-      activeBadge.textContent = "Actif";
+      activeBadge.textContent = i18n.t("plans.badge.active");
       badges.appendChild(activeBadge);
     }
     header.appendChild(badges);
@@ -409,30 +434,30 @@ function renderPlansGrid() {
 
     const openBtn = document.createElement("button");
     openBtn.className = "option-btn option-btn-sm";
-    openBtn.textContent = "Ouvrir";
+    openBtn.textContent = i18n.t("plans.action.open");
     openBtn.addEventListener("click", () => openPlanEditor(plan.id));
 
     const duplicateBtn = document.createElement("button");
     duplicateBtn.className = "option-btn option-btn-sm";
-    duplicateBtn.textContent = "Dupliquer";
+    duplicateBtn.textContent = i18n.t("plans.action.duplicate");
     duplicateBtn.addEventListener("click", () => duplicatePlan(plan));
 
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "option-btn option-btn-sm";
-    toggleBtn.textContent = isActive ? "Désactiver" : "Activer";
+    toggleBtn.textContent = isActive ? i18n.t("plans.action.deactivate") : i18n.t("plans.action.activate");
     // Un plan sans exercice ne doit jamais pouvoir être activé (main/index.js s'en protège aussi
     // en repliant sur le plan par défaut, mais autant ne pas laisser l'UI proposer l'action).
     const isEmpty = plan.exercises.length === 0;
     if (!isActive && isEmpty) {
       toggleBtn.disabled = true;
-      toggleBtn.title = "Ajoute au moins un exercice avant d'activer ce plan.";
+      toggleBtn.title = i18n.t("plans.action.disabledHint");
     } else {
       toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
     }
 
     const exportBtn = document.createElement("button");
     exportBtn.className = "option-btn option-btn-sm";
-    exportBtn.textContent = "Exporter";
+    exportBtn.textContent = i18n.t("plans.action.export");
     exportBtn.addEventListener("click", () => exportPlan(plan.id));
 
     actions.append(openBtn, duplicateBtn, toggleBtn, exportBtn);
@@ -440,7 +465,7 @@ function renderPlansGrid() {
     if (!isDefault) {
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "option-btn option-btn-sm option-btn-danger";
-      deleteBtn.textContent = "Supprimer";
+      deleteBtn.textContent = i18n.t("plans.action.delete");
       deleteBtn.addEventListener("click", () => deletePlan(plan.id));
       actions.appendChild(deleteBtn);
     }
@@ -457,17 +482,17 @@ async function activatePlan(id) {
 
 async function duplicatePlan(plan) {
   const created = await window.dashboardAPI.createPlan(
-    `${plan.name} (copie)`,
+    `${plan.name} (${i18n.t("plans.copySuffix")})`,
     structuredClone(plan.exercises)
   );
   plansState.customPlans.push(created);
   openPlanEditor(created.id);
-  showToast("Plan dupliqué");
+  showToast(i18n.t("plans.toast.duplicated"));
 }
 
 async function exportPlan(id) {
   const { exported } = await window.dashboardAPI.exportPlan(id);
-  if (exported) showToast("Plan exporté");
+  if (exported) showToast(i18n.t("plans.toast.exported"));
 }
 
 async function importPlan() {
@@ -479,16 +504,16 @@ async function importPlan() {
   if (!imported) return; // annulé par l'utilisateur, rien à faire
   plansState.customPlans.push(plan);
   openPlanEditor(plan.id);
-  showToast("Plan importé");
+  showToast(i18n.t("plans.toast.imported"));
 }
 
 async function deletePlan(id) {
-  if (!confirm("Supprimer ce plan ? Cette action est irréversible.")) return;
+  if (!confirm(i18n.t("plans.confirmDelete"))) return;
   const nextSettings = await window.dashboardAPI.deletePlan(id);
   plansState.customPlans = plansState.customPlans.filter((p) => p.id !== id);
   applySettingsToUI(nextSettings);
   renderPlansGrid();
-  showToast("Plan supprimé");
+  showToast(i18n.t("plans.toast.deleted"));
 }
 
 function openPlanEditor(id) {
@@ -526,7 +551,7 @@ function renderPlanExercises() {
     const labelInput = document.createElement("input");
     labelInput.type = "text";
     labelInput.className = "text-input plan-exercise-label";
-    labelInput.placeholder = "Nom de l'exercice";
+    labelInput.placeholder = i18n.t("planEditor.labelPlaceholder");
     labelInput.value = exercise.label;
     labelInput.disabled = editingPlan.isDefault;
     labelInput.addEventListener("change", () => updateExerciseField(index, "label", labelInput.value));
@@ -534,7 +559,7 @@ function renderPlanExercises() {
     const categoryInput = document.createElement("input");
     categoryInput.type = "text";
     categoryInput.className = "text-input plan-exercise-category";
-    categoryInput.placeholder = "Catégorie";
+    categoryInput.placeholder = i18n.t("planEditor.categoryPlaceholder");
     categoryInput.setAttribute("list", "exercise-category-options");
     categoryInput.value = exercise.category;
     categoryInput.disabled = editingPlan.isDefault;
@@ -557,7 +582,7 @@ function renderPlanExercises() {
       const removeBtn = document.createElement("button");
       removeBtn.className = "plan-exercise-remove-btn";
       removeBtn.textContent = "✕";
-      removeBtn.title = "Supprimer cet exercice";
+      removeBtn.title = i18n.t("planEditor.removeExerciseTitle");
       removeBtn.addEventListener("click", () => removeExercise(index));
       row.appendChild(removeBtn);
     }
@@ -568,7 +593,7 @@ function renderPlanExercises() {
   if (editingPlan.exercises.length === 0) {
     const empty = document.createElement("p");
     empty.className = "plans-empty-hint";
-    empty.textContent = "Aucun exercice pour l'instant.";
+    empty.textContent = i18n.t("planEditor.emptyHint");
     planExercisesList.appendChild(empty);
   }
 }
@@ -601,14 +626,14 @@ planAddExerciseBtn.addEventListener("click", () => {
 });
 
 planNameInput.addEventListener("change", () => {
-  editingPlan.name = planNameInput.value.trim() || "Plan sans nom";
+  editingPlan.name = planNameInput.value.trim() || i18n.t("plans.noNameFallback");
   planNameInput.value = editingPlan.name;
   planEditTitle.textContent = editingPlan.name;
   persistEditingPlan();
 });
 
 newPlanBtn.addEventListener("click", async () => {
-  const created = await window.dashboardAPI.createPlan("Nouveau plan", []);
+  const created = await window.dashboardAPI.createPlan(i18n.t("plans.defaultNewName"), []);
   plansState.customPlans.push(created);
   openPlanEditor(created.id);
 });

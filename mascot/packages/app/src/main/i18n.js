@@ -1,0 +1,32 @@
+/** Dictionnaire FR/EN pour le process principal (menu tray natif, dialogues natifs, erreurs d'import) — voir aussi dashboard/i18n.js et overlay/i18n.js pour le pendant renderer. */
+const TRANSLATIONS = {
+  fr: {
+    trayOpenDashboard: "Ouvrir le dashboard",
+    trayTriggerNow: "Déclencher un exercice maintenant",
+    trayPause: "Mettre en pause",
+    trayStreak: (n) => `Streak actuel : ${n} jour(s)`,
+    trayQuit: "Quitter",
+    exportDialogTitle: "Exporter le plan",
+    exportFilterName: "Plan Mascot Coach (JSON)",
+    importDialogTitle: "Importer un plan",
+    errorInvalidJson: "Ce fichier n'est pas un JSON valide.",
+    errorInvalidShape: "Ce fichier n'a pas le format d'un plan Mascot Coach (nom + exercices attendus).",
+  },
+  en: {
+    trayOpenDashboard: "Open dashboard",
+    trayTriggerNow: "Trigger an exercise now",
+    trayPause: "Pause",
+    trayStreak: (n) => `Current streak: ${n} day${n === 1 ? "" : "s"}`,
+    trayQuit: "Quit",
+    exportDialogTitle: "Export plan",
+    exportFilterName: "Mascot Coach plan (JSON)",
+    importDialogTitle: "Import a plan",
+    errorInvalidJson: "This file isn't valid JSON.",
+    errorInvalidShape: "This file isn't in the Mascot Coach plan format (expected a name and exercises).",
+  },
+};
+
+export function t(lang, key, ...args) {
+  const value = TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.fr[key];
+  return typeof value === "function" ? value(...args) : value;
+}

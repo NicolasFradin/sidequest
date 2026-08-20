@@ -14,6 +14,7 @@ import {
   install as installClaudeHook,
   uninstall as uninstallClaudeHook,
 } from "@mascot/core";
+import { t } from "./i18n.js";
 
 app.setName("Mascot Coach");
 // App tray-only en arrière-plan : pas de menu applicatif par défaut. Ça évite aussi les
@@ -219,6 +220,7 @@ function showExercise() {
     mascot: settings.activeMascot,
     mode: settings.mode,
     theme: settings.theme,
+    language: settings.language,
     blocking,
   };
 
@@ -284,18 +286,19 @@ function createTray() {
 }
 
 function buildTrayMenu() {
+  const lang = storage.getSettings().language;
   const menu = Menu.buildFromTemplate([
     {
-      label: "Ouvrir le dashboard",
+      label: t(lang, "trayOpenDashboard"),
       click: () => showDashboard(),
     },
     { type: "separator" },
     {
-      label: "Déclencher un exercice maintenant",
+      label: t(lang, "trayTriggerNow"),
       click: () => scheduler.triggerNow(),
     },
     {
-      label: "Mettre en pause",
+      label: t(lang, "trayPause"),
       type: "checkbox",
       id: "pause",
       click: (item) => {
@@ -308,11 +311,11 @@ function buildTrayMenu() {
     },
     { type: "separator" },
     {
-      label: `Streak actuel : ${storage.getCurrentStreak()} jour(s)`,
+      label: t(lang, "trayStreak", storage.getCurrentStreak()),
       enabled: false,
     },
     { type: "separator" },
-    { label: "Quitter", click: () => app.quit() },
+    { label: t(lang, "trayQuit"), click: () => app.quit() },
   ]);
   tray.setContextMenu(menu);
 }
@@ -488,6 +491,10 @@ if (!gotSingleInstanceLock) {
         // déclenchement — et se met à jour en direct si elle est affichée au moment du switch.
         overlayWindow.webContents.send("theme-changed", next.theme);
       }
+      if (partial.language !== undefined) {
+        overlayWindow.webContents.send("language-changed", next.language);
+        buildTrayMenu();
+      }
       return { ...next, autolaunchWarning };
     });
     ipcMain.handle("dashboard:get-sessions", () => storage.getSessions());
@@ -511,10 +518,11 @@ if (!gotSingleInstanceLock) {
       const plan = storage.getPlan(id) ?? (id === "sport-basic" ? loadPack("sport-basic") : null);
       if (!plan) return { exported: false };
 
+      const lang = storage.getSettings().language;
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
-        title: "Exporter le plan",
+        title: t(lang, "exportDialogTitle"),
         defaultPath: `${plan.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,
-        filters: [{ name: "Plan Mascot Coach (JSON)", extensions: ["json"] }],
+        filters: [{ name: t(lang, "exportFilterName"), extensions: ["json"] }],
       });
       if (canceled || !filePath) return { exported: false };
 
@@ -523,9 +531,10 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle("dashboard:import-plan", async () => {
+      const lang = storage.getSettings().language;
       const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
-        title: "Importer un plan",
-        filters: [{ name: "Plan Mascot Coach (JSON)", extensions: ["json"] }],
+        title: t(lang, "importDialogTitle"),
+        filters: [{ name: t(lang, "exportFilterName"), extensions: ["json"] }],
         properties: ["openFile"],
       });
       if (canceled || filePaths.length === 0) return { imported: false, error: null };
@@ -534,10 +543,10 @@ if (!gotSingleInstanceLock) {
       try {
         data = JSON.parse(readFileSync(filePaths[0], "utf-8"));
       } catch {
-        return { imported: false, error: "Ce fichier n'est pas un JSON valide." };
+        return { imported: false, error: t(lang, "errorInvalidJson") };
       }
       if (typeof data.name !== "string" || !data.name.trim() || !Array.isArray(data.exercises)) {
-        return { imported: false, error: "Ce fichier n'a pas le format d'un plan Mascot Coach (nom + exercices attendus)." };
+        return { imported: false, error: t(lang, "errorInvalidShape") };
       }
 
       // Tolérant sur la forme de chaque exercice (fichier potentiellement édité à la main) :
