@@ -1,182 +1,182 @@
-# Plan de développement MVP — Mascotte Coach (idle time companion)
+# MVP Development Plan — Mascot Coach (idle time companion)
 
-**Repo local** : `/Users/nicolas/perso/ClaudeCodeGym`
+**Local repo**: `/Users/nicolas/perso/ClaudeCodeGym`
 
-## 1. Vision produit
+## 1. Product vision
 
-Une application desktop cross-platform qui affiche une mascotte à l'écran (façon Clippy) pendant les temps morts de l'utilisateur (ex. attente de réponse de Claude Code / Codex / Copilot), pour proposer des micro-exercices de sport. Positionnement long terme : marketplace de "idle time" (sport, yoga, formations...), avec une couche premium (leaderboard, skins, réglages avancés, IA).
+A cross-platform desktop app that shows a mascot on screen (Clippy-style) during the user's idle time (e.g. waiting on a Claude Code / Codex / Copilot response) to suggest quick exercise breaks. Long-term positioning: an "idle time" marketplace (sport, yoga, courses...), with a premium layer (leaderboard, skins, advanced settings, AI).
 
-Inspirations : `claude-gym` (notification douce, lecture de logs locaux) et `workout-gate` (blocage réel de session, webcam anti-triche).
+Inspirations: `claude-gym` (gentle notification, local log reading) and `workout-gate` (real session blocking, anti-cheat webcam).
 
-## 2. Décisions de cadrage validées
+## 2. Locked-in decisions
 
-- **Friction** : les deux modes dispo dès le MVP, réglables dans les settings (notification douce **et** blocage réel).
-- **Plateformes** : macOS, Windows, Linux dès le MVP.
-- **Stack** : Electron (écosystème npm), stack définitivement tranchée après comparaison avec Neutralino.js, Tauri et des alternatives 100% Python (PySide6, pywebview) — Electron retenu pour la maturité de l'écosystème (tray, autolaunch, fenêtres transparentes) et la vitesse de développement en solo. Pas de webcam/anti-triche au MVP mais schéma de données prêt pour ça.
-- **Mascottes** : les 2 mascottes fournies (Ronnie Coleman, Miami 80s) intégrées dès le MVP, thème Miami Vice 80s.
-- **Licence** : MIT/Apache 2.0 sur le repo public dès maintenant — les features premium futures ne seront jamais publiées dans ce repo (voir section 7).
+- **Friction**: both modes available from the MVP, configurable in settings (soft notification **and** real blocking).
+- **Platforms**: macOS, Windows, Linux from the MVP.
+- **Stack**: Electron (npm ecosystem), settled after comparing Neutralino.js, Tauri, and 100%-Python alternatives (PySide6, pywebview) — Electron chosen for ecosystem maturity (tray, autolaunch, transparent windows) and solo-dev iteration speed. No webcam/anti-cheat in the MVP, but the data schema is ready for it.
+- **Mascots**: the 2 provided mascots (Ronnie Coleman, Miami 80s) integrated from the MVP, Miami Vice 80s theme.
+- **License**: MIT/Apache 2.0 on the public repo starting now — future premium features will never be published in this repo (see section 7).
 
-## 3. Architecture technique
+## 3. Technical architecture
 
 ### 3.1 Monorepo (pnpm workspaces)
 
 ```
 mascot/
 ├── packages/
-│   ├── core/                # package npm pur, sans dépendance Electron
+│   ├── core/                # pure npm package, no Electron dependency
 │   │   ├── scheduler.ts     # timer + triggers (idle time)
-│   │   ├── hooks/           # lecteurs de logs Claude Code / Codex (v0.5)
-│   │   ├── exercises/       # data fixe des exercices (JSON packs)
-│   │   ├── storage.ts       # SQLite (better-sqlite3) : historique + settings
-│   │   └── gate.ts          # logique de blocage de session
-│   └── app/                 # app Electron
-│       ├── main/            # process principal : tray, fenêtres, autolaunch
-│       ├── overlay/         # fenêtre mascotte (HTML/CSS/JS vanilla, transparente, always-on-top)
-│       └── dashboard/       # fenêtre réglages/historique (HTML/CSS/JS vanilla, graphes canvas/SVG faits main — décision Sprint 3 : cohérence avec l'overlay, pas de bundler au MVP)
+│   │   ├── hooks/           # Claude Code / Codex log readers (v0.5)
+│   │   ├── exercises/       # static exercise data (JSON packs)
+│   │   ├── storage.ts       # SQLite (better-sqlite3): history + settings
+│   │   └── gate.ts          # session-blocking logic
+│   └── app/                 # Electron app
+│       ├── main/            # main process: tray, windows, autolaunch
+│       ├── overlay/         # mascot window (vanilla HTML/CSS/JS, transparent, always-on-top)
+│       └── dashboard/       # settings/history window (vanilla HTML/CSS/JS, hand-rolled canvas/SVG charts — Sprint 3 decision: consistency with the overlay, no bundler in the MVP)
 ├── assets/mascots/          # sprites (Ronnie Coleman, Miami 80s)
 └── package.json
 ```
 
-`core` est réutilisable indépendamment de l'app graphique (ex. via `npx`), et deviendra la base du futur système de "packs" marketplace.
+`core` is reusable independently of the GUI app (e.g. via `npx`), and will become the foundation of the future marketplace "packs" system.
 
-### 3.2 Modèle de données (SQLite local)
+### 3.2 Data model (local SQLite)
 
 **`settings`**
 - `interval_minutes`, `mode` (`notify` / `gate` / `mixed`), `active_mascot`, `autolaunch` (bool), `active_program`
 
 **`sessions`**
-- `id`, `timestamp`, `exercise_id`, `status` (`done` / `skipped` / `missed`), `trigger_type` (`timer` / `hook`), `verified` (bool, `false` par défaut — prêt pour anti-triche future)
+- `id`, `timestamp`, `exercise_id`, `status` (`done` / `skipped` / `missed`), `trigger_type` (`timer` / `hook`), `verified` (bool, `false` by default — ready for future anti-cheat)
 
-**`exercises`** (packs, format déclaratif JSON — jamais de code exécutable, voir 3.3)
+**`exercises`** (packs, declarative JSON format — never executable code, see 3.3)
 
-Les graphes du dashboard (streak, volume/semaine) se calculent à la volée depuis `sessions`, pas de champ score agrégé stocké — ça évite toute migration le jour où la formule de score change.
+Dashboard charts (streak, volume/week) are computed on the fly from `sessions`, no stored aggregate score field — this avoids any migration the day the scoring formula changes.
 
-### 3.3 Format des packs (extensible dès le MVP)
+### 3.3 Pack format (extensible from the MVP)
 
-Un pack = un fichier JSON déclaratif (jamais de JS exécuté), ex :
+A pack is a declarative JSON file (never executed JS), e.g.:
 
 ```json
 {
   "id": "sport-basic",
-  "name": "Sport - Programme de base",
+  "name": "Sport - Basic Program",
   "exercises": [
-    { "id": "squat-10", "label": "10 squats", "duration_sec": 30, "category": "jambes" },
-    { "id": "pushup-10", "label": "10 pompes", "duration_sec": 30, "category": "bras" }
+    { "id": "squat-10", "label": "10 squats", "duration_sec": 30, "category": "legs" },
+    { "id": "pushup-10", "label": "10 push-ups", "duration_sec": 30, "category": "arms" }
   ]
 }
 ```
 
-Ce choix (données déclaratives, pas de code) est ce qui permettra plus tard d'ouvrir la création de packs à des créateurs tiers sans risque de sécurité (pas de sandboxing de JS à gérer).
+This choice (declarative data, no code) is what will later let us open pack creation up to third-party creators without any security risk (no JS sandboxing to worry about).
 
-### 3.4 Lancement au démarrage
+### 3.4 Launch at startup
 
-`app.setLoginItemSettings({ openAtLogin: true })` (macOS/Windows) + génération d'un fichier `.desktop` dans `~/.config/autostart/` pour Linux. Toggle exposé dans le dashboard.
+`app.setLoginItemSettings({ openAtLogin: true })` (macOS/Windows) + generating a `.desktop` file in `~/.config/autostart/` for Linux. Toggle exposed in the dashboard.
 
-### 3.5 Accès au dashboard
+### 3.5 Dashboard access
 
-L'app tourne en arrière-plan comme une "menu bar app" (pas de fenêtre ouverte par défaut, juste une icône dans la barre des tâches/menu bar) :
+The app runs in the background as a "menu bar app" (no window open by default, just a tray/menu bar icon):
 
-- **Clic sur l'icône tray** (gauche ou droit, pas de distinction sur macOS) → affiche le menu contextuel : "Ouvrir le dashboard", "Mettre en pause", "Quitter". Le dashboard ne s'ouvre jamais automatiquement au clic, seulement via "Ouvrir le dashboard" (décision revue en cours de Sprint 5 — le plan prévoyait initialement un clic simple = toggle direct).
-- **Raccourci clavier global configurable** (ex. `Cmd/Ctrl+Shift+M`) pour ouvrir le dashboard depuis n'importe où sans toucher la souris.
-- **Depuis l'overlay mascotte** : une icône réglages discrète (⚙) ouvre directement le dashboard sur l'onglet concerné.
-- **Premier lancement** : le dashboard s'ouvre automatiquement (onboarding : choix de la mascotte, intervalle, autolaunch).
-- Techniquement : une seule instance de `BrowserWindow` créée puis réutilisée (masquée/affichée, jamais recréée), avec `app.requestSingleInstanceLock()` pour éviter les doublons si l'app est relancée alors qu'elle tourne déjà.
-- Fermer la fenêtre (croix) ne quitte pas l'app — elle repasse en tray, seul "Quitter" dans le menu tray termine le process. Comportement standard des apps menu bar (Spotify, Docker Desktop, etc.).
+- **Click on the tray icon** (left or right, no distinction on macOS) → shows the context menu: "Open dashboard", "Pause", "Quit". The dashboard never opens automatically on click, only via "Open dashboard" (decision revised during Sprint 5 — the plan originally called for a single click to directly toggle it).
+- **Configurable global keyboard shortcut** (e.g. `Cmd/Ctrl+Shift+M`) to open the dashboard from anywhere without touching the mouse.
+- **From the mascot overlay**: a discreet settings icon (⚙) opens the dashboard directly on the relevant tab.
+- **First launch**: the dashboard opens automatically (onboarding: mascot choice, interval, autolaunch).
+- Technically: a single `BrowserWindow` instance is created once and reused (hidden/shown, never recreated), with `app.requestSingleInstanceLock()` to avoid duplicates if the app is relaunched while already running.
+- Closing the window (the × button) doesn't quit the app — it goes back to the tray, only "Quit" in the tray menu ends the process. Standard menu-bar-app behavior (Spotify, Docker Desktop, etc.).
 
-Pas de serveur web local nécessaire pour le MVP (le dashboard est chargé directement en local dans la `BrowserWindow`) — ça ne deviendra pertinent que si une version web/SaaS voit le jour plus tard (V2+).
+No local web server needed for the MVP (the dashboard is loaded directly and locally in the `BrowserWindow`) — that would only become relevant if a web/SaaS version happens later (V2+).
 
-## 4. Périmètre fonctionnel du MVP
+## 4. MVP functional scope
 
-**Inclus**
-- Mascotte overlay déclenchée par un timer configurable (2 mascottes au choix)
-- Mode notification douce **et** mode blocage réel, réglables
-- Dashboard : réglages (intervalle, mode, mascotte, autolaunch), historique de séances, 1-2 graphes (volume/semaine, streak)
-- Stockage 100% local (SQLite)
-- Packaging cross-platform (macOS/Windows/Linux) via `electron-builder`
+**Included**
+- Mascot overlay triggered by a configurable timer (2 mascots to choose from)
+- Both soft-notification mode **and** real-blocking mode, configurable
+- Dashboard: settings (interval, mode, mascot, autolaunch), session history, 1-2 charts (volume/week, streak)
+- 100% local storage (SQLite)
+- Cross-platform packaging (macOS/Windows/Linux) via `electron-builder`
 
-**Exclus du MVP (roadmap ultérieure)**
-- Vérification webcam / anti-triche
-- Génération d'exercices par LLM
-- Hooks spécifiques Claude Code / Codex (lecture de logs)
-- Leaderboard, comptes utilisateurs, skins premium, backend
+**Excluded from the MVP (later roadmap)**
+- Webcam verification / anti-cheat
+- LLM-generated exercises
+- Claude Code / Codex-specific hooks (log reading)
+- Leaderboard, user accounts, premium skins, backend
 
-## 5. Sprints de développement
+## 5. Development sprints
 
-1. **Sprint 1 — Squelette du monorepo** : setup pnpm workspaces, `core` avec scheduler + storage SQLite + 1 pack "sport" (10-15 exercices). Tests unitaires du scheduler.
-2. **Sprint 2 — App Electron minimale** : tray icon, overlay transparent always-on-top affichant un exercice au déclenchement du timer, intégration des 2 sprites.
-3. **Sprint 3 — Dashboard** : fenêtre réglages complète, écran historique + graphes Recharts.
-4. **Sprint 4 — Mode blocage** : overlay bloquant + logique de dette de sessions non faites (honor system, champ `verified` toujours à `false`).
-5. **Sprint 5 — Packaging & distribution** : `electron-builder` pour les 3 OS, releases GitHub, README d'installation, licence MIT/Apache 2.0.
+1. **Sprint 1 — Monorepo skeleton**: pnpm workspaces setup, `core` with scheduler + SQLite storage + 1 "sport" pack (10-15 exercises). Scheduler unit tests.
+2. **Sprint 2 — Minimal Electron app**: tray icon, transparent always-on-top overlay showing an exercise when the timer fires, integration of the 2 sprites.
+3. **Sprint 3 — Dashboard**: full settings window, history screen + Recharts-style charts.
+4. **Sprint 4 — Gate mode**: blocking overlay + logic for a debt of unfinished sessions (honor system, `verified` field always `false`).
+5. **Sprint 5 — Packaging & distribution**: `electron-builder` for the 3 OSes, GitHub releases, install README, MIT/Apache 2.0 license.
 
-## 6. Roadmap post-MVP
+## 6. Post-MVP roadmap
 
-| Version | Contenu |
+| Version | Content |
 |---|---|
-| V0.5 | Hooks Claude Code / Codex (déclenchement contextuel, façon claude-gym) — voir [`plan-v0.5-hooks-claude-code.md`](plan-v0.5-hooks-claude-code.md) |
-| V0.5.1 | Thèmes globaux / skins (palette dashboard + mascottes par thème : Miami 80's, Military camo, Dragonball, Roman Empire) — non planifiée initialement, démarrée en cours de route — voir [`plan-theme-global.md`](plan-theme-global.md) |
-| V0.5+ | Mascottes animées dans l'overlay (au repos + pendant l'exercice) — 3 méthodes envisagées, à trancher selon le temps dispo : (1) animation CSS `@keyframes` sur l'`<img>` existant (rebond/respiration en idle, zéro nouvel asset, le plus rapide) ; (2) frames PNG multiples swappées en JS (`setInterval` sur `mascotImg.src`, façon sprite dessiné à la main) ; (3) [Rive](https://rive.app) (`.riv`) piloté en state machine (`idle` / `exercice-proposé` / `fait` / `skip` / `bloquant`), branché sur les événements déjà exposés par `mascotAPI` — option la plus riche mais demande de vectoriser les mascottes |
-| V1 | Génération d'exercices via API Claude, programmes personnalisés |
-| V1.5 | Registre de packs installable (`mascot install pack-yoga`), encore gratuit |
-| V2 | Backend : comptes, leaderboard FR/monde (score composite, champ `verified` activé), skins premium |
-| V2.5 | Affinage post-lancement V2 sur données d'usage réelles : formule exacte du score composite, activation de la vérification anti-triche webcam (schéma déjà prêt, `verified: bool`), détail final du split Free/Premium |
-| V3 | Marketplace ouverte à des créateurs tiers (commission), abonnement IA |
+| V0.5 | Claude Code / Codex hooks (contextual triggering, claude-gym-style) — see [`plan-v0.5-hooks-claude-code.md`](plan-v0.5-hooks-claude-code.md) |
+| V0.5.1 | Global themes / skins (dashboard palette + mascots per theme: Miami 80's, Military camo, Dragonball, Roman Empire) — not planned initially, started along the way — see [`plan-theme-global.md`](plan-theme-global.md) |
+| V0.5+ | Animated mascots in the overlay (idle + during exercise) — 3 approaches considered, to be decided based on available time: (1) CSS `@keyframes` animation on the existing `<img>` (idle bounce/breathing, zero new assets, fastest); (2) multiple PNG frames swapped in JS (`setInterval` on `mascotImg.src`, hand-drawn sprite style); (3) [Rive](https://rive.app) (`.riv`) driven by a state machine (`idle` / `exercise-proposed` / `done` / `skip` / `blocking`), wired to the events already exposed by `mascotAPI` — the richest option but requires vectorizing the mascots |
+| V1 | Exercise generation via the Claude API, personalized programs |
+| V1.5 | Installable pack registry (`mascot install pack-yoga`), still free |
+| V2 | Backend: accounts, national/global leaderboard (composite score, `verified` field activated), premium skins |
+| V2.5 | Post-V2-launch refinement based on real usage data: exact composite score formula, webcam anti-cheat verification activation (schema already in place, `verified: bool`), final Free/Premium split details |
+| V3 | Marketplace open to third-party creators (commission), AI subscription |
 
-## 7. Stratégie licence & monétisation future
+## 7. License & future monetization strategy
 
-- Repo public actuel : licence **MIT ou Apache 2.0**, jamais modifiée rétroactivement.
-- Toutes les futures features premium (backend leaderboard, sync compte, vérification, logique de licence) sont développées dans du code **jamais publié** (repo privé séparé), qui communique avec le client open-source via API.
-- Le client open-source reste complet et fonctionnel sans le backend premium — seules les features premium (participation leaderboard, skins, IA) nécessitent une licence/API key vérifiée côté serveur.
-- Alternative à évaluer plus tard si le risque de fork concurrent devient réel : passer les futures parties sensibles en **AGPL** plutôt que MIT.
+- Current public repo: **MIT or Apache 2.0** license, never changed retroactively.
+- All future premium features (leaderboard backend, account sync, verification, licensing logic) are developed in code **never published** (separate private repo), communicating with the open-source client via API.
+- The open-source client stays complete and functional without the premium backend — only premium features (leaderboard participation, skins, AI) require a server-verified license/API key.
+- Alternative to evaluate later if the risk of a competing fork becomes real: move future sensitive parts to **AGPL** instead of MIT.
 
-## 8. Problèmes connus (à ré-investiguer)
+## 8. Known issues (to re-investigate)
 
-- **Icône Dock macOS peu fiable** : en dev (`electron .`) comme sur l'app packagée non signée, l'icône custom du Dock apparaît de façon intermittente puis peut disparaître après quelques secondes (`app.dock.setIcon()` en dev, mais aussi le `.icns` natif du bundle packagé). Hypothèse la plus probable : comportement connu de macOS Icon Services/LaunchServices avec les apps **non signées** (`mac.identity: null` dans la config electron-builder, faute de compte Apple Developer payant) — à revérifier une fois l'app réellement signée/notariée. Non bloquant : la tray icon (menu bar) fonctionne de façon fiable dans tous les cas, c'est le point d'accès principal de l'app.
+- **Unreliable macOS Dock icon**: both in dev (`electron .`) and in the unsigned packaged app, the custom Dock icon appears intermittently and can disappear after a few seconds (`app.dock.setIcon()` in dev, but also the packaged bundle's native `.icns`). Most likely hypothesis: known macOS Icon Services/LaunchServices behavior for **unsigned** apps (`mac.identity: null` in the electron-builder config, for lack of a paid Apple Developer account) — worth re-checking once the app is actually signed/notarized. Not blocking: the tray icon (menu bar) works reliably in all cases and is the app's primary access point.
 
-## 9. Charte graphique (adaptée du template fourni)
+## 9. Visual identity (adapted from the provided template)
 
-Basée sur la charte "Ronnie Coleman App" fournie (pensée pour mobile), adaptée ici pour une app desktop (overlay + dashboard).
+Based on the provided "Ronnie Coleman App" style guide (designed for mobile), adapted here for a desktop app (overlay + dashboard).
 
-### Palette de couleurs
+### Color palette
 
-| Usage | Couleur | Hex |
+| Use | Color | Hex |
 |---|---|---|
-| Fond principal | Noir bleuté | `#0B0E1A` |
-| Fond secondaire (cards) | Bleu nuit | `#15182B` |
-| Accent bleu | Bleu électrique | `#1E90FF` |
-| Accent cyan | Turquoise néon | `#00E5D4` |
-| Accent primaire (CTA) | Rose magenta | `#FF2D95` |
-| Accent doré | Jaune/or | `#FFD23F` |
-| Texte clair | Blanc | `#FFFFFF` |
-| Texte secondaire | Gris clair | `#A1A1AA` |
+| Primary background | Bluish black | `#0B0E1A` |
+| Secondary background (cards) | Midnight blue | `#15182B` |
+| Blue accent | Electric blue | `#1E90FF` |
+| Cyan accent | Neon turquoise | `#00E5D4` |
+| Primary accent (CTA) | Magenta pink | `#FF2D95` |
+| Gold accent | Yellow/gold | `#FFD23F` |
+| Light text | White | `#FFFFFF` |
+| Secondary text | Light gray | `#A1A1AA` |
 
-Dégradés : cyan → violet (logo, headers), rose → orange (CTA alternatifs, badges).
+Gradients: cyan → purple (logo, headers), pink → orange (alternate CTAs, badges).
 
-### Typographies
+### Typography
 
-- **Titres/headlines** : Bebas Neue
-- **Accents/punchlines** (façon "YEAH BUDDY!") : Permanent Marker
-- **Texte courant** (dashboard, labels, données) : Inter
+- **Titles/headlines**: Bebas Neue
+- **Accents/punchlines** (à la "YEAH BUDDY!"): Permanent Marker
+- **Body text** (dashboard, labels, data): Inter
 
-Les trois sont disponibles gratuitement sur Google Fonts, utilisables sans restriction en usage commercial.
+All three are freely available on Google Fonts, usable without restriction for commercial use.
 
-### Composants UI repris pour le dashboard Electron
+### UI components carried over to the Electron dashboard
 
-- **Bouton primaire** : fond dégradé rose, texte blanc, coins arrondis
-- **Bouton secondaire** : contour cyan/blanc, fond transparent
-- **Bouton tertiaire** : lien texte + chevron
-- **Card** : fond `#15182B`, coins arrondis, avatar mascotte + titre + barre de progression
-- **Progress bar** : fond sombre, remplissage dégradé cyan → rose
-- **Badge** : contour rose, texte majuscules, fond transparent
-- **Icônes** : style outline simple (haltère, flamme, graphique, cloche, réglages...)
+- **Primary button**: pink gradient background, white text, rounded corners
+- **Secondary button**: cyan/white outline, transparent background
+- **Tertiary button**: text link + chevron
+- **Card**: `#15182B` background, rounded corners, mascot avatar + title + progress bar
+- **Progress bar**: dark background, cyan → pink gradient fill
+- **Badge**: pink outline, uppercase text, transparent background
+- **Icons**: simple outline style (dumbbell, flame, chart, bell, settings...)
 
-### Adaptation mobile → desktop
+### Mobile → desktop adaptation
 
-- Le template original utilise une bottom nav bar mobile → sur desktop, elle devient une **sidebar de navigation** (Accueil / Programme / Historique / Réglages / Profil).
-- L'**overlay mascotte** reprend le style "card" du template en version compacte : fond sombre à contour néon, sprite pixel-art + texte de l'exercice + boutons primaire/secondaire (fait/passer).
-- Le fond dégradé néon avec skyline (present sur les écrans d'exemple) peut habiller l'arrière-plan du dashboard, en version subtile pour ne pas nuire à la lisibilité des graphes et données.
+- The original template uses a mobile bottom nav bar → on desktop, it becomes a **navigation sidebar** (Home / Program / History / Settings / Profile).
+- The **mascot overlay** reuses the template's "card" style in a compact form: dark background with neon outline, pixel-art sprite + exercise text + primary/secondary buttons (done/skip).
+- The neon gradient background with skyline (present in the example screens) can dress up the dashboard background, in a subtle version so it doesn't hurt the readability of charts and data.
 
 ### Illustrations
 
-Style pixel art 8-bit/16-bit, ambiance néon Miami 80s, contraste élevé — cohérent avec les deux mascottes déjà intégrées (Ronnie Coleman, Miami 80s) et à conserver pour toute mascotte additionnelle future.
+8-bit/16-bit pixel-art style, Miami 80s neon vibe, high contrast — consistent with the two mascots already integrated (Ronnie Coleman, Miami 80s) and to be kept for any future additional mascot.
 
-Mascottes statiques (PNG) au MVP. Animation prévue post-MVP (voir roadmap V0.5+) : à conserver en tête pour le format des futurs assets, sans bloquer le MVP sur ce point.
+Static mascots (PNG) in the MVP. Animation planned post-MVP (see V0.5+ roadmap): keep this in mind for the format of future assets, without blocking the MVP on this point.

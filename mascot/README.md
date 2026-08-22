@@ -1,87 +1,88 @@
 # Mascot Coach — MVP
 
-Application desktop qui affiche une mascotte coach pendant les temps morts (idle time), pour proposer des micro-exercices de sport.
+Desktop app that shows a coach mascot during idle time, prompting quick exercise breaks.
 
-## Installer l'application (utilisateur final)
+## Installing the app (end users)
 
-Télécharge la dernière version depuis la page [Releases GitHub](../../releases) :
+Download the latest release from the [GitHub Releases page](../../releases):
 
-- **macOS** : `Mascot Coach-x.x.x-mac-x64.dmg` → ouvre le DMG, glisse l'app dans `Applications`. L'app n'étant pas signée (pas de compte Apple Developer payant au stade MVP), macOS Gatekeeper bloquera le premier lancement ("app endommagée" ou "développeur non identifié") : **clic droit sur l'app → "Ouvrir"** (au lieu d'un double-clic), puis confirme. À refaire seulement au tout premier lancement.
-- **Windows** : `Mascot Coach-x.x.x-win-x64.exe` (installeur) ou la version `portable`. Windows SmartScreen affichera un avertissement similaire (app non signée) → "Informations complémentaires" → "Exécuter quand même".
-- **Linux** : `Mascot Coach-x.x.x-linux-x86_64.AppImage` → `chmod +x` puis exécute-le directement, ou le `.deb` via `sudo dpkg -i`.
+- **macOS**: `Mascot Coach-x.x.x-mac-x64.dmg` → open the DMG, drag the app into `Applications`. The app isn't signed yet (no paid Apple Developer account at this stage), so macOS Gatekeeper will block the first launch ("app is damaged" or "unidentified developer"): **right-click the app → "Open"** (instead of double-clicking), then confirm. Only needed on the very first launch.
+- **Windows**: `Mascot Coach-x.x.x-win-x64.exe` (installer) or the `portable` build. Windows SmartScreen shows a similar warning (unsigned app) → "More info" → "Run anyway".
+- **Linux**: `Mascot Coach-x.x.x-linux-x86_64.AppImage` → `chmod +x` then run it directly, or the `.deb` via `sudo dpkg -i`.
 
 ## Structure
 
-- `packages/core` — logique métier pure (scheduler, storage SQLite, packs d'exercices), sans dépendance à Electron.
-- `packages/app` — app Electron : tray (barre de menu macOS) + overlay mascotte + dashboard.
+- `packages/core` — pure business logic (scheduler, SQLite storage, exercise plans), no Electron dependency.
+- `packages/app` — Electron app: tray (menu bar), mascot overlay, dashboard.
 
-## Prérequis (macOS)
+## Prerequisites (macOS)
 
-- Node.js 22+ (vérifier avec `node --version`)
-- Xcode Command Line Tools (nécessaire pour compiler `better-sqlite3`) : `xcode-select --install` si pas déjà installé
+- Node.js 22+ (check with `node --version`)
+- Xcode Command Line Tools (needed to compile `better-sqlite3`): `xcode-select --install` if not already installed
 
-## Installation
+## Setup
 
 ```bash
 corepack enable
 pnpm install
-pnpm approve-builds --all   # autorise la compilation native de better-sqlite3 et le téléchargement d'Electron
+pnpm approve-builds --all   # allow native compilation of better-sqlite3 and Electron's download
 ```
 
-## Tester `core` (logique métier)
+## Testing `core` (business logic)
 
 ```bash
-# Suite de tests unitaires (scheduler, storage, packs)
+# Unit test suite (scheduler, storage, exercise plans)
 pnpm test
 
-# Voir le scheduler tourner en conditions réelles (1 exercice toutes les 3s, Ctrl+C pour arrêter)
+# Watch the scheduler run in real conditions (1 exercise every 3s, Ctrl+C to stop)
 cd packages/core && pnpm demo
 
-# Compiler en JS (vérifie qu'il n'y a pas d'erreur de typage) — nécessaire avant de lancer l'app
+# Compile to JS (type-checks the codebase) — required before running the app
 pnpm build
 ```
 
-## Tester l'app Electron (tray + overlay)
+## Testing the Electron app (tray + overlay)
 
 ```bash
 cd packages/app
 pnpm start
 ```
 
-Tu dois voir une icône apparaître dans la barre de menu macOS (en haut à droite). Clique dessus pour ouvrir le menu :
-- **"Déclencher un exercice maintenant"** → fait apparaître l'overlay mascotte immédiatement (pas besoin d'attendre l'intervalle par défaut de 30 minutes).
-- L'overlay affiche la mascotte, un exercice, et deux boutons ("C'est fait" / "Passer").
-- **"Quitter"** ferme réellement l'app (fermer juste l'overlay ne quitte pas l'app, elle reste active en tray).
+You should see an icon appear in the macOS menu bar. Click it to open the menu:
 
-## ⚠️ Point d'attention : module natif partagé (better-sqlite3)
+- **"Trigger an exercise now"** → shows the mascot overlay immediately (no need to wait for the default 30-minute interval).
+- The overlay shows the mascot, an exercise, and two buttons ("Done" / "Skip").
+- **"Quit"** actually quits the app (just closing the overlay window doesn't — it stays running in the tray).
 
-`core` (testé sous Node) et `app` (tourne sous Electron) partagent la même dépendance `better-sqlite3`, mais Electron utilise une version de Node différente en interne (ABI différente). Lancer l'app (`pnpm start` dans `packages/app`) recompile ce module pour Electron — ce qui peut ensuite faire échouer `pnpm test` dans `core` avec une erreur `NODE_MODULE_VERSION`.
+## ⚠️ Heads-up: shared native module (better-sqlite3)
 
-**Si ça arrive**, depuis la racine du repo :
+`core` (tested under plain Node) and `app` (runs under Electron) share the same `better-sqlite3` dependency, but Electron bundles a different Node ABI internally. Running the app (`pnpm start` in `packages/app`) recompiles that module for Electron's ABI — which can then make `pnpm test` in `core` fail with a `NODE_MODULE_VERSION` mismatch.
+
+**If that happens**, from the repo root:
 
 ```bash
 pnpm run fix:native-modules
 ```
 
-Ça réinstalle proprement les dépendances natives pour Node. Tu peux ensuite relancer `pnpm test` normalement. C'est un aller-retour à faire uniquement si tu alternes entre tester `core` et lancer l'app — pas à chaque fois.
+This cleanly reinstalls the native dependencies for plain Node. You can then run `pnpm test` again normally. You only need to do this round-trip when alternating between testing `core` and running the app — not every single time.
 
-## Packager l'app (build local)
+## Packaging the app (local build)
 
 ```bash
 cd packages/app
-pnpm run dist:mac    # .dmg + .zip — nécessite macOS
-pnpm run dist:win    # .exe (nsis) + portable — buildable depuis n'importe quel OS
-pnpm run dist:linux  # .AppImage + .deb — buildable depuis n'importe quel OS
+pnpm run dist:mac    # .dmg + .zip — requires macOS
+pnpm run dist:win    # .exe (nsis) + portable — buildable from any OS
+pnpm run dist:linux  # .AppImage + .deb — buildable from any OS
 ```
 
-Les artefacts sortent dans `packages/app/release/`. Pas de code signing configuré au MVP (pas de certificat Apple/Windows) — voir les avertissements Gatekeeper/SmartScreen dans la section installation ci-dessus.
+Artifacts land in `packages/app/release/`. No code signing configured at this stage (no Apple/Windows certificate) — see the Gatekeeper/SmartScreen warnings in the install section above.
 
-Sur GitHub, pousser un tag `vX.Y.Z` déclenche `.github/workflows/release.yml` : build automatique sur macOS/Windows/Linux et publication d'une [Release GitHub](../../releases) avec tous les artefacts attachés.
+On GitHub, pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`: automatic build on macOS/Windows/Linux and publishing to a [GitHub Release](../../releases) with all artifacts attached.
 
-## Sprints réalisés
+## Sprints shipped
 
-- [x] Sprint 1 — Squelette du monorepo + `core` (scheduler, storage, pack sport-basic, tests)
-- [x] Sprint 2 — App Electron minimale (tray + overlay, mascotte + exercice + boutons fait/passer)
-- [x] Sprint 3 — Dashboard (réglages, historique, graphes, thème clair/sombre)
-- [x] Sprint 4 — Mode blocage (gate/mixed + dette de séances honor system)
-- [x] Sprint 5 — Packaging & distribution (electron-builder, releases GitHub)
+- [x] Sprint 1 — Monorepo skeleton + `core` (scheduler, storage, sport-basic pack, tests)
+- [x] Sprint 2 — Minimal Electron app (tray + overlay, mascot + exercise + done/skip buttons)
+- [x] Sprint 3 — Dashboard (settings, history, charts, light/dark theme)
+- [x] Sprint 4 — Gate mode (gate/mixed + honor-system debt of skipped sessions)
+- [x] Sprint 5 — Packaging & distribution (electron-builder, GitHub releases)

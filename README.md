@@ -1,31 +1,88 @@
-# ClaudeCodeGym
-Your AI assistant for moving more and sitting less.
+<p align="center">
+  <img src="mascot/packages/app/build/icon.png" alt="Mascot Coach" width="160">
+  <br>
+  <strong>A desktop mascot that nudges you to move during idle time</strong>
+</p>
 
-**Mascot Coach** est une application desktop (macOS/Windows/Linux) qui affiche une mascotte coach pendant tes temps morts pour te proposer des micro-exercices de sport — inspirée du principe "no pain, no gain" façon Miami Vice 80s.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="License"></a>
+  <a href="../../releases"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-informational?style=flat-square" alt="Platforms"></a>
+</p>
 
-## Installer l'application
+**You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm.
 
-Télécharge la dernière version depuis la page [**Releases**](../../releases) :
+Mascot Coach sits in your tray and pops up a mascot with a quick exercise whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing.
 
-| OS | Fichier |
+## How it works
+
+- A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active plan.
+- A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook Mascot Coach installs into `~/.claude/settings.json` for you.
+- Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the exercise — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
+- Build your own **training plans** in the dashboard — a name and a list of exercises — or start from the bundled default plan. Only one plan is active at a time. Export/import as JSON to share a plan with someone else.
+
+If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
+
+## Install
+
+Download the latest build from the [**Releases**](../../releases) page:
+
+| OS | File |
 |---|---|
 | macOS | `Mascot Coach-x.x.x-mac-x64.dmg` |
-| Windows | `Mascot Coach-x.x.x-win-x64.exe` (ou la version `portable`) |
-| Linux | `Mascot Coach-x.x.x-linux-x86_64.AppImage` (ou le `.deb`) |
+| Windows | `Mascot Coach-x.x.x-win-x64.exe` (or the `portable` build) |
+| Linux | `Mascot Coach-x.x.x-linux-x86_64.AppImage` (or the `.deb`) |
 
-L'app n'étant pas signée (pas de certificat payant au stade MVP), l'OS affichera un avertissement au premier lancement — c'est normal, l'app est open source et le code est juste ici :
-- **macOS** : clic droit sur l'app → **"Ouvrir"** (au lieu d'un double-clic), puis confirme.
-- **Windows** : SmartScreen → "Informations complémentaires" → "Exécuter quand même".
-- **Linux** : `chmod +x Mascot*.AppImage` puis lance-le directement, ou `sudo dpkg -i` pour le `.deb`.
+The app isn't code-signed yet (no paid developer certificate at this stage), so your OS will warn you on first launch — that's expected, the app is open source and the code is right here:
 
-## Lancer l'application
+- **macOS**: right-click the app → **"Open"** (instead of double-clicking), then confirm.
+- **Windows**: SmartScreen → "More info" → "Run anyway".
+- **Linux**: `chmod +x Mascot*.AppImage` and run it directly, or `sudo dpkg -i` for the `.deb`.
 
-Une fois installée, **Mascot Coach tourne en arrière-plan** — pas de fenêtre qui s'ouvre au démarrage (sauf la toute première fois, pour choisir tes réglages). Cherche son icône dans :
-- la **barre de menu macOS** (en haut à droite) ou la **zone de notification Windows/Linux** — clic pour ouvrir le menu ("Ouvrir le dashboard", "Déclencher un exercice maintenant", "Quitter") ;
-- le **Dock/la barre des tâches**, si ton OS l'affiche.
+## Usage
 
-Un exercice apparaît automatiquement toutes les 30 minutes par défaut (réglable dans le dashboard), sous forme d'une mascotte qui te propose de bouger.
+Once installed, **Mascot Coach runs in the background** — no window opens on launch (except the very first time, to pick your settings). Find it in:
 
-## Développer / contribuer
+- the **macOS menu bar** or the **Windows/Linux system tray** — click for the menu (open dashboard, trigger an exercise now, quit);
+- the **Dock/taskbar**, if your OS shows it there.
 
-Le code de l'app vit dans [`mascot/`](mascot/) — voir [`mascot/README.md`](mascot/README.md) pour le setup dev, faire tourner les tests, ou packager l'app toi-même.
+An exercise pops up automatically every 30 minutes by default (configurable in the dashboard). To wire it up to Claude Code instead of (or alongside) the timer, open the dashboard's **"Claude Code integration"** card and hit activate.
+
+## Build from source / contribute
+
+The app's code lives in [`mascot/`](mascot/) — see [`mascot/README.md`](mascot/README.md) for dev setup, running tests, and packaging the app yourself.
+
+```
+mascot/
+├── packages/core/   # pure business logic (scheduler, SQLite storage, exercise plans) — no Electron dependency
+└── packages/app/    # Electron app: tray, mascot overlay, dashboard
+```
+
+Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-mascotte-coach.md`](docs/plan-mvp-mascotte-coach.md) for the original product plan and [`docs/plan-v0.5-hooks-claude-code.md`](docs/plan-v0.5-hooks-claude-code.md) for the Claude Code hooks design.
+
+## Roadmap — major next steps
+
+- **Smarter hook debounce** — the "Claude is still thinking" trigger currently waits a fixed 8 seconds before showing an exercise. Next: anticipate actual turn length instead (count `PreToolUse`/`PostToolUse` calls as a signal, or learn from real turn-duration history) rather than a hardcoded delay.
+- **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
+- **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
+- **Animated mascots** — the overlay currently shows static PNGs; idle/exercise/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
+- **LLM-generated exercises** — personalized programs generated via the Claude API instead of hand-written JSON packs.
+- **Real pack registry/marketplace** — plan import/export (JSON) already ships as a stepping stone; a browsable catalog of community plans is the natural next step, followed further out by a full marketplace with third-party creators.
+- **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
+
+Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
+
+## FAQ
+
+**Is this an Anthropic product?** Nope. Personal project, not affiliated.
+
+**Does it phone home?** No. The Claude Code integration is a local HTTP hook on `127.0.0.1` — zero network calls, zero telemetry. Everything (settings, history, plans) is stored locally in SQLite.
+
+## Disclaimer
+
+The exercises are quick desk-friendly movements, not a training program. They are not a substitute for professional fitness or medical advice — please use correct form and listen to your body.
+
+If you feel any pain or discomfort, stop immediately and consult a physiotherapist or doctor. Do not exercise through injury. The authors of this project accept no responsibility for harm resulting from improper exercise.
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE). Inspired by [claude-gym](https://github.com/477-Studio/claude-gym) (gentle notifications, local-only) and `workout-gate` (real session blocking).
