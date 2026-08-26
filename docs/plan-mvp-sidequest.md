@@ -1,4 +1,4 @@
-# MVP Development Plan — Mascot Coach (idle time companion)
+# MVP Development Plan — SideQuest (idle time marketplace)
 
 **Local repo**: `/Users/nicolas/perso/ClaudeCodeGym`
 
@@ -21,7 +21,7 @@ Inspirations: `claude-gym` (gentle notification, local log reading) and `workout
 ### 3.1 Monorepo (pnpm workspaces)
 
 ```
-mascot/
+sidequest/
 ├── packages/
 │   ├── core/                # pure npm package, no Electron dependency
 │   │   ├── scheduler.ts     # timer + triggers (idle time)
@@ -116,10 +116,10 @@ No local web server needed for the MVP (the dashboard is loaded directly and loc
 | V0.5.1 | Global themes / skins (dashboard palette + mascots per theme: Miami 80's, Military camo, Dragonball, Roman Empire) — not planned initially, started along the way — see [`plan-theme-global.md`](plan-theme-global.md) |
 | V0.5+ | Animated mascots in the overlay (idle + during exercise) — 3 approaches considered, to be decided based on available time: (1) CSS `@keyframes` animation on the existing `<img>` (idle bounce/breathing, zero new assets, fastest); (2) multiple PNG frames swapped in JS (`setInterval` on `mascotImg.src`, hand-drawn sprite style); (3) [Rive](https://rive.app) (`.riv`) driven by a state machine (`idle` / `exercise-proposed` / `done` / `skip` / `blocking`), wired to the events already exposed by `mascotAPI` — the richest option but requires vectorizing the mascots |
 | V1 | Exercise generation via the Claude API, personalized programs |
-| V1.5 | Installable pack registry (`mascot install pack-yoga`), still free |
+| V1.5 | Installable pack registry (`sidequest install sidegym` / `sideparrot` / `sideyoga` / `sidecodinggame`), still free. SideGym (fitness) ships in the MVP; SideParrot (language learning), SideYoga (relaxation) and SideCodingGame (coding-game practice) are the names reserved for the next packs |
 | V2 | Backend: accounts, national/global leaderboard (composite score, `verified` field activated), premium skins |
 | V2.5 | Post-V2-launch refinement based on real usage data: exact composite score formula, webcam anti-cheat verification activation (schema already in place, `verified: bool`), final Free/Premium split details |
-| V3 | Marketplace open to third-party creators (commission), AI subscription |
+| V3 | Marketplace open to third-party creators (commission): the community can submit its own SideQuests (packs) for review and publishing, not just first-party ones. AI subscription |
 
 ## 7. License & future monetization strategy
 

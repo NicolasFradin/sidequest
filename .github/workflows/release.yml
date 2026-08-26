@@ -22,7 +22,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: mascot
+        working-directory: sidequest
 
     steps:
       - uses: actions/checkout@v4
@@ -38,10 +38,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build core
-        run: pnpm --filter @mascot/core build
+        run: pnpm --filter @sidequest/core build
 
       - name: Package app (${{ matrix.os }})
-        working-directory: mascot/packages/app
+        working-directory: sidequest/packages/app
         run: pnpm run ${{ matrix.dist-script }}
 
       - name: Upload artifacts
@@ -49,11 +49,11 @@ jobs:
         with:
           name: release-${{ matrix.os }}
           path: |
-            mascot/packages/app/release/*.dmg
-            mascot/packages/app/release/*.zip
-            mascot/packages/app/release/*.exe
-            mascot/packages/app/release/*.AppImage
-            mascot/packages/app/release/*.deb
+            sidequest/packages/app/release/*.dmg
+            sidequest/packages/app/release/*.zip
+            sidequest/packages/app/release/*.exe
+            sidequest/packages/app/release/*.AppImage
+            sidequest/packages/app/release/*.deb
           if-no-files-found: error
 
   release:

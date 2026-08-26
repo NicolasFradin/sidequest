@@ -1,6 +1,6 @@
 # Branding & Style Guide
 
-This folder centralizes the project's reference visual assets, **organized by global theme (skin)** — see [`docs/plan-theme-global.md`](../plan-theme-global.md) for the feature plan, and `docs/plan-mvp-mascotte-coach.md` section 9 for the base design tokens (palette, typography, components).
+This folder centralizes the project's reference visual assets, **organized by global theme (skin)** — see [`docs/plan-theme-global.md`](../plan-theme-global.md) for the feature plan, and `docs/plan-mvp-sidequest.md` section 9 for the base design tokens (palette, typography, components).
 
 ## Structure
 

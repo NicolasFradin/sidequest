@@ -14,7 +14,7 @@ const TRANSLATIONS = {
     "settings.triggerNow": "🎲 Générer un exercice",
     "settings.triggerNow.title": "Générer un exercice maintenant",
 
-    "onboarding.title": "Bienvenue sur Mascot Coach 👋",
+    "onboarding.title": "Bienvenue sur SideQuest 👋",
     "onboarding.text":
       "Choisis ton intervalle, ta mascotte, et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.",
     "onboarding.dismiss": "J'ai compris",
@@ -50,7 +50,7 @@ const TRANSLATIONS = {
     "mascot.hint": "Les mascottes disponibles dépendent du thème choisi ci-dessus.",
 
     "autolaunch.label": "Lancer au démarrage",
-    "autolaunch.hint": "Ouvre Mascot Coach automatiquement à la connexion.",
+    "autolaunch.hint": "Ouvre SideQuest automatiquement à la connexion.",
 
     "hook.status.installed": "Activé",
     "hook.status.notInstalled": "Non activé",
@@ -122,7 +122,7 @@ const TRANSLATIONS = {
     "settings.triggerNow": "🎲 Generate an exercise",
     "settings.triggerNow.title": "Generate an exercise now",
 
-    "onboarding.title": "Welcome to Mascot Coach 👋",
+    "onboarding.title": "Welcome to SideQuest 👋",
     "onboarding.text":
       "Pick your interval, your mascot, and turn on launch at startup if you'd like — everything stays editable anytime.",
     "onboarding.dismiss": "Got it",
@@ -158,7 +158,7 @@ const TRANSLATIONS = {
     "mascot.hint": "Available mascots depend on the theme chosen above.",
 
     "autolaunch.label": "Launch at startup",
-    "autolaunch.hint": "Opens Mascot Coach automatically when you log in.",
+    "autolaunch.hint": "Opens SideQuest automatically when you log in.",
 
     "hook.status.installed": "Enabled",
     "hook.status.notInstalled": "Not enabled",

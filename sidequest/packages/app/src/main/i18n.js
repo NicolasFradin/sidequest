@@ -7,10 +7,10 @@ const TRANSLATIONS = {
     trayStreak: (n) => `Streak actuel : ${n} jour(s)`,
     trayQuit: "Quitter",
     exportDialogTitle: "Exporter le plan",
-    exportFilterName: "Plan Mascot Coach (JSON)",
+    exportFilterName: "Plan SideQuest (JSON)",
     importDialogTitle: "Importer un plan",
     errorInvalidJson: "Ce fichier n'est pas un JSON valide.",
-    errorInvalidShape: "Ce fichier n'a pas le format d'un plan Mascot Coach (nom + exercices attendus).",
+    errorInvalidShape: "Ce fichier n'a pas le format d'un plan SideQuest (nom + exercices attendus).",
   },
   en: {
     trayOpenDashboard: "Open dashboard",
@@ -19,10 +19,10 @@ const TRANSLATIONS = {
     trayStreak: (n) => `Current streak: ${n} day${n === 1 ? "" : "s"}`,
     trayQuit: "Quit",
     exportDialogTitle: "Export plan",
-    exportFilterName: "Mascot Coach plan (JSON)",
+    exportFilterName: "SideQuest plan (JSON)",
     importDialogTitle: "Import a plan",
     errorInvalidJson: "This file isn't valid JSON.",
-    errorInvalidShape: "This file isn't in the Mascot Coach plan format (expected a name and exercises).",
+    errorInvalidShape: "This file isn't in the SideQuest plan format (expected a name and exercises).",
   },
 };
 
