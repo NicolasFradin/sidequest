@@ -1,5 +1,5 @@
 {
-  "name": "@mascot/core",
+  "name": "@sidequest/core",
   "version": "0.0.1",
   "description": "Logique métier réutilisable : scheduler, storage, packs d'exercices, gate",
   "type": "module",

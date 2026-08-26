@@ -1,7 +1,7 @@
 # Development Plan — Global Themes (skins)
 
 **Local repo**: `/Users/nicolas/perso/ClaudeCodeGym`
-**Status**: feature not planned initially in the roadmap (see [`plan-mvp-mascotte-coach.md`](plan-mvp-mascotte-coach.md), section 6) — started directly on 2026-08-16 at the user's request, documented after the fact.
+**Status**: feature not planned initially in the roadmap (see [`plan-mvp-sidequest.md`](plan-mvp-sidequest.md), section 6) — started directly on 2026-08-16 at the user's request, documented after the fact.
 
 ## 1. Vision
 

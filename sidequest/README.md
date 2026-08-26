@@ -1,14 +1,14 @@
-# Mascot Coach — MVP
+# SideQuest — MVP
 
-Desktop app that shows a coach mascot during idle time, prompting quick exercise breaks.
+Desktop app that shows a coach mascot during idle time, prompting quick quests (fitness today via the SideGym pack, more to come).
 
 ## Installing the app (end users)
 
 Download the latest release from the [GitHub Releases page](../../releases):
 
-- **macOS**: `Mascot Coach-x.x.x-mac-x64.dmg` → open the DMG, drag the app into `Applications`. The app isn't signed yet (no paid Apple Developer account at this stage), so macOS Gatekeeper will block the first launch ("app is damaged" or "unidentified developer"): **right-click the app → "Open"** (instead of double-clicking), then confirm. Only needed on the very first launch.
-- **Windows**: `Mascot Coach-x.x.x-win-x64.exe` (installer) or the `portable` build. Windows SmartScreen shows a similar warning (unsigned app) → "More info" → "Run anyway".
-- **Linux**: `Mascot Coach-x.x.x-linux-x86_64.AppImage` → `chmod +x` then run it directly, or the `.deb` via `sudo dpkg -i`.
+- **macOS**: `SideQuest-x.x.x-mac-x64.dmg` → open the DMG, drag the app into `Applications`. The app isn't signed yet (no paid Apple Developer account at this stage), so macOS Gatekeeper will block the first launch ("app is damaged" or "unidentified developer"): **right-click the app → "Open"** (instead of double-clicking), then confirm. Only needed on the very first launch.
+- **Windows**: `SideQuest-x.x.x-win-x64.exe` (installer) or the `portable` build. Windows SmartScreen shows a similar warning (unsigned app) → "More info" → "Run anyway".
+- **Linux**: `SideQuest-x.x.x-linux-x86_64.AppImage` → `chmod +x` then run it directly, or the `.deb` via `sudo dpkg -i`.
 
 ## Structure
 

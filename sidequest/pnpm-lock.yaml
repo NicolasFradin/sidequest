@@ -10,7 +10,7 @@ importers:
 
   packages/app:
     dependencies:
-      '@mascot/core':
+      '@sidequest/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -3760,7 +3760,7 @@ snapshots:
   path-scurry@1.11.1:
     dependencies:
       lru-cache: 10.4.3
-      minipass: 5.0.0
+      minipass: 7.1.3
 
   pathe@1.1.2: {}
 

@@ -1,5 +1,5 @@
 {
-  "name": "@mascot/app",
+  "name": "@sidequest/app",
   "version": "0.0.1",
   "private": true,
   "description": "App Electron : tray + overlay mascotte",
@@ -10,14 +10,14 @@
     "start": "electron .",
     "prestart": "electron-rebuild -f -w better-sqlite3",
     "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
-    "predist": "pnpm --filter @mascot/core build && electron-rebuild -f -w better-sqlite3",
+    "predist": "pnpm --filter @sidequest/core build && electron-rebuild -f -w better-sqlite3",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
-    "@mascot/core": "workspace:*"
+    "@sidequest/core": "workspace:*"
   },
   "devDependencies": {
     "electron": "^33.2.0",
@@ -25,8 +25,8 @@
     "@electron/rebuild": "^3.7.1"
   },
   "build": {
-    "appId": "com.mascotcoach.app",
-    "productName": "Mascot Coach",
+    "appId": "com.sidequest.app",
+    "productName": "SideQuest",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release",

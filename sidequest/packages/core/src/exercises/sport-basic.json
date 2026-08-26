@@ -1,6 +1,6 @@
 {
   "id": "sport-basic",
-  "name": "Sport - Programme de base",
+  "name": "SideGym - Programme de base",
   "exercises": [
     { "id": "squat-10", "label": "10 squats", "durationSec": 30, "category": "jambes" },
     { "id": "pushup-10", "label": "10 pompes", "durationSec": 30, "category": "bras" },

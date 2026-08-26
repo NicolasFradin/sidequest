@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="mascot/packages/app/build/icon.png" alt="Mascot Coach" width="160">
+  <img src="sidequest/packages/app/build/icon.png" alt="SideQuest" width="160">
   <br>
-  <strong>A desktop mascot that nudges you to move during idle time</strong>
+  <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while you wait</strong>
 </p>
 
 <p align="center">
@@ -11,14 +11,14 @@
 
 **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm.
 
-Mascot Coach sits in your tray and pops up a mascot with a quick exercise whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing.
+SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. Today that quest is fitness (the **SideGym** pack). The idea is bigger than sport: SideQuest is meant to grow into a marketplace of idle-time quests — language learning, relaxation, coding practice, whatever fits in 30 seconds between two prompts — including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
 
 ## How it works
 
 - A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active plan.
-- A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook Mascot Coach installs into `~/.claude/settings.json` for you.
+- A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook SideQuest installs into `~/.claude/settings.json` for you.
 - Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the exercise — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
-- Build your own **training plans** in the dashboard — a name and a list of exercises — or start from the bundled default plan. Only one plan is active at a time. Export/import as JSON to share a plan with someone else.
+- Build your own **training plans** in the dashboard — a name and a list of exercises — or start from the bundled default plan (SideGym). Only one plan is active at a time. Export/import as JSON to share a plan with someone else.
 
 If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
 
@@ -28,9 +28,9 @@ Download the latest build from the [**Releases**](../../releases) page:
 
 | OS | File |
 |---|---|
-| macOS | `Mascot Coach-x.x.x-mac-x64.dmg` |
-| Windows | `Mascot Coach-x.x.x-win-x64.exe` (or the `portable` build) |
-| Linux | `Mascot Coach-x.x.x-linux-x86_64.AppImage` (or the `.deb`) |
+| macOS | `SideQuest-x.x.x-mac-x64.dmg` |
+| Windows | `SideQuest-x.x.x-win-x64.exe` (or the `portable` build) |
+| Linux | `SideQuest-x.x.x-linux-x86_64.AppImage` (or the `.deb`) |
 
 The app isn't code-signed yet (no paid developer certificate at this stage), so your OS will warn you on first launch — that's expected, the app is open source and the code is right here:
 
@@ -40,7 +40,7 @@ The app isn't code-signed yet (no paid developer certificate at this stage), so 
 
 ## Usage
 
-Once installed, **Mascot Coach runs in the background** — no window opens on launch (except the very first time, to pick your settings). Find it in:
+Once installed, **SideQuest runs in the background** — no window opens on launch (except the very first time, to pick your settings). Find it in:
 
 - the **macOS menu bar** or the **Windows/Linux system tray** — click for the menu (open dashboard, trigger an exercise now, quit);
 - the **Dock/taskbar**, if your OS shows it there.
@@ -49,15 +49,15 @@ An exercise pops up automatically every 30 minutes by default (configurable in t
 
 ## Build from source / contribute
 
-The app's code lives in [`mascot/`](mascot/) — see [`mascot/README.md`](mascot/README.md) for dev setup, running tests, and packaging the app yourself.
+The app's code lives in [`sidequest/`](sidequest/) — see [`sidequest/README.md`](sidequest/README.md) for dev setup, running tests, and packaging the app yourself.
 
 ```
-mascot/
-├── packages/core/   # pure business logic (scheduler, SQLite storage, exercise plans) — no Electron dependency
+sidequest/
+├── packages/core/   # pure business logic (scheduler, SQLite storage, quest packs) — no Electron dependency
 └── packages/app/    # Electron app: tray, mascot overlay, dashboard
 ```
 
-Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-mascotte-coach.md`](docs/plan-mvp-mascotte-coach.md) for the original product plan and [`docs/plan-v0.5-hooks-claude-code.md`](docs/plan-v0.5-hooks-claude-code.md) for the Claude Code hooks design.
+Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan and [`docs/plan-v0.5-hooks-claude-code.md`](docs/plan-v0.5-hooks-claude-code.md) for the Claude Code hooks design.
 
 ## Roadmap — major next steps
 
@@ -66,7 +66,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-mascotte-coach.md`]
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/exercise/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
 - **LLM-generated exercises** — personalized programs generated via the Claude API instead of hand-written JSON packs.
-- **Real pack registry/marketplace** — plan import/export (JSON) already ships as a stepping stone; a browsable catalog of community plans is the natural next step, followed further out by a full marketplace with third-party creators.
+- **Marketplace of quests** — SideGym (fitness) is the first quest pack. Plan import/export (JSON) already ships as a stepping stone toward an installable pack registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).

@@ -1,7 +1,7 @@
 # V0.5 Development Plan — Claude Code Hooks
 
 **Local repo**: `/Users/nicolas/perso/ClaudeCodeGym`
-**Prerequisite**: MVP (see [`plan-mvp-mascotte-coach.md`](plan-mvp-mascotte-coach.md)) shipped and merged into `master`.
+**Prerequisite**: MVP (see [`plan-mvp-sidequest.md`](plan-mvp-sidequest.md)) shipped and merged into `master`.
 
 ## 1. Vision
 

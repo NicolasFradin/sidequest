@@ -13,10 +13,10 @@ import {
   isInstalled as isClaudeHookInstalled,
   install as installClaudeHook,
   uninstall as uninstallClaudeHook,
-} from "@mascot/core";
+} from "@sidequest/core";
 import { t } from "./i18n.js";
 
-app.setName("Mascot Coach");
+app.setName("SideQuest");
 // App tray-only en arrière-plan : pas de menu applicatif par défaut. Ça évite aussi les
 // raccourcis clavier par défaut d'Electron (Cmd+W, Cmd+Q...) qui détruiraient nos fenêtres
 // au lieu de les masquer — seul "Quitter" dans le tray doit pouvoir terminer le process.
@@ -33,11 +33,11 @@ let tray = null;
 let overlayWindow = null;
 let dashboardWindow = null;
 let isQuitting = false;
-/** @type {import('@mascot/core').Storage} */
+/** @type {import('@sidequest/core').Storage} */
 let storage = null;
-/** @type {import('@mascot/core').Scheduler} */
+/** @type {import('@sidequest/core').Scheduler} */
 let scheduler = null;
-/** @type {import('@mascot/core').HookServer} */
+/** @type {import('@sidequest/core').HookServer} */
 let hookServer = null;
 /** Nombre d'appels du hook reçus depuis le dernier déclenchement (voir hookEveryN) */
 let hookCallCount = 0;
@@ -120,7 +120,7 @@ function createDashboardWindow() {
     height: 640,
     minWidth: 720,
     minHeight: 480,
-    title: "Mascot Coach",
+    title: "SideQuest",
     show: false,
     backgroundColor: "#0b0e1a",
     webPreferences: {
@@ -170,12 +170,12 @@ function applyAutolaunch(enabled) {
     }
     if (process.platform === "linux") {
       const autostartDir = path.join(homedir(), ".config", "autostart");
-      const desktopFilePath = path.join(autostartDir, "mascot-coach.desktop");
+      const desktopFilePath = path.join(autostartDir, "sidequest.desktop");
       if (enabled) {
         mkdirSync(autostartDir, { recursive: true });
         writeFileSync(
           desktopFilePath,
-          `[Desktop Entry]\nType=Application\nName=Mascot Coach\nExec=${process.execPath}\nX-GNOME-Autostart-enabled=true\n`
+          `[Desktop Entry]\nType=Application\nName=SideQuest\nExec=${process.execPath}\nX-GNOME-Autostart-enabled=true\n`
         );
       } else if (existsSync(desktopFilePath)) {
         unlinkSync(desktopFilePath);
@@ -278,7 +278,7 @@ function createTray() {
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 });
   icon.setTemplateImage(true); // s'adapte au mode clair/sombre de la menu bar macOS
   tray = new Tray(icon);
-  tray.setToolTip("Mascot Coach");
+  tray.setToolTip("SideQuest");
   // Le clic gauche sur l'icône tray n'ouvre plus le dashboard automatiquement — seul
   // "Ouvrir le dashboard" dans le menu (clic droit), le raccourci clavier ou l'icône ⚙
   // de l'overlay le font.
@@ -331,7 +331,7 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
-    const dbPath = path.join(app.getPath("userData"), "mascot.sqlite");
+    const dbPath = path.join(app.getPath("userData"), "sidequest.sqlite");
     storage = new Storage(dbPath);
     const settings = storage.getSettings();
     const isFirstLaunch = !storage.hasBeenConfigured();
