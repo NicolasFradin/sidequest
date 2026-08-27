@@ -576,7 +576,9 @@ html, body {
 
 .plan-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-card);
+  /* --pack-accent posée en inline style par renderPlansGrid() (JS) — couleur propre au pack
+     (pack.color, sinon une teinte stable dérivée de son id, voir sqMascots.resolvePackColor). */
+  border: 1px solid color-mix(in srgb, var(--pack-accent) 45%, var(--border-card));
   border-radius: 14px;
   padding: 18px 20px;
   display: flex;
@@ -633,7 +635,7 @@ html, body {
 .plan-card-xp-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-teal), var(--accent-magenta));
+  background: var(--pack-accent, var(--accent-teal));
   transition: width 0.3s ease;
 }
 

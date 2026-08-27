@@ -64,6 +64,21 @@ function resolvePackMascotStage(mascot, level) {
   return eligible[0]?.imagePath ?? mascot.imagePath;
 }
 
+/**
+ * Couleur d'accent d'un pack : celle définie dans son JSON (`pack.color`) si présente, sinon une
+ * teinte stable dérivée d'un hash de son id (même pack -> même couleur à chaque relance de
+ * l'app, pas de tirage aléatoire) — évite d'imposer un sélecteur de couleur à l'import (v1).
+ * Miroir de la fonction équivalente côté main process (packages/app/src/main/index.js), même
+ * raison de duplication que resolvePackMascotStage ci-dessus.
+ */
+function resolvePackColor(pack) {
+  if (pack.color) return pack.color;
+  let hash = 0;
+  for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
+}
+
 window.sqMascots = {
   MASCOT_LABELS,
   MASCOT_IMAGES,
@@ -71,4 +86,5 @@ window.sqMascots = {
   MASCOT_LIGHT_VARIANTS,
   resolveMascotImage,
   resolvePackMascotStage,
+  resolvePackColor,
 };

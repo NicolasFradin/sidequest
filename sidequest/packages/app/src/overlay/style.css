@@ -109,7 +109,7 @@ html, body {
   width: 140px;
   height: 140px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 229, 212, 0.08));
+  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--pack-accent, var(--accent-teal)) 35%, transparent));
   margin-bottom: 8px;
 }
 
@@ -182,6 +182,6 @@ html, body {
 
 .btn-secondary {
   background: transparent;
-  color: var(--accent-teal);
-  border: 1.5px solid var(--accent-teal);
+  color: var(--pack-accent, var(--accent-teal));
+  border: 1.5px solid var(--pack-accent, var(--accent-teal));
 }

@@ -381,6 +381,7 @@ function renderPlansGrid() {
 
     const card = document.createElement("div");
     card.className = "plan-card";
+    card.style.setProperty("--pack-accent", sqMascots.resolvePackColor(plan));
 
     const header = document.createElement("div");
     header.className = "plan-card-header";

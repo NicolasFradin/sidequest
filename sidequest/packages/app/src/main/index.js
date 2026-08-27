@@ -258,6 +258,19 @@ function resolvePackMascotImagePath(mascot, level) {
   return eligible[0]?.imagePath ?? mascot.imagePath;
 }
 
+/**
+ * Couleur d'accent d'un pack — miroir de `resolvePackColor` dans shared/mascots.js (dashboard),
+ * dupliquée ici pour l'overlay qui tourne côté main process (contexte Node, pas de module partagé
+ * possible avec le renderer). `pack.color` si défini, sinon une teinte stable dérivée de son id.
+ */
+function resolvePackColor(pack) {
+  if (pack.color) return pack.color;
+  let hash = 0;
+  for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
+}
+
 function showExercise() {
   const settings = storage.getSettings();
   const pack = loadActiveProgram(settings);
@@ -282,6 +295,9 @@ function showExercise() {
     // croissance selon le niveau XP du pack) — l'overlay n'a pas besoin d'accès fichier
     // lui-même, ce chemin absolu résolu côté main lui suffit.
     mascotImage: mascotStageImagePath ? `file://${mascotStageImagePath}` : null,
+    // Couleur d'accent du pack actif — l'overlay la pose en variable CSS (--pack-accent),
+    // consommée par son style.css (bordure du bouton "Passer", halo de la mascotte).
+    packColor: resolvePackColor(pack),
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
