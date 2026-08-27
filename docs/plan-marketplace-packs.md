@@ -105,6 +105,19 @@ New doc, `docs/plan-community-packs.md`, linked from the V1.5 roadmap row:
 3. **Relationship to the existing roadmap**, without contradicting it: this PR path is a lightweight, manual (regular human code review) precursor to V1.5 (`sidequest install <pack>`, dynamic registry) and V3 (paid, formally-reviewed third-party marketplace) already described in `plan-mvp-sidequest.md`.
 4. **Constraints carried over**: packs stay purely declarative JSON (same security rationale as `packs.ts`'s existing comment); no CI schema-validation bot, no art-licensing requirement for now — left to human review, deliberately not over-engineered.
 
+### 3.7 Bundled pack translation (fr/en) — done, 2026-08-27
+
+The dashboard has been bilingual (fr/en) since before this plan, but pack content itself — `Pack.name`, `Exercise.label`/`.category` — was always plain French text baked into the JSON, untranslated regardless of the UI language. Fixed for bundled packs only (SideGym, SideCat, SideTama, and any future one added via 3.6's PR path):
+
+- **`packages/core/src/packs.ts`**: `Pack`/`Exercise` gain optional `nameEn`/`labelEn`/`categoryEn` fields — French stays the reference (`name`/`label`/`category`, unchanged), English is an override only present on bundled packs. New `translatePack(pack, language)`: returns the pack as-is for `"fr"`, or with every `*En` field substituted in for `"en"` (falling back to the French field if a specific translation is missing) — same default-fr/override-en pattern already used by every `t()` dictionary in the app (`dashboard/i18n.js`, `main/i18n.js`). A no-op on custom/imported/generated packs, which never have `*En` fields (user content, already in whatever language the user wrote it in) — safe to call unconditionally without checking `source` first.
+- All three bundled pack JSON files got full English translations (name + every exercise's label/category).
+- **`packages/app/src/main/index.js`**: `loadActiveProgram()` now translates before returning — the single choke point already shared by `showExercise()` (overlay) and `dashboard:get-exercises` (history table), so both picked up translation for free from one change. `dashboard:get-plans` translates `bundledPacks` (not `customPlans`) before sending to the renderer. `dashboard:export-plan` translates too, so an exported file matches what's currently on screen.
+- **`packages/app/src/dashboard/renderer.js`**: the language-change branch in `applySettingsToUI()` now calls `refreshPlans()` (re-fetch over IPC) instead of `renderPlansGrid()` (re-render from the already-cached, already-stale-language response) — translation happens server-side in main, so the renderer needs a fresh fetch to see it.
+
+Verified live: switching the dashboard's language bubble from fr→en retranslates the gallery card names (`"SideCat - S'occuper de son chat"` → `"SideCat - Look After Your Cat"`), the read-only exercise list in a bundled pack's editor, and — checked via `dashboard:get-exercises` directly, since it's the exact function the overlay's `showExercise()` also calls — all 12 of SideGym's exercise labels (`"Gainage"` → `"Plank"`, `"10 pompes"` → `"10 push-ups"`, etc.).
+
+**Left as a known, narrow gap**: if a bundled pack is open in the (read-only) plan editor at the moment the language changes, its exercise list won't retranslate until closed and reopened — `editingPlan` is a local snapshot, not re-fetched on language change, and re-fetching it live wasn't judged worth the complexity for a read-only view of a rare timing coincidence.
+
 ## 4. Functional scope
 
 **Included**

@@ -1,18 +1,19 @@
 {
   "id": "sport-basic",
   "name": "SideGym - Programme de base",
+  "nameEn": "SideGym - Basic Program",
   "exercises": [
-    { "id": "squat-10", "label": "10 squats", "durationSec": 30, "category": "jambes" },
-    { "id": "pushup-10", "label": "10 pompes", "durationSec": 30, "category": "bras" },
-    { "id": "plank-30", "label": "Gainage", "durationSec": 30, "category": "abdos" },
-    { "id": "lunges-10", "label": "10 fentes (5 par jambe)", "durationSec": 30, "category": "jambes" },
-    { "id": "jumping-jacks-20", "label": "20 jumping jacks", "durationSec": 30, "category": "cardio" },
-    { "id": "stretch-neck", "label": "Étirement de la nuque", "durationSec": 20, "category": "étirement" },
-    { "id": "stretch-shoulders", "label": "Étirement des épaules", "durationSec": 20, "category": "étirement" },
-    { "id": "situp-10", "label": "10 crunchs", "durationSec": 30, "category": "abdos" },
-    { "id": "calf-raise-15", "label": "15 montées sur pointes de pieds", "durationSec": 20, "category": "jambes" },
-    { "id": "wall-sit-20", "label": "Chaise contre le mur", "durationSec": 20, "category": "jambes" },
-    { "id": "arm-circles", "label": "Cercles de bras", "durationSec": 20, "category": "bras" },
-    { "id": "high-knees", "label": "Montées de genoux", "durationSec": 20, "category": "cardio" }
+    { "id": "squat-10", "label": "10 squats", "labelEn": "10 squats", "durationSec": 30, "category": "jambes", "categoryEn": "legs" },
+    { "id": "pushup-10", "label": "10 pompes", "labelEn": "10 push-ups", "durationSec": 30, "category": "bras", "categoryEn": "arms" },
+    { "id": "plank-30", "label": "Gainage", "labelEn": "Plank", "durationSec": 30, "category": "abdos", "categoryEn": "abs" },
+    { "id": "lunges-10", "label": "10 fentes (5 par jambe)", "labelEn": "10 lunges (5 per leg)", "durationSec": 30, "category": "jambes", "categoryEn": "legs" },
+    { "id": "jumping-jacks-20", "label": "20 jumping jacks", "labelEn": "20 jumping jacks", "durationSec": 30, "category": "cardio", "categoryEn": "cardio" },
+    { "id": "stretch-neck", "label": "Étirement de la nuque", "labelEn": "Neck stretch", "durationSec": 20, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "stretch-shoulders", "label": "Étirement des épaules", "labelEn": "Shoulder stretch", "durationSec": 20, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "situp-10", "label": "10 crunchs", "labelEn": "10 crunches", "durationSec": 30, "category": "abdos", "categoryEn": "abs" },
+    { "id": "calf-raise-15", "label": "15 montées sur pointes de pieds", "labelEn": "15 calf raises", "durationSec": 20, "category": "jambes", "categoryEn": "legs" },
+    { "id": "wall-sit-20", "label": "Chaise contre le mur", "labelEn": "Wall sit", "durationSec": 20, "category": "jambes", "categoryEn": "legs" },
+    { "id": "arm-circles", "label": "Cercles de bras", "labelEn": "Arm circles", "durationSec": 20, "category": "bras", "categoryEn": "arms" },
+    { "id": "high-knees", "label": "Montées de genoux", "labelEn": "High knees", "durationSec": 20, "category": "cardio", "categoryEn": "cardio" }
   ]
 }

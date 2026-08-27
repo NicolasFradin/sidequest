@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { loadPack, pickRandomExercise, listBundledPacks, parsePackJson, MAX_PACK_EXERCISES } from "../src/packs.js";
+import {
+  loadPack,
+  pickRandomExercise,
+  listBundledPacks,
+  parsePackJson,
+  translatePack,
+  MAX_PACK_EXERCISES,
+} from "../src/packs.js";
 
 describe("packs", () => {
   it("charge le pack sport-basic avec au moins 10 exercices", () => {
@@ -90,5 +97,40 @@ describe("parsePackJson", () => {
     expect(parsePackJson(null)).toEqual({ error: "invalid-shape" });
     expect(parsePackJson("pas un objet")).toEqual({ error: "invalid-shape" });
     expect(parsePackJson(42)).toEqual({ error: "invalid-shape" });
+  });
+});
+
+describe("translatePack", () => {
+  it("retourne le pack tel quel en français (référence)", () => {
+    const pack = loadPack("sport-basic");
+    expect(translatePack(pack, "fr")).toEqual(pack);
+  });
+
+  it("traduit le nom et les exercices en anglais pour un pack embarqué", () => {
+    const pack = loadPack("sport-basic");
+    const translated = translatePack(pack, "en");
+    expect(translated.name).toBe("SideGym - Basic Program");
+    // "10 pompes" -> "10 push-ups" : contrairement à "10 squats" (index 0), identique en fr/en,
+    // celui-ci diffère réellement — vérifie qu'une vraie traduction a bien été appliquée.
+    const pushups = translated.exercises.find((e) => e.id === "pushup-10");
+    expect(pushups?.label).toBe("10 push-ups");
+    expect(pushups?.category).toBe("arms");
+    expect(translated.exercises.every((e) => e.label && e.category)).toBe(true);
+  });
+
+  it("ne modifie pas le nombre ni les id des exercices", () => {
+    const pack = loadPack("sport-basic");
+    const translated = translatePack(pack, "en");
+    expect(translated.exercises.map((e) => e.id)).toEqual(pack.exercises.map((e) => e.id));
+  });
+
+  it("ne fait rien sur un pack sans traductions (custom/importé/généré)", () => {
+    const pack = {
+      id: "custom-1",
+      name: "Mon pack perso",
+      source: "custom" as const,
+      exercises: [{ id: "x", label: "Fais un truc", durationSec: 20, category: "perso" }],
+    };
+    expect(translatePack(pack, "en")).toEqual(pack);
   });
 });

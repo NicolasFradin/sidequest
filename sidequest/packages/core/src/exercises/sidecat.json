@@ -1,15 +1,16 @@
 {
   "id": "sidecat",
   "name": "SideCat - S'occuper de son chat",
+  "nameEn": "SideCat - Look After Your Cat",
   "color": "#8a6a45",
   "exercises": [
-    { "id": "cat-feed", "label": "Nourris ton chat", "durationSec": 15, "category": "repas" },
-    { "id": "cat-pet", "label": "Une caresse, une gamelle, 30 secondes", "durationSec": 30, "category": "câlin" },
-    { "id": "cat-ears", "label": "Gratte-lui les oreilles", "durationSec": 15, "category": "câlin" },
-    { "id": "cat-litter", "label": "Change sa litière", "durationSec": 30, "category": "entretien" },
-    { "id": "cat-play", "label": "Agite un jouet devant lui 5 fois", "durationSec": 20, "category": "jeu" },
-    { "id": "cat-water", "label": "Vérifie sa gamelle d'eau", "durationSec": 10, "category": "repas" },
-    { "id": "cat-brush", "label": "Brosse-le un peu", "durationSec": 30, "category": "entretien" },
-    { "id": "cat-talk", "label": "Parle-lui doucement", "durationSec": 15, "category": "câlin" }
+    { "id": "cat-feed", "label": "Nourris ton chat", "labelEn": "Feed your cat", "durationSec": 15, "category": "repas", "categoryEn": "food" },
+    { "id": "cat-pet", "label": "Une caresse, une gamelle, 30 secondes", "labelEn": "A pet, a bowl, 30 seconds", "durationSec": 30, "category": "câlin", "categoryEn": "cuddle" },
+    { "id": "cat-ears", "label": "Gratte-lui les oreilles", "labelEn": "Scratch its ears", "durationSec": 15, "category": "câlin", "categoryEn": "cuddle" },
+    { "id": "cat-litter", "label": "Change sa litière", "labelEn": "Change the litter box", "durationSec": 30, "category": "entretien", "categoryEn": "care" },
+    { "id": "cat-play", "label": "Agite un jouet devant lui 5 fois", "labelEn": "Wiggle a toy in front of it 5 times", "durationSec": 20, "category": "jeu", "categoryEn": "play" },
+    { "id": "cat-water", "label": "Vérifie sa gamelle d'eau", "labelEn": "Check its water bowl", "durationSec": 10, "category": "repas", "categoryEn": "food" },
+    { "id": "cat-brush", "label": "Brosse-le un peu", "labelEn": "Brush it a little", "durationSec": 30, "category": "entretien", "categoryEn": "care" },
+    { "id": "cat-talk", "label": "Parle-lui doucement", "labelEn": "Talk to it softly", "durationSec": 15, "category": "câlin", "categoryEn": "cuddle" }
   ]
 }

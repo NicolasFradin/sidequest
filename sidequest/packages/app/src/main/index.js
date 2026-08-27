@@ -11,6 +11,7 @@ import {
   listBundledPacks,
   pickRandomExercise,
   parsePackJson,
+  translatePack,
   HookServer,
   isInstalled as isClaudeHookInstalled,
   install as installClaudeHook,
@@ -212,10 +213,14 @@ function applyAutolaunch(enabled) {
  * Replie sur le plan par défaut si le résultat n'a aucun exercice (ex. plan custom créé mais pas
  * encore rempli, puis activé par erreur) — sinon pickRandomExercise() renvoie `undefined` et bloque
  * silencieusement les boutons Fait/Passer (voire le hook Claude Code en mode bloquant).
+ * Traduit selon la langue de l'UI (no-op sur un plan custom/importé/généré, qui n'a jamais de
+ * champs `*En` — voir translatePack()) : centralisé ici pour couvrir à la fois showExercise()
+ * (l'overlay) et dashboard:get-exercises (l'historique) sans dupliquer l'appel.
  */
 function loadActiveProgram(settings) {
   const plan = storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
-  return plan.exercises.length > 0 ? plan : loadPack("sport-basic");
+  const resolved = plan.exercises.length > 0 ? plan : loadPack("sport-basic");
+  return translatePack(resolved, settings.language);
 }
 
 /**
@@ -611,10 +616,13 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
-    ipcMain.handle("dashboard:get-plans", () => ({
-      bundledPacks: listBundledPacks(),
-      customPlans: storage.getPlans(),
-    }));
+    ipcMain.handle("dashboard:get-plans", () => {
+      const lang = storage.getSettings().language;
+      return {
+        bundledPacks: listBundledPacks().map((p) => translatePack(p, lang)),
+        customPlans: storage.getPlans(),
+      };
+    });
     ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
@@ -634,10 +642,13 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle("dashboard:export-plan", async (_event, id) => {
-      const plan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
-      if (!plan) return { exported: false };
-
       const lang = storage.getSettings().language;
+      const rawPlan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
+      if (!rawPlan) return { exported: false };
+      // Exporte dans la langue actuellement affichée (no-op sur un plan custom/importé/généré,
+      // qui n'a jamais de champs `*En`) — cohérent avec ce que l'utilisateur voit à l'écran.
+      const plan = translatePack(rawPlan, lang);
+
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
         title: t(lang, "exportDialogTitle"),
         defaultPath: `${plan.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,

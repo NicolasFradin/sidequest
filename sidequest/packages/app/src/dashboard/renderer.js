@@ -110,11 +110,14 @@ function applySettingsToUI(settings) {
   i18n.applyStaticTranslations();
   // Ré-applique la traduction des libellés générés dynamiquement en JS (pas couverts par
   // data-i18n) uniquement quand la langue a réellement changé — évite du travail inutile
-  // (re-rendu de la liste de plans, re-fetch de l'historique) à chaque sauvegarde de réglage.
+  // (re-fetch de la galerie, re-fetch de l'historique) à chaque sauvegarde de réglage.
   if (settings.language !== lastAppliedLanguage) {
     lastAppliedLanguage = settings.language;
     applyHookStatus(hookStatusBadge.classList.contains("installed"));
-    renderPlansGrid();
+    // refreshPlans() (re-fetch IPC), pas juste renderPlansGrid() (re-rendu du cache) : les packs
+    // embarqués sont traduits côté main process (translatePack(), voir @sidequest/core) selon la
+    // langue au moment de l'appel — un simple re-rendu du cache garderait l'ancienne langue.
+    refreshPlans();
     if (editingPlan) renderPlanExercises();
     if (document.getElementById("panel-history").classList.contains("active")) refreshHistory();
   }
