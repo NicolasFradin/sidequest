@@ -135,13 +135,12 @@ html, body {
   gap: 28px;
 }
 
-.brand {
-  font-family: "Bebas Neue", -apple-system, sans-serif;
-  font-size: 26px;
-  line-height: 1;
-  letter-spacing: 1px;
-  color: var(--accent-teal);
-  padding: 0 8px;
+.brand-logo {
+  display: block;
+  width: 100%;
+  max-width: 170px;
+  height: auto;
+  margin: 0 8px;
 }
 
 .nav {
@@ -353,6 +352,30 @@ html, body {
 .page-icon-btn:hover {
   border-color: var(--accent-teal);
   transform: rotate(45deg);
+}
+
+.info-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  cursor: help;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.info-bubble:hover,
+.info-bubble:focus-visible {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  outline: none;
 }
 
 .onboarding-banner[hidden] {
