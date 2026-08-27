@@ -8,7 +8,7 @@
 <body>
   <div class="dashboard">
     <aside class="sidebar">
-      <p class="brand">Mascot<br />Coach</p>
+      <img class="brand-logo" src="../../assets/sidequest-logo.png" alt="SideQuest" />
       <nav class="nav" id="tabs">
         <button class="nav-item active" data-tab="settings">
           <span class="nav-icon">⚙</span> <span data-i18n="nav.settings">Réglages</span>
@@ -37,7 +37,7 @@
       <section class="tab-panel active" id="panel-settings">
         <div class="page-header">
           <h1 class="page-title" data-i18n="nav.settings">Réglages</h1>
-          <button id="trigger-exercise" class="page-action" data-i18n="settings.triggerNow" data-i18n-title="settings.triggerNow.title" title="Générer un exercice maintenant">🎲 Générer un exercice</button>
+          <button id="trigger-exercise" class="page-action" data-i18n="settings.triggerNow" data-i18n-title="settings.triggerNow.title" title="Générer une quête maintenant">🎲 Générer une quête</button>
         </div>
 
         <div class="onboarding-banner" id="onboarding-banner" hidden>
@@ -49,7 +49,7 @@
         </div>
 
         <div class="card">
-          <label class="field-label" data-i18n="interval.label">Intervalle entre deux exercices</label>
+          <label class="field-label" data-i18n="interval.label">Intervalle entre deux quêtes</label>
           <div class="interval-row">
             <input type="range" id="interval-range" min="1" max="120" step="1" />
             <span class="interval-value" id="interval-value">30 min</span>
@@ -63,7 +63,7 @@
             <button class="option-btn" data-mode="gate" data-i18n="mode.gate">Blocage réel</button>
             <button class="option-btn" data-mode="mixed" data-i18n="mode.mixed">Mixte</button>
           </div>
-          <p class="field-hint" data-i18n-html="mode.hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire l'exercice. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
+          <p class="field-hint" data-i18n-html="mode.hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire la quête. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
         </div>
 
         <div class="card">
@@ -73,7 +73,7 @@
             <button class="option-btn" data-trigger-source="hook" data-i18n="triggerSource.hook">Hook Claude Code seul</button>
             <button class="option-btn" data-trigger-source="both" data-i18n="triggerSource.both">Les deux</button>
           </div>
-          <p class="field-hint" data-i18n="triggerSource.hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des exercices. Les deux (défaut) : minuteur ET hook actifs.</p>
+          <p class="field-hint" data-i18n="triggerSource.hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des quêtes. Les deux (défaut) : minuteur ET hook actifs.</p>
         </div>
 
         <div class="card">
@@ -151,6 +151,22 @@
             <div class="page-header-actions">
               <button id="generate-plan-btn" class="option-btn" data-i18n="plans.generate">✨ Générer avec l'IA</button>
               <button id="import-plan-btn" class="option-btn" data-i18n="plans.import">Importer un plan</button>
+              <span class="info-bubble" tabindex="0"
+                >ⓘ<span class="info-bubble-tooltip" data-i18n-html="plans.import.infoTooltip"
+                  >Format attendu (fichier JSON) :
+                  <pre>{
+  "name": "Mon pack",
+  "mascot": {
+    "label": "Ma mascotte",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "Ma quête", "durationSec": 30, "category": "détente" }
+  ]
+}</pre>
+                  La mascotte est optionnelle.</span
+                ></span
+              >
               <button id="new-plan-btn" class="page-action" data-i18n="plans.new">+ Nouveau plan</button>
             </div>
           </div>
@@ -170,14 +186,14 @@
 
           <div class="card">
             <label class="field-label" data-i18n="planEditor.mascotLabel">Mascotte</label>
-            <p class="field-hint" data-i18n="planEditor.mascotHint">Propre à ce pack — sinon la mascotte globale s'affiche. Choisis-en une, ou ajoute la tienne.</p>
+            <p class="field-hint" data-i18n="planEditor.mascotHint">Propre à ce pack — sinon la mascotte SideQuest par défaut s'affiche. Choisis-en une, ou ajoute la tienne.</p>
             <div class="mascot-row" id="plan-mascot-options"></div>
           </div>
 
           <div class="card">
-            <label class="field-label" data-i18n="planEditor.exercisesLabel">Exercices</label>
+            <label class="field-label" data-i18n="planEditor.exercisesLabel">Quêtes</label>
             <div class="plan-exercises-list" id="plan-exercises-list"></div>
-            <button id="plan-add-exercise-btn" class="option-btn" data-i18n="planEditor.addExercise">+ Ajouter un exercice</button>
+            <button id="plan-add-exercise-btn" class="option-btn" data-i18n="planEditor.addExercise">+ Ajouter une quête</button>
             <datalist id="exercise-category-options">
               <option value="jambes"></option>
               <option value="bras"></option>
@@ -238,7 +254,7 @@
             <thead>
               <tr>
                 <th data-i18n="history.table.date">Date</th>
-                <th data-i18n="history.table.exercise">Exercice</th>
+                <th data-i18n="history.table.exercise">Quête</th>
                 <th data-i18n="history.table.mascot">Mascotte</th>
                 <th data-i18n="history.table.mode">Mode</th>
                 <th data-i18n="history.table.status">Statut</th>

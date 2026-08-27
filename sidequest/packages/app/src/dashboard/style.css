@@ -135,13 +135,12 @@ html, body {
   gap: 28px;
 }
 
-.brand {
-  font-family: "Bebas Neue", -apple-system, sans-serif;
-  font-size: 26px;
-  line-height: 1;
-  letter-spacing: 1px;
-  color: var(--accent-teal);
-  padding: 0 8px;
+.brand-logo {
+  display: block;
+  width: 100%;
+  max-width: 170px;
+  height: auto;
+  margin: 0 8px;
 }
 
 .nav {
@@ -353,6 +352,75 @@ html, body {
 .page-icon-btn:hover {
   border-color: var(--accent-teal);
   transform: rotate(45deg);
+}
+
+.info-bubble {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  cursor: help;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.info-bubble:hover,
+.info-bubble:focus-visible {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  outline: none;
+}
+
+/* Tooltip maison plutôt que le `title` natif — pas fiable dans ce contexte Electron
+   (n'apparaissait pas au survol, cf. retour utilisateur). Un vrai élément enfant (pas
+   `content: attr(title)`) pour pouvoir y mettre l'exemple JSON en <pre> mis en forme. */
+.info-bubble-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.5;
+  font-style: normal;
+  font-weight: 400;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  z-index: 20;
+}
+
+.info-bubble-tooltip pre {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  overflow-x: auto;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre;
+}
+
+.info-bubble:hover .info-bubble-tooltip,
+.info-bubble:focus-visible .info-bubble-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 
 .onboarding-banner[hidden] {

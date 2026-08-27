@@ -498,12 +498,18 @@ function allPlans() {
 
 /** Image de la carte d'un pack dans la galerie : sa propre mascotte si elle en a une (pack
     importé avec sa propre image, éventuellement un palier de croissance selon le niveau XP
-    du pack), sinon la mascotte globale actuellement choisie — c'est effectivement celle qui
-    s'affichera à l'écran si ce pack est activé. */
+    du pack) ; à défaut, un pack bundled (SideGym...) retombe sur la mascotte globale
+    actuellement choisie — c'est effectivement celle qui s'affichera à l'écran si ce pack est
+    activé — tandis qu'un pack custom/importé/généré par IA retombe sur la mascotte SideQuest
+    par défaut plutôt que d'hériter du skin visuel en cours. */
 function planCardMascotImage(plan) {
   const level = plansState.progress?.[plan.id]?.level ?? 1;
   const stageImagePath = sqMascots.resolvePackMascotStage(plan.mascot, level);
-  const overrideUrl = stageImagePath ? `file://${stageImagePath}` : null;
+  const overrideUrl = stageImagePath
+    ? `file://${stageImagePath}`
+    : plan.source !== "bundled"
+      ? sqMascots.DEFAULT_PACK_MASCOT_IMAGE
+      : null;
   const mascotId = plan.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
   return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }

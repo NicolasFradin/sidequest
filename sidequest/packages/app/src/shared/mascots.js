@@ -37,6 +37,15 @@ const MASCOTS_BY_THEME = {
 const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
 
 /**
+ * Mascotte par défaut d'un pack custom/importé/généré par IA qui n'a pas la sienne — remplace le
+ * repli sur la mascotte globale active pour ces sources-là (un pack fabriqué par l'utilisateur ou
+ * une IA ne devrait pas hériter du skin visuel en cours, ex. le sergent en mode Military camo).
+ * Les packs bundled (SideGym...) gardent l'ancien comportement (repli sur la mascotte globale) —
+ * voir planCardMascotImage() côté dashboard et showExercise() côté main (packages/app/src/main).
+ */
+const DEFAULT_PACK_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
+
+/**
  * @param {string} mascotId
  * @param {"dark" | "light"} theme
  * @param {string | null} [overrideImageUrl] Image déjà résolue côté main (mascotte propre à un
@@ -84,6 +93,7 @@ window.sqMascots = {
   MASCOT_IMAGES,
   MASCOTS_BY_THEME,
   MASCOT_LIGHT_VARIANTS,
+  DEFAULT_PACK_MASCOT_IMAGE,
   resolveMascotImage,
   resolvePackMascotStage,
   resolvePackColor,

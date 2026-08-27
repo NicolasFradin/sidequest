@@ -315,16 +315,23 @@ function mascotToDataUri(mascot) {
   }
 }
 
+/** Mascotte par défaut d'un pack custom/importé/généré par IA sans mascotte propre — miroir de
+ * `DEFAULT_PACK_MASCOT_IMAGE` dans shared/mascots.js (dashboard), résolue ici en chemin absolu
+ * puisque ce process ne connaît pas la racine relative de l'overlay/du dashboard. */
+const DEFAULT_PACK_MASCOT_PATH = path.join(ASSETS_DIR, "mascots", "sidequest.png");
+
 /**
  * Résout le chemin de l'image d'une mascotte de pack selon le niveau atteint (paliers de
  * croissance optionnels, ex. SideCat/SideTama — voir `PackMascot.stages` dans @sidequest/core).
  * Sans `stages`, `imagePath` sert pour tous les niveaux (comportement inchangé pour SideGym etc.).
+ * Un pack sans mascotte propre retombe sur `DEFAULT_PACK_MASCOT_PATH`, sauf s'il est bundled
+ * (SideGym...), qui garde le repli sur la mascotte globale géré par l'appelant (`payload.mascot`).
  */
-function resolvePackMascotImagePath(mascot, level) {
-  if (!mascot) return null;
-  if (!mascot.stages?.length) return mascot.imagePath;
-  const eligible = mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
-  return eligible[0]?.imagePath ?? mascot.imagePath;
+function resolvePackMascotImagePath(pack, level) {
+  if (!pack.mascot) return pack.source === "bundled" ? null : DEFAULT_PACK_MASCOT_PATH;
+  if (!pack.mascot.stages?.length) return pack.mascot.imagePath;
+  const eligible = pack.mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
+  return eligible[0]?.imagePath ?? pack.mascot.imagePath;
 }
 
 /**
@@ -373,13 +380,14 @@ function showExercise() {
   currentBlocking = blocking;
   currentPlanId = pack.id;
 
-  const mascotStageImagePath = resolvePackMascotImagePath(pack.mascot, packProgress.level);
+  const mascotStageImagePath = resolvePackMascotImagePath(pack, packProgress.level);
   const payload = {
     exercise,
     mascot: settings.activeMascot,
     // Mascotte propre au pack (importée avec sa propre image, éventuellement un palier de
-    // croissance selon le niveau XP du pack) — l'overlay n'a pas besoin d'accès fichier
-    // lui-même, ce chemin absolu résolu côté main lui suffit.
+    // croissance selon le niveau XP du pack), ou la mascotte SideQuest par défaut pour un pack
+    // custom/importé/généré sans la sienne (voir resolvePackMascotImagePath) — l'overlay n'a
+    // pas besoin d'accès fichier lui-même, ce chemin absolu résolu côté main lui suffit.
     mascotImage: mascotStageImagePath ? `file://${mascotStageImagePath}` : null,
     // Couleur d'accent du pack actif — l'overlay la pose en variable CSS (--pack-accent),
     // consommée par son style.css (bordure du bouton "Passer", halo de la mascotte).

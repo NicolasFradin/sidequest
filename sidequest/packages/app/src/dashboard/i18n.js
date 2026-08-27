@@ -1,7 +1,7 @@
 /**
  * Dictionnaire FR/EN de l'UI du dashboard. Clé plate -> chaîne, ou fonction pour les rares cas
  * avec interpolation (pluriel, compteur). Les noms de thèmes visuels (Miami 80's, etc.) et le
- * contenu des exercices/plans (données utilisateur) ne sont volontairement pas traduits ici.
+ * contenu des quêtes/plans (données utilisateur) ne sont volontairement pas traduits ici.
  */
 const TRANSLATIONS = {
   fr: {
@@ -11,29 +11,29 @@ const TRANSLATIONS = {
     "theme.button": "Thème",
     "theme.toggle.title": "Changer de thème",
 
-    "settings.triggerNow": "🎲 Générer un exercice",
-    "settings.triggerNow.title": "Générer un exercice maintenant",
+    "settings.triggerNow": "🎲 Générer une quête",
+    "settings.triggerNow.title": "Générer une quête maintenant",
 
     "onboarding.title": "Bienvenue sur SideQuest 👋",
     "onboarding.text":
       "Choisis ton intervalle et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.",
     "onboarding.dismiss": "J'ai compris",
 
-    "interval.label": "Intervalle entre deux exercices",
+    "interval.label": "Intervalle entre deux quêtes",
 
     "mode.label": "Mode",
     "mode.notify": "Notification douce",
     "mode.gate": "Blocage réel",
     "mode.mixed": "Mixte",
     "mode.hint":
-      "Notification douce : \"Passer\" toujours possible. Blocage réel : impossible de fermer sans faire l'exercice. Mixte : \"Passer\" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).",
+      "Notification douce : \"Passer\" toujours possible. Blocage réel : impossible de fermer sans faire la quête. Mixte : \"Passer\" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).",
 
     "triggerSource.label": "Source de déclenchement",
     "triggerSource.timer": "Minuteur seul",
     "triggerSource.hook": "Hook Claude Code seul",
     "triggerSource.both": "Les deux",
     "triggerSource.hint":
-      "Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des exercices. Les deux (défaut) : minuteur ET hook actifs.",
+      "Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des quêtes. Les deux (défaut) : minuteur ET hook actifs.",
 
     "claudeIntegration.label": "Intégration Claude Code",
     "claudeIntegration.hint":
@@ -94,19 +94,31 @@ const TRANSLATIONS = {
     "plans.toast.generated": "Pack généré",
     "plans.badge.generated": "Généré par IA",
     "plans.import": "Importer un pack",
+    "plans.import.infoTooltip": `Format attendu (fichier JSON) :
+<pre>{
+  "name": "Mon pack",
+  "mascot": {
+    "label": "Ma mascotte",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "Ma quête", "durationSec": 30, "category": "détente" }
+  ]
+}</pre>
+La mascotte est optionnelle.`,
     "plans.new": "+ Nouveau pack",
     "plans.badge.bundled": "Officiel",
     "plans.badge.imported": "Importé",
     "plans.badge.active": "Actif",
     "plans.level": (n) => `Niveau ${n}`,
-    "plans.count": (n) => `${n} exercice${n > 1 ? "s" : ""}`,
+    "plans.count": (n) => `${n} quête${n > 1 ? "s" : ""}`,
     "plans.action.open": "Ouvrir",
     "plans.action.duplicate": "Dupliquer",
     "plans.action.activate": "Activer",
     "plans.action.deactivate": "Désactiver",
     "plans.action.export": "Exporter",
     "plans.action.delete": "Supprimer",
-    "plans.action.disabledHint": "Ajoute au moins un exercice avant d'activer ce plan.",
+    "plans.action.disabledHint": "Ajoute au moins une quête avant d'activer ce plan.",
     "plans.confirmDelete": "Supprimer ce plan ? Cette action est irréversible.",
     "plans.toast.duplicated": "Plan dupliqué",
     "plans.toast.exported": "Plan exporté",
@@ -119,16 +131,16 @@ const TRANSLATIONS = {
     "planEditor.backTitle": "Retour",
     "planEditor.nameLabel": "Nom du plan",
     "planEditor.mascotLabel": "Mascotte",
-    "planEditor.mascotHint": "Propre à ce pack — sinon la mascotte globale s'affiche. Choisis-en une, ou ajoute la tienne.",
+    "planEditor.mascotHint": "Propre à ce pack — sinon la mascotte SideQuest par défaut s'affiche. Choisis-en une, ou ajoute la tienne.",
     "planEditor.mascotCustom": "Personnalisée",
     "planEditor.mascotAdd": "+ Ajouter",
     "planEditor.toast.mascotUpdated": "Mascotte mise à jour",
-    "planEditor.exercisesLabel": "Exercices",
-    "planEditor.addExercise": "+ Ajouter un exercice",
-    "planEditor.labelPlaceholder": "Nom de l'exercice",
+    "planEditor.exercisesLabel": "Quêtes",
+    "planEditor.addExercise": "+ Ajouter une quête",
+    "planEditor.labelPlaceholder": "Nom de la quête",
     "planEditor.categoryPlaceholder": "Catégorie",
-    "planEditor.removeExerciseTitle": "Supprimer cet exercice",
-    "planEditor.emptyHint": "Aucun exercice pour l'instant.",
+    "planEditor.removeExerciseTitle": "Supprimer cette quête",
+    "planEditor.emptyHint": "Aucune quête pour l'instant.",
 
     "history.pageTitle": "Historique",
     "history.refresh.title": "Rafraîchir",
@@ -139,7 +151,7 @@ const TRANSLATIONS = {
     "history.chart.label": "Volume / semaine (7 derniers jours)",
     "history.table.label": "Séances récentes",
     "history.table.date": "Date",
-    "history.table.exercise": "Exercice",
+    "history.table.exercise": "Quête",
     "history.table.mascot": "Mascotte",
     "history.table.mode": "Mode",
     "history.table.status": "Statut",
@@ -157,29 +169,29 @@ const TRANSLATIONS = {
     "theme.button": "Theme",
     "theme.toggle.title": "Switch theme",
 
-    "settings.triggerNow": "🎲 Generate an exercise",
-    "settings.triggerNow.title": "Generate an exercise now",
+    "settings.triggerNow": "🎲 Generate a quest",
+    "settings.triggerNow.title": "Generate a quest now",
 
     "onboarding.title": "Welcome to SideQuest 👋",
     "onboarding.text":
       "Pick your interval, and turn on launch at startup if you'd like — everything stays editable anytime.",
     "onboarding.dismiss": "Got it",
 
-    "interval.label": "Interval between exercises",
+    "interval.label": "Interval between quests",
 
     "mode.label": "Mode",
     "mode.notify": "Soft notification",
     "mode.gate": "Hard gate",
     "mode.mixed": "Mixed",
     "mode.hint":
-      "Soft notification: \"Skip\" always available. Hard gate: can't dismiss without doing the exercise. Mixed: \"Skip\" works normally, but becomes gated once you've skipped too much (debt &gt; 0, see the History tab).",
+      "Soft notification: \"Skip\" always available. Hard gate: can't dismiss without doing the quest. Mixed: \"Skip\" works normally, but becomes gated once you've skipped too much (debt &gt; 0, see the History tab).",
 
     "triggerSource.label": "Trigger source",
     "triggerSource.timer": "Timer only",
     "triggerSource.hook": "Claude Code hook only",
     "triggerSource.both": "Both",
     "triggerSource.hint":
-      "Timer only: ignores the Claude Code hook if configured. Hook only: the timer is paused, only the hook triggers exercises. Both (default): timer AND hook active.",
+      "Timer only: ignores the Claude Code hook if configured. Hook only: the timer is paused, only the hook triggers quests. Both (default): timer AND hook active.",
 
     "claudeIntegration.label": "Claude Code integration",
     "claudeIntegration.hint":
@@ -240,19 +252,31 @@ const TRANSLATIONS = {
     "plans.toast.generated": "Pack generated",
     "plans.badge.generated": "AI-generated",
     "plans.import": "Import a pack",
+    "plans.import.infoTooltip": `Expected format (JSON file):
+<pre>{
+  "name": "My pack",
+  "mascot": {
+    "label": "My mascot",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "My quest", "durationSec": 30, "category": "relax" }
+  ]
+}</pre>
+The mascot is optional.`,
     "plans.new": "+ New pack",
     "plans.badge.bundled": "Official",
     "plans.badge.imported": "Imported",
     "plans.badge.active": "Active",
     "plans.level": (n) => `Level ${n}`,
-    "plans.count": (n) => `${n} exercise${n > 1 ? "s" : ""}`,
+    "plans.count": (n) => `${n} quest${n > 1 ? "s" : ""}`,
     "plans.action.open": "Open",
     "plans.action.duplicate": "Duplicate",
     "plans.action.activate": "Activate",
     "plans.action.deactivate": "Deactivate",
     "plans.action.export": "Export",
     "plans.action.delete": "Delete",
-    "plans.action.disabledHint": "Add at least one exercise before activating this plan.",
+    "plans.action.disabledHint": "Add at least one quest before activating this plan.",
     "plans.confirmDelete": "Delete this plan? This action can't be undone.",
     "plans.toast.duplicated": "Plan duplicated",
     "plans.toast.exported": "Plan exported",
@@ -265,16 +289,16 @@ const TRANSLATIONS = {
     "planEditor.backTitle": "Back",
     "planEditor.nameLabel": "Plan name",
     "planEditor.mascotLabel": "Mascot",
-    "planEditor.mascotHint": "Specific to this pack — otherwise the global mascot shows. Pick one, or add your own.",
+    "planEditor.mascotHint": "Specific to this pack — otherwise the default SideQuest mascot shows. Pick one, or add your own.",
     "planEditor.mascotCustom": "Custom",
     "planEditor.mascotAdd": "+ Add",
     "planEditor.toast.mascotUpdated": "Mascot updated",
-    "planEditor.exercisesLabel": "Exercises",
-    "planEditor.addExercise": "+ Add an exercise",
-    "planEditor.labelPlaceholder": "Exercise name",
+    "planEditor.exercisesLabel": "Quests",
+    "planEditor.addExercise": "+ Add a quest",
+    "planEditor.labelPlaceholder": "Quest name",
     "planEditor.categoryPlaceholder": "Category",
-    "planEditor.removeExerciseTitle": "Remove this exercise",
-    "planEditor.emptyHint": "No exercises yet.",
+    "planEditor.removeExerciseTitle": "Remove this quest",
+    "planEditor.emptyHint": "No quests yet.",
 
     "history.pageTitle": "History",
     "history.refresh.title": "Refresh",
@@ -285,7 +309,7 @@ const TRANSLATIONS = {
     "history.chart.label": "Volume / week (last 7 days)",
     "history.table.label": "Recent sessions",
     "history.table.date": "Date",
-    "history.table.exercise": "Exercise",
+    "history.table.exercise": "Quest",
     "history.table.mascot": "Mascot",
     "history.table.mode": "Mode",
     "history.table.status": "Status",
