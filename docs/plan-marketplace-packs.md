@@ -77,10 +77,22 @@ Reuses the existing "Plans" tab (`dashboard/renderer.js`, panel in `index.html`)
 ### 3.5 Logo & per-pack color system
 
 - **README** — done: `docs/branding/SideQuest-logo.png` (2092×752, transparent background) integrated centered at the top of `README.md` (`<img ... width="480">` inside the existing `<p align="center">` block).
-- **Base palette** read off the actual file (background is transparent, not black — the black seen in a chat preview was just the window background): cyan/turquoise ≈ `#3ecfd6` (primary), cream/sand ≈ `#ecd8a8` (secondary), brown ≈ `#8a6a45` (tertiary accent variation), dark anthracite ≈ `#12181a` (dashboard dark base, not pure black). Exposed as new CSS custom properties (`--sq-accent`, `--sq-cream`, ...) in the dashboard's shared stylesheet, additive to the existing `visualTheme` skin tokens (section 3.1 of `plan-theme-global.md`) — this becomes the product's default/brand palette, skins remain a cosmetic choice on top.
+- **Base palette — official, provided by the user 2026-08-27** (supersedes the earlier eyeballed approximation below): the SideQuest logo's own CSS custom properties, to be used verbatim as the app's brand palette.
+  ```css
+  --sidequest-cyan:  #00D3DC;
+  --sidequest-cream: #FCE1A4;
+  --sidequest-black: #000000;
+  --sidequest-dark:  #010B0F;
+  --sidequest-white: #F5F3EA;
+  ```
+  Not yet wired into actual CSS (`dashboard/style.css`, `overlay/style.css`) — this is the source-of-truth reference; implementation (mapping these onto `--sq-accent`/`--sq-cream`/etc. or directly replacing today's `--accent-teal` family) is still open, additive to the existing `visualTheme` skin tokens (section 3.1 of `plan-theme-global.md`) so skins remain a cosmetic choice layered on top, not a replacement.
+  <details><summary>Earlier eyeballed approximation (2026-08-27, before the official values above) — kept for context, no longer authoritative</summary>
+
+  cyan/turquoise ≈ `#3ecfd6` (primary), cream/sand ≈ `#ecd8a8` (secondary), brown ≈ `#8a6a45` (tertiary accent variation), dark anthracite ≈ `#12181a` (dashboard dark base, not pure black) — read off the actual logo file's pixels (background is transparent, not black; the black seen in an early chat preview was just the window background behind the transparency).
+  </details>
 - **Per-pack color, 3 usage points**: (1) gallery card border/badge tinted with `pack.color` (3.3); (2) XP bar fill uses `pack.color` instead of one global color (3.4); (3) overlay — `showExercise()` adds `payload.packColor`, the overlay sets `document.documentElement.style.setProperty("--pack-accent", payload.packColor)`, consumed by its existing CSS (popup border, primary button) — same mechanism as `payload.mascotImage` in 3.2.
 - **Packs without an explicit color** (custom/imported, no `color` in the JSON): stable fallback computed by hashing the pack id into an HSL hue (small utility function, no new dependency) rather than forcing a color picker into the import UI.
-- **Indicative color proposal** for already-named packs (to confirm later): SideGym `#3ecfd6` (logo cyan — current official pack), SideParrot green, SideYoga soft lavender, SideCodingGame electric blue, SideCat `#8a6a45` (logo brown) or warm orange, SideTama `#ecd8a8` (logo cream) or gold.
+- **Indicative color proposal** for already-named packs (to confirm later — not yet applied to `sport-basic.json`, which still relies on the hash fallback): SideGym `#00D3DC` (`--sidequest-cyan` — current official pack), SideParrot green, SideYoga soft lavender, SideCodingGame electric blue, SideCat `#8a6a45` (warm brown, not part of the core brand palette) or warm orange, SideTama `#FCE1A4` (`--sidequest-cream`, already set in `sidetama.json`) or gold.
 
 **Explicitly out of scope**: no custom color picker in the import UI for v1 (the JSON's `color` field is optional, hash fallback otherwise); no retouch of the 4 existing `visualTheme` skins.
 

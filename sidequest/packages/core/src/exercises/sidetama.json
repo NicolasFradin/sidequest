@@ -1,7 +1,7 @@
 {
   "id": "sidetama",
   "name": "SideTama - Fais grandir ton tamagotchi",
-  "color": "#ecd8a8",
+  "color": "#FCE1A4",
   "exercises": [
     { "id": "tama-feed", "label": "Nourris-le", "durationSec": 15, "category": "repas" },
     { "id": "tama-play", "label": "Joue avec lui", "durationSec": 30, "category": "jeu" },
