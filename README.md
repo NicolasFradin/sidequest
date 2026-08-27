@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="sidequest/packages/app/build/icon.png" alt="SideQuest" width="160">
+  <img src="docs/branding/SideQuest-logo.png" alt="SideQuest — Code. Quest. Grow." width="480">
   <br>
   <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while you wait</strong>
 </p>

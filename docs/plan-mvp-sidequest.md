@@ -116,6 +116,7 @@ No local web server needed for the MVP (the dashboard is loaded directly and loc
 | V0.5.1 | Global themes / skins (dashboard palette + mascots per theme: Miami 80's, Military camo, Dragonball, Roman Empire) — not planned initially, started along the way — see [`plan-theme-global.md`](plan-theme-global.md) |
 | V0.5+ | Animated mascots in the overlay (idle + during exercise) — 3 approaches considered, to be decided based on available time: (1) CSS `@keyframes` animation on the existing `<img>` (idle bounce/breathing, zero new assets, fastest); (2) multiple PNG frames swapped in JS (`setInterval` on `mascotImg.src`, hand-drawn sprite style); (3) [Rive](https://rive.app) (`.riv`) driven by a state machine (`idle` / `exercise-proposed` / `done` / `skip` / `blocking`), wired to the events already exposed by `mascotAPI` — the richest option but requires vectorizing the mascots |
 | V1 | Exercise generation via the Claude API, personalized programs |
+| V1+ | Local-first marketplace groundwork: custom pack import (own exercises + own mascot), packs gallery in the dashboard, per-pack XP/gamification (incl. SideCat, SideTama concept packs), official SideQuest logo & per-pack color system, community pack contribution via PR as a lightweight precursor to the V1.5 registry — see [`plan-marketplace-packs.md`](plan-marketplace-packs.md) |
 | V1.5 | Installable pack registry (`sidequest install sidegym` / `sideparrot` / `sideyoga` / `sidecodinggame`), still free. SideGym (fitness) ships in the MVP; SideParrot (language learning), SideYoga (relaxation) and SideCodingGame (coding-game practice) are the names reserved for the next packs |
 | V2 | Backend: accounts, national/global leaderboard (composite score, `verified` field activated), premium skins |
 | V2.5 | Post-V2-launch refinement based on real usage data: exact composite score formula, webcam anti-cheat verification activation (schema already in place, `verified: bool`), final Free/Premium split details |
@@ -134,7 +135,7 @@ No local web server needed for the MVP (the dashboard is loaded directly and loc
 
 ## 9. Visual identity (adapted from the provided template)
 
-Based on the provided "Ronnie Coleman App" style guide (designed for mobile), adapted here for a desktop app (overlay + dashboard).
+Based on the provided "Ronnie Coleman App" style guide (designed for mobile), adapted here for a desktop app (overlay + dashboard). This section predates the SideQuest rebrand and the skin system (section 6, V0.5.1) — the palette below is effectively what the Miami 80's skin's own table reuses in `plan-theme-global.md`. Since 2026-08-27 the project also has an official SideQuest logo (`docs/branding/SideQuest-logo.png`) with its own base brand palette (cyan/cream/dark, additive on top of the 4 skins, not a replacement) — see [`plan-marketplace-packs.md`](plan-marketplace-packs.md) section 3.5 for the extracted colors and the per-pack color system built on top of it.
 
 ### Color palette
 

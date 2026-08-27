@@ -8,6 +8,7 @@ import {
   Scheduler,
   Storage,
   loadPack,
+  listBundledPacks,
   pickRandomExercise,
   HookServer,
   isInstalled as isClaudeHookInstalled,
@@ -28,6 +29,11 @@ const OVERLAY_DIR = path.join(__dirname, "..", "overlay");
 const DASHBOARD_DIR = path.join(__dirname, "..", "dashboard");
 const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
 const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
+/** Mascottes custom décodées depuis un import de pack (voir dashboard:import-plan) — jamais le base64 en base SQLite, juste ce chemin. */
+const CUSTOM_MASCOTS_DIR = () => path.join(app.getPath("userData"), "custom-mascots");
+const MAX_MASCOT_IMAGE_BYTES = 3 * 1024 * 1024;
+/** mime -> extension de fichier pour les mascottes custom décodées depuis un data URI base64. */
+const MASCOT_MIME_EXTENSIONS = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
 
 let tray = null;
 let overlayWindow = null;
@@ -55,6 +61,10 @@ let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
 let currentBlocking = false;
+/** Id du pack actif au moment du déclenchement — sert à créditer l'XP du bon pack dans recordAndHide(). */
+let currentPlanId = null;
+/** XP gagnée par exercice complété ("fait") — formule volontairement plate pour v1, pas de barème par pack/exercice. */
+const XP_PER_EXERCISE = 10;
 
 let overlayReady = false;
 let pendingPayload = null;
@@ -201,10 +211,71 @@ function loadActiveProgram(settings) {
   return plan.exercises.length > 0 ? plan : loadPack("sport-basic");
 }
 
+/**
+ * Décode un data URI base64 (`data:image/png;base64,...`) et écrit l'image sur disque, sous
+ * `userData/custom-mascots/` — jamais le base64 lui-même en base SQLite, seul ce chemin l'est
+ * (voir Storage.createPlan). Retourne `null` si le format ou la taille (>3 Mo décodé) est invalide.
+ * @returns {string | null} chemin fichier absolu
+ */
+function decodeMascotImage(image) {
+  const match = /^data:image\/(png|jpe?g|webp);base64,([a-zA-Z0-9+/=]+)$/.exec(image ?? "");
+  if (!match) return null;
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+
+  const ext = MASCOT_MIME_EXTENSIONS[match[1].toLowerCase()] ?? "png";
+  const dir = CUSTOM_MASCOTS_DIR();
+  mkdirSync(dir, { recursive: true });
+  const imagePath = path.join(dir, `${randomUUID()}.${ext}`);
+  writeFileSync(imagePath, buffer);
+  return imagePath;
+}
+
+/** Ré-encode la mascotte d'un plan en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-plan). */
+function mascotToDataUri(mascot) {
+  if (!mascot?.imagePath) return null;
+  try {
+    const ext = path.extname(mascot.imagePath).slice(1).toLowerCase();
+    const mime = ext === "jpg" ? "jpeg" : ext;
+    const buffer = readFileSync(mascot.imagePath);
+    return `data:image/${mime};base64,${buffer.toString("base64")}`;
+  } catch {
+    // Fichier mascotte introuvable (ex. userData déplacé/nettoyé à la main) — on exporte sans
+    // mascotte plutôt que de faire échouer tout l'export.
+    return null;
+  }
+}
+
+/**
+ * Résout le chemin de l'image d'une mascotte de pack selon le niveau atteint (paliers de
+ * croissance optionnels, ex. SideCat/SideTama — voir `PackMascot.stages` dans @sidequest/core).
+ * Sans `stages`, `imagePath` sert pour tous les niveaux (comportement inchangé pour SideGym etc.).
+ */
+function resolvePackMascotImagePath(mascot, level) {
+  if (!mascot) return null;
+  if (!mascot.stages?.length) return mascot.imagePath;
+  const eligible = mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
+  return eligible[0]?.imagePath ?? mascot.imagePath;
+}
+
+/**
+ * Couleur d'accent d'un pack — miroir de `resolvePackColor` dans shared/mascots.js (dashboard),
+ * dupliquée ici pour l'overlay qui tourne côté main process (contexte Node, pas de module partagé
+ * possible avec le renderer). `pack.color` si défini, sinon une teinte stable dérivée de son id.
+ */
+function resolvePackColor(pack) {
+  if (pack.color) return pack.color;
+  let hash = 0;
+  for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
+}
+
 function showExercise() {
   const settings = storage.getSettings();
   const pack = loadActiveProgram(settings);
   const exercise = pickRandomExercise(pack);
+  const packProgress = storage.getPackProgress(pack.id);
   const debt = storage.getDebt();
   // gate = toujours bloquant. mixed = bloquant seulement si on a trop esquivé (dette > 0),
   // sinon aussi souple que notify. notify = jamais bloquant.
@@ -214,10 +285,19 @@ function showExercise() {
   currentMascot = settings.activeMascot;
   currentMode = settings.mode;
   currentBlocking = blocking;
+  currentPlanId = pack.id;
 
+  const mascotStageImagePath = resolvePackMascotImagePath(pack.mascot, packProgress.level);
   const payload = {
     exercise,
     mascot: settings.activeMascot,
+    // Mascotte propre au pack (importée avec sa propre image, éventuellement un palier de
+    // croissance selon le niveau XP du pack) — l'overlay n'a pas besoin d'accès fichier
+    // lui-même, ce chemin absolu résolu côté main lui suffit.
+    mascotImage: mascotStageImagePath ? `file://${mascotStageImagePath}` : null,
+    // Couleur d'accent du pack actif — l'overlay la pose en variable CSS (--pack-accent),
+    // consommée par son style.css (bordure du bouton "Passer", halo de la mascotte).
+    packColor: resolvePackColor(pack),
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
@@ -259,10 +339,14 @@ function recordAndHide(status) {
     mascot: currentMascot ?? storage.getSettings().activeMascot,
     mode: currentMode ?? storage.getSettings().mode,
   });
+  if (status === "done" && currentPlanId) {
+    storage.addXp(currentPlanId, XP_PER_EXERCISE);
+  }
   currentExercise = null;
   currentMascot = null;
   currentMode = null;
   currentBlocking = false;
+  currentPlanId = null;
   overlayWindow.hide();
 
   // Libère le hook Claude Code retenu par ce même exercice (mode "stop"/"start" bloquant, voir
@@ -504,18 +588,29 @@ if (!gotSingleInstanceLock) {
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
     ipcMain.handle("dashboard:get-plans", () => ({
-      defaultPlan: loadPack("sport-basic"),
+      bundledPacks: listBundledPacks(),
       customPlans: storage.getPlans(),
     }));
+    ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {
+      const plan = storage.getPlan(id);
       storage.deletePlan(id);
+      // Best-effort : ne nettoie que les mascottes qu'on a nous-mêmes décodées sous userData
+      // (jamais les PNG embarqués avec l'app) ; une erreur ici ne doit jamais bloquer la suppression.
+      if (plan?.mascot?.imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) {
+        try {
+          unlinkSync(plan.mascot.imagePath);
+        } catch {
+          // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
+        }
+      }
       return storage.getSettings();
     });
 
     ipcMain.handle("dashboard:export-plan", async (_event, id) => {
-      const plan = storage.getPlan(id) ?? (id === "sport-basic" ? loadPack("sport-basic") : null);
+      const plan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
       if (!plan) return { exported: false };
 
       const lang = storage.getSettings().language;
@@ -526,7 +621,13 @@ if (!gotSingleInstanceLock) {
       });
       if (canceled || !filePath) return { exported: false };
 
-      writeFileSync(filePath, JSON.stringify({ name: plan.name, exercises: plan.exercises }, null, 2), "utf-8");
+      const mascotImage = mascotToDataUri(plan.mascot);
+      const exported = {
+        name: plan.name,
+        exercises: plan.exercises,
+        ...(mascotImage ? { mascot: { label: plan.mascot.label, image: mascotImage } } : {}),
+      };
+      writeFileSync(filePath, JSON.stringify(exported, null, 2), "utf-8");
       return { exported: true };
     });
 
@@ -558,7 +659,15 @@ if (!gotSingleInstanceLock) {
         category: String(e?.category ?? ""),
       }));
 
-      const plan = storage.createPlan(data.name.trim(), exercises);
+      // La mascotte est optionnelle — sans elle, comportement inchangé (mascotte globale).
+      let mascot;
+      if (data.mascot !== undefined) {
+        const imagePath = decodeMascotImage(data.mascot?.image);
+        if (!imagePath) return { imported: false, error: t(lang, "errorInvalidMascot") };
+        mascot = { id: `custom:${randomUUID()}`, label: String(data.mascot?.label ?? data.name), imagePath };
+      }
+
+      const plan = storage.createPlan(data.name.trim(), exercises, { source: "imported", mascot });
       return { imported: true, plan };
     });
 

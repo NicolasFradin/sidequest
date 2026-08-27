@@ -1,0 +1,46 @@
+# Community pack contributions — a lightweight, PR-based path
+
+**Local repo**: `/Users/nicolas/perso/sidequest`
+**Status**: documentation only, no code — written 2026-08-27 as Sprint 7 of [`plan-marketplace-packs.md`](plan-marketplace-packs.md), linked from the V1.5 row of [`plan-mvp-sidequest.md`](plan-mvp-sidequest.md) section 6.
+
+## What this is (and isn't)
+
+Today, adding a new bundled pack to SideQuest — SideGym is the only one that shipped before this — requires zero registry/config changes, thanks to `listBundledPacks()` (`packages/core/src/packs.ts`, added in `plan-marketplace-packs.md` Sprint 1): it scans every `*.json` file under `packages/core/src/exercises/` at load time. A pack file dropped there is automatically discovered.
+
+That mechanical fact is what makes a **PR-based contribution path** realistic without building any new infrastructure: a contributor adds a pack file (and optionally a mascot image) to a pull request, a maintainer reviews it like any other code change, and once merged it ships in the next release.
+
+This is **not** the same thing as:
+- **V1.5**'s planned `sidequest install <pack>` — a dynamic registry with a CLI, fetched at runtime without an app update. Doesn't exist. This PR path is a lightweight, git-native precursor to it.
+- **V3**'s planned third-party marketplace — paid, with a formal review/publishing pipeline. This PR path is just... a normal GitHub PR, reviewed by a human the same way any other contribution is.
+
+## How a contributor adds a pack today
+
+1. **Write the pack JSON** — same declarative shape as `packages/core/src/exercises/sport-basic.json` or `sidecat.json`:
+   ```json
+   {
+     "id": "sideparrot",
+     "name": "SideParrot - Apprends une langue",
+     "color": "#3ecfd6",
+     "exercises": [
+       { "id": "phrase-1", "label": "Répète une phrase à voix haute", "durationSec": 20, "category": "oral" }
+     ]
+   }
+   ```
+   `id` must be unique among bundled packs (it's the JSON filename minus `.json`, and the primary key `listBundledPacks()`/`storage` use everywhere). `color` is optional — see `plan-marketplace-packs.md` § 3.5 for the fallback if omitted.
+2. **Drop it in `packages/core/src/exercises/`**, named `<id>.json`. Nothing else to register — `listBundledPacks()` picks it up.
+3. **Mascot image, if any: currently a gap, not a supported path.** Every existing mechanism for a pack's own mascot (`PackMascot.imagePath`, resolved to `file://...` in the overlay, decoded-to-disk on import) assumes an *absolute filesystem path* produced at runtime for imported/custom packs — there is no equivalent step today that turns a bundled pack's mascot filename into a valid path (`packages/core` deliberately has no knowledge of `packages/app/assets/`). Until that's built (tracked in `plan-marketplace-packs.md` Sprint 4's log), a bundled pack should ship **without** a `mascot` field — it'll correctly fall back to the user's globally-selected mascot, same as SideGym, SideCat, and SideTama do today. Don't add `mascot` to a contributed pack JSON yet; it won't resolve.
+4. **Open a PR.** A maintainer reviews it like any other code change — see Constraints below for what they should be checking.
+
+## The key limitation to set expectations on
+
+A pack merged via PR only reaches users at the **next tagged release** — there's no dynamic registry, no hot-reload, no "install without updating the app." Compare with the **local JSON import** already shipped (`plan-marketplace-packs.md` § 3.2): a user importing their own pack file gets it **instantly, offline, no release involved**. These are two different distribution paths serving different needs — import is for one person's own pack right now, the PR path is for something meant to ship to everyone eventually.
+
+## Constraints a reviewer should hold the line on
+
+- **Declarative JSON only, never executable code.** This isn't a style preference — `packages/core/src/packs.ts`'s own comment on `loadPack()` states the rationale directly: it's what lets pack creation be opened up to third parties at all without a JS-sandboxing security problem. A PR that tries to make a pack do anything beyond `{id, name, color?, exercises: [...]}` is out of scope for this mechanism, full stop.
+- **No CI schema-validation bot exists.** A malformed pack JSON degrades gracefully today (`loadPack()` just does `JSON.parse` — a genuinely broken file throws at app startup, so a bad PR would be caught by `pnpm --filter @sidequest/app start` before merge, not by an automated check). Left as manual reviewer diligence for now — not worth building a bot for the current contribution volume.
+- **No art-licensing requirement is enforced.** If a pack ships an image later (once the mascot-path gap above is closed), the reviewer is the only check on whether the contributor actually has rights to it. Deliberately left as human judgment rather than a license-header convention, consistent with not over-building process ahead of actual need.
+
+## Relationship to the rest of the roadmap
+
+Nothing here contradicts or replaces `plan-mvp-sidequest.md` section 6 — V1.5 and V3 stay exactly as scoped there. This doc just describes what's *already possible*, today, with the tools Sprints 1–6 already built, while that heavier infrastructure remains unbuilt.

@@ -13,42 +13,10 @@ themeToggle.addEventListener("click", async () => {
   applySettingsToUI(next);
 });
 
-const MASCOT_LABELS = {
-  "ronnie-coleman": "Ronnie Coleman",
-  "miami-80s": "Miami 80s",
-  "arnold-80s": "Arnold 80s",
-  sergeant: "Sergent",
-  "sergeant-desert": "Sergent (désert)",
-  goku: "Goku",
-  centurion: "Centurion",
-};
-const MASCOT_IMAGES = {
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
-  "arnold-80s": "../../assets/mascots/arnold-80s.png",
-  sergeant: "../../assets/mascots/sergeant.png",
-  "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
-  goku: "../../assets/mascots/goku.png",
-  centurion: "../../assets/mascots/centurion.png",
-};
-/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
-const MASCOTS_BY_THEME = {
-  "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
-  "military-camo": ["sergeant"],
-  dragonball: ["goku"],
-  "roman-empire": ["centurion"],
-};
-/**
- * Variante d'une mascotte à afficher en mode clair, si elle existe (sinon la mascotte normale
- * sert pour les deux modes) — sert de base à resolveMascotImage(). Mécanisme générique, pas
- * limité à Military camo, voir plan-theme-global.md sprint 5.
- */
-const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
-
-function resolveMascotImage(mascotId, theme) {
-  const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
-}
+// Pas de déstructuration ici : les <script> classiques partagent la même portée de haut niveau
+// dans le document, donc `const { MASCOT_LABELS } = ...` entrerait en conflit avec le `const
+// MASCOT_LABELS` déjà déclaré par shared/mascots.js (chargé juste avant) — d'où cet alias unique.
+const sqMascots = window.sqMascots;
 
 const languageButtons = [...document.querySelectorAll("#language-options .language-bubble")];
 languageButtons.forEach((btn) =>
@@ -91,7 +59,7 @@ function formatInterval(minutes) {
 /** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif — l'aperçu de
     chacune suit le mode clair/sombre (ex. sergent désertique en clair, forêt en sombre). */
 function renderMascotOptions(visualTheme, activeMascot, theme) {
-  const mascotIds = MASCOTS_BY_THEME[visualTheme] ?? MASCOTS_BY_THEME["miami-80s"];
+  const mascotIds = sqMascots.MASCOTS_BY_THEME[visualTheme] ?? sqMascots.MASCOTS_BY_THEME["miami-80s"];
   mascotOptionsContainer.innerHTML = "";
   mascotIds.forEach((mascotId) => {
     const btn = document.createElement("button");
@@ -100,11 +68,11 @@ function renderMascotOptions(visualTheme, activeMascot, theme) {
     btn.dataset.mascot = mascotId;
 
     const img = document.createElement("img");
-    img.src = resolveMascotImage(mascotId, theme);
-    img.alt = MASCOT_LABELS[mascotId] ?? mascotId;
+    img.src = sqMascots.resolveMascotImage(mascotId, theme);
+    img.alt = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
 
     const label = document.createElement("span");
-    label.textContent = MASCOT_LABELS[mascotId] ?? mascotId;
+    label.textContent = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
 
     btn.append(img, label);
     btn.addEventListener("click", () => save({ activeMascot: mascotId }));
@@ -191,7 +159,7 @@ hookTriggerModeButtons.forEach((btn) =>
 visualThemeButtons.forEach((btn) =>
   btn.addEventListener("click", () => {
     const nextTheme = btn.dataset.visualTheme;
-    const validMascots = MASCOTS_BY_THEME[nextTheme] ?? [];
+    const validMascots = sqMascots.MASCOTS_BY_THEME[nextTheme] ?? [];
     const partial = { visualTheme: nextTheme };
     // La mascotte active n'existe pas forcément dans le nouveau thème (ex. "sergeant" n'a de
     // sens que pour "military-camo") — on bascule alors sur la première mascotte du thème.
@@ -319,10 +287,10 @@ function renderHistoryTable(sessions, exerciseLabels) {
     const mascotWrap = document.createElement("span");
     mascotWrap.className = "history-mascot";
     const mascotImg = document.createElement("img");
-    mascotImg.src = MASCOT_IMAGES[session.mascot] ?? MASCOT_IMAGES["ronnie-coleman"];
+    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["ronnie-coleman"];
     mascotImg.alt = "";
     const mascotLabel = document.createElement("span");
-    mascotLabel.textContent = MASCOT_LABELS[session.mascot] ?? session.mascot;
+    mascotLabel.textContent = sqMascots.MASCOT_LABELS[session.mascot] ?? session.mascot;
     mascotWrap.append(mascotImg, mascotLabel);
     mascotCell.appendChild(mascotWrap);
 
@@ -377,12 +345,24 @@ const newPlanBtn = document.getElementById("new-plan-btn");
 const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
 
-let plansState = { defaultPlan: null, customPlans: [] };
-/** Plan en cours d'édition (copie locale) : { id, name, exercises, isDefault } */
+let plansState = { bundledPacks: [], customPlans: [], progress: {} };
+/** Plan en cours d'édition (copie locale) : { id, name, exercises, isBundled } */
 let editingPlan = null;
 
 function allPlans() {
-  return plansState.defaultPlan ? [plansState.defaultPlan, ...plansState.customPlans] : plansState.customPlans;
+  return [...plansState.bundledPacks, ...plansState.customPlans];
+}
+
+/** Image de la carte d'un pack dans la galerie : sa propre mascotte si elle en a une (pack
+    importé avec sa propre image, éventuellement un palier de croissance selon le niveau XP
+    du pack), sinon la mascotte globale actuellement choisie — c'est effectivement celle qui
+    s'affichera à l'écran si ce pack est activé. */
+function planCardMascotImage(plan) {
+  const level = plansState.progress?.[plan.id]?.level ?? 1;
+  const stageImagePath = sqMascots.resolvePackMascotStage(plan.mascot, level);
+  const overrideUrl = stageImagePath ? `file://${stageImagePath}` : null;
+  const mascotId = plan.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
+  return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
 
 function findPlan(id) {
@@ -396,14 +376,22 @@ function planExerciseCountLabel(plan) {
 function renderPlansGrid() {
   plansGrid.innerHTML = "";
   allPlans().forEach((plan) => {
-    const isDefault = plan.id === DEFAULT_PLAN_ID;
+    const isBundled = plan.source === "bundled";
     const isActive = currentSettings?.activeProgram === plan.id;
 
     const card = document.createElement("div");
     card.className = "plan-card";
+    card.style.setProperty("--pack-accent", sqMascots.resolvePackColor(plan));
 
     const header = document.createElement("div");
     header.className = "plan-card-header";
+
+    const mascotThumb = document.createElement("img");
+    mascotThumb.className = "plan-card-mascot";
+    mascotThumb.src = planCardMascotImage(plan);
+    mascotThumb.alt = "";
+    header.appendChild(mascotThumb);
+
     const name = document.createElement("span");
     name.className = "plan-card-name";
     name.textContent = plan.name;
@@ -411,11 +399,18 @@ function renderPlansGrid() {
 
     const badges = document.createElement("div");
     badges.className = "plan-card-badges";
-    if (isDefault) {
-      const defaultBadge = document.createElement("span");
-      defaultBadge.className = "status-badge default";
-      defaultBadge.textContent = i18n.t("plans.badge.default");
-      badges.appendChild(defaultBadge);
+    // Officiel (embarqué avec l'app) / Importé (fichier JSON avec sa propre mascotte) / rien
+    // pour un pack créé à la main dans le dashboard ("Perso") — voir plan.source, Phase 0.
+    if (isBundled) {
+      const bundledBadge = document.createElement("span");
+      bundledBadge.className = "status-badge bundled";
+      bundledBadge.textContent = i18n.t("plans.badge.bundled");
+      badges.appendChild(bundledBadge);
+    } else if (plan.source === "imported") {
+      const importedBadge = document.createElement("span");
+      importedBadge.className = "status-badge imported";
+      importedBadge.textContent = i18n.t("plans.badge.imported");
+      badges.appendChild(importedBadge);
     }
     if (isActive) {
       const activeBadge = document.createElement("span");
@@ -428,6 +423,22 @@ function renderPlansGrid() {
     const count = document.createElement("p");
     count.className = "plan-card-count";
     count.textContent = planExerciseCountLabel(plan);
+
+    // Barre d'XP (gamification transverse à tous les packs) — voir Storage.addXp/getPackProgress.
+    // Palier tous les 100 xp (formule v1 volontairement simple, cf. plan-marketplace-packs.md § 3.4).
+    const progress = plansState.progress?.[plan.id] ?? { xp: 0, level: 1 };
+    const xpBar = document.createElement("div");
+    xpBar.className = "plan-card-xp";
+    const xpTrack = document.createElement("div");
+    xpTrack.className = "plan-card-xp-track";
+    const xpFill = document.createElement("div");
+    xpFill.className = "plan-card-xp-fill";
+    xpFill.style.width = `${progress.xp % 100}%`;
+    xpTrack.appendChild(xpFill);
+    const xpLabel = document.createElement("span");
+    xpLabel.className = "plan-card-xp-label";
+    xpLabel.textContent = i18n.t("plans.level", progress.level);
+    xpBar.append(xpTrack, xpLabel);
 
     const actions = document.createElement("div");
     actions.className = "plan-card-actions";
@@ -462,7 +473,7 @@ function renderPlansGrid() {
 
     actions.append(openBtn, duplicateBtn, toggleBtn, exportBtn);
 
-    if (!isDefault) {
+    if (!isBundled) {
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "option-btn option-btn-sm option-btn-danger";
       deleteBtn.textContent = i18n.t("plans.action.delete");
@@ -470,7 +481,7 @@ function renderPlansGrid() {
       actions.appendChild(deleteBtn);
     }
 
-    card.append(header, count, actions);
+    card.append(header, count, xpBar, actions);
     plansGrid.appendChild(card);
   });
 }
@@ -523,12 +534,12 @@ function openPlanEditor(id) {
     id: plan.id,
     name: plan.name,
     exercises: structuredClone(plan.exercises),
-    isDefault: plan.id === DEFAULT_PLAN_ID,
+    isBundled: plan.source === "bundled",
   };
   planEditTitle.textContent = plan.name;
   planNameInput.value = plan.name;
-  planNameInput.disabled = editingPlan.isDefault;
-  planAddExerciseBtn.hidden = editingPlan.isDefault;
+  planNameInput.disabled = editingPlan.isBundled;
+  planAddExerciseBtn.hidden = editingPlan.isBundled;
   renderPlanExercises();
   plansListView.hidden = true;
   planEditView.hidden = false;
@@ -553,7 +564,7 @@ function renderPlanExercises() {
     labelInput.className = "text-input plan-exercise-label";
     labelInput.placeholder = i18n.t("planEditor.labelPlaceholder");
     labelInput.value = exercise.label;
-    labelInput.disabled = editingPlan.isDefault;
+    labelInput.disabled = editingPlan.isBundled;
     labelInput.addEventListener("change", () => updateExerciseField(index, "label", labelInput.value));
 
     const categoryInput = document.createElement("input");
@@ -562,7 +573,7 @@ function renderPlanExercises() {
     categoryInput.placeholder = i18n.t("planEditor.categoryPlaceholder");
     categoryInput.setAttribute("list", "exercise-category-options");
     categoryInput.value = exercise.category;
-    categoryInput.disabled = editingPlan.isDefault;
+    categoryInput.disabled = editingPlan.isBundled;
     categoryInput.addEventListener("change", () => updateExerciseField(index, "category", categoryInput.value));
 
     const durationInput = document.createElement("input");
@@ -571,14 +582,14 @@ function renderPlanExercises() {
     durationInput.step = "5";
     durationInput.className = "text-input plan-exercise-duration";
     durationInput.value = exercise.durationSec;
-    durationInput.disabled = editingPlan.isDefault;
+    durationInput.disabled = editingPlan.isBundled;
     durationInput.addEventListener("change", () =>
       updateExerciseField(index, "durationSec", Math.max(5, Number(durationInput.value) || 5))
     );
 
     row.append(labelInput, categoryInput, durationInput);
 
-    if (!editingPlan.isDefault) {
+    if (!editingPlan.isBundled) {
       const removeBtn = document.createElement("button");
       removeBtn.className = "plan-exercise-remove-btn";
       removeBtn.textContent = "✕";
@@ -643,6 +654,11 @@ importPlanBtn.addEventListener("click", () => importPlan());
 planBackBtn.addEventListener("click", () => closePlanEditor());
 
 async function refreshPlans() {
-  plansState = await window.dashboardAPI.getPlans();
+  const { bundledPacks, customPlans } = await window.dashboardAPI.getPlans();
+  const packs = [...bundledPacks, ...customPlans];
+  const progressEntries = await Promise.all(
+    packs.map(async (p) => [p.id, await window.dashboardAPI.getPackProgress(p.id)])
+  );
+  plansState = { bundledPacks, customPlans, progress: Object.fromEntries(progressEntries) };
   renderPlansGrid();
 }
