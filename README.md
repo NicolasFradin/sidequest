@@ -29,9 +29,9 @@ SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/Side
 
 ## How it works
 
-- A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active pack.
+- A **timer** fires every N minutes (configurable) and shows a mascot with a random quest from your active pack.
 - A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook SideQuest installs into `~/.claude/settings.json` for you.
-- Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the exercise — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
+- Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the quest — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
 - A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file, or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
 - Give any pack **its own mascot** right in its editor — pick one of the bundled ones or upload your own image, no JSON editing needed.
 
@@ -51,16 +51,16 @@ The app isn't code-signed yet (no paid developer certificate at this stage), so 
 
 - **macOS**: right-click the app → **"Open"** (instead of double-clicking), then confirm.
 - **Windows**: SmartScreen → "More info" → "Run anyway".
-- **Linux**: `chmod +x Mascot*.AppImage` and run it directly, or `sudo dpkg -i` for the `.deb`.
+- **Linux**: `chmod +x SideQuest*.AppImage` and run it directly, or `sudo dpkg -i` for the `.deb`.
 
 ## Usage
 
 Once installed, **SideQuest runs in the background** — no window opens on launch (except the very first time, to pick your settings). Find it in:
 
-- the **macOS menu bar** or the **Windows/Linux system tray** — click for the menu (open dashboard, trigger an exercise now, quit);
+- the **macOS menu bar** or the **Windows/Linux system tray** — click for the menu (open dashboard, trigger a quest now, quit);
 - the **Dock/taskbar**, if your OS shows it there.
 
-An exercise pops up automatically every 30 minutes by default (configurable in the dashboard). To wire it up to Claude Code instead of (or alongside) the timer, open the dashboard's **"Claude Code integration"** card and hit activate.
+A quest pops up automatically every 30 minutes by default (configurable in the dashboard). To wire it up to Claude Code instead of (or alongside) the timer, open the dashboard's **"Claude Code integration"** card and hit activate.
 
 ## Build from source / contribute
 
@@ -76,10 +76,10 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 
 ## Roadmap — major next steps
 
-- **Smarter hook debounce** — the "Claude is still thinking" trigger currently waits a fixed 8 seconds before showing an exercise. Next: anticipate actual turn length instead (count `PreToolUse`/`PostToolUse` calls as a signal, or learn from real turn-duration history) rather than a hardcoded delay.
+- **Smarter hook debounce** — the "Claude is still thinking" trigger currently waits a fixed 8 seconds before showing a quest. Next: anticipate actual turn length instead (count `PreToolUse`/`PostToolUse` calls as a signal, or learn from real turn-duration history) rather than a hardcoded delay.
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
-- **Animated mascots** — the overlay currently shows static PNGs; idle/exercise/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
+- **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
 - **Marketplace of quests** — SideGym, SideCat and SideTama ship today. Pack import/export (JSON) and AI generation already work as stepping stones toward an installable pack registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 

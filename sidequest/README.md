@@ -12,7 +12,7 @@ Download the latest release from the [GitHub Releases page](../../releases):
 
 ## Structure
 
-- `packages/core` — pure business logic (scheduler, SQLite storage, exercise plans), no Electron dependency.
+- `packages/core` — pure business logic (scheduler, SQLite storage, quest plans), no Electron dependency.
 - `packages/app` — Electron app: tray (menu bar), mascot overlay, dashboard.
 
 ## Prerequisites (macOS)
@@ -31,10 +31,10 @@ pnpm approve-builds --all   # allow native compilation of better-sqlite3 and Ele
 ## Testing `core` (business logic)
 
 ```bash
-# Unit test suite (scheduler, storage, exercise plans)
+# Unit test suite (scheduler, storage, quest plans)
 pnpm test
 
-# Watch the scheduler run in real conditions (1 exercise every 3s, Ctrl+C to stop)
+# Watch the scheduler run in real conditions (1 quest every 3s, Ctrl+C to stop)
 cd packages/core && pnpm demo
 
 # Compile to JS (type-checks the codebase) — required before running the app
@@ -50,8 +50,8 @@ pnpm start
 
 You should see an icon appear in the macOS menu bar. Click it to open the menu:
 
-- **"Trigger an exercise now"** → shows the mascot overlay immediately (no need to wait for the default 30-minute interval).
-- The overlay shows the mascot, an exercise, and two buttons ("Done" / "Skip").
+- **"Trigger a quest now"** → shows the mascot overlay immediately (no need to wait for the default 30-minute interval).
+- The overlay shows the mascot, a quest, and two buttons ("Done" / "Skip").
 - **"Quit"** actually quits the app (just closing the overlay window doesn't — it stays running in the tray).
 
 ## ⚠️ Heads-up: shared native module (better-sqlite3)
