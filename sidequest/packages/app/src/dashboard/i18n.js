@@ -94,8 +94,18 @@ const TRANSLATIONS = {
     "plans.toast.generated": "Pack généré",
     "plans.badge.generated": "Généré par IA",
     "plans.import": "Importer un pack",
-    "plans.import.infoTitle":
-      "Format attendu : un fichier JSON avec un nom, une liste de quêtes, et en option ta propre mascotte (image intégrée en base64).",
+    "plans.import.infoTooltip": `Format attendu (fichier JSON) :
+<pre>{
+  "name": "Mon pack",
+  "mascot": {
+    "label": "Ma mascotte",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "Ma quête", "durationSec": 30, "category": "détente" }
+  ]
+}</pre>
+La mascotte est optionnelle.`,
     "plans.new": "+ Nouveau pack",
     "plans.badge.bundled": "Officiel",
     "plans.badge.imported": "Importé",
@@ -242,8 +252,18 @@ const TRANSLATIONS = {
     "plans.toast.generated": "Pack generated",
     "plans.badge.generated": "AI-generated",
     "plans.import": "Import a pack",
-    "plans.import.infoTitle":
-      "Expected format: a JSON file with a name, a list of quests, and optionally your own mascot (base64-embedded image).",
+    "plans.import.infoTooltip": `Expected format (JSON file):
+<pre>{
+  "name": "My pack",
+  "mascot": {
+    "label": "My mascot",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "My quest", "durationSec": 30, "category": "relax" }
+  ]
+}</pre>
+The mascot is optional.`,
     "plans.new": "+ New pack",
     "plans.badge.bundled": "Official",
     "plans.badge.imported": "Imported",

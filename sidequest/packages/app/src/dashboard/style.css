@@ -380,15 +380,14 @@ html, body {
 }
 
 /* Tooltip maison plutôt que le `title` natif — pas fiable dans ce contexte Electron
-   (n'apparaît pas au survol, cf. retour utilisateur). Lit `attr(title)` : même attribut
-   que celui déjà posé/traduit en HTML (data-i18n-title -> el.title), pas de duplication. */
-.info-bubble::after {
-  content: attr(title);
+   (n'apparaissait pas au survol, cf. retour utilisateur). Un vrai élément enfant (pas
+   `content: attr(title)`) pour pouvoir y mettre l'exemple JSON en <pre> mis en forme. */
+.info-bubble-tooltip {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 260px;
-  padding: 10px 12px;
+  width: 320px;
+  padding: 12px 14px;
   border-radius: 8px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -397,7 +396,7 @@ html, body {
   font-size: 12px;
   line-height: 1.5;
   font-style: normal;
-  white-space: normal;
+  font-weight: 400;
   text-align: left;
   opacity: 0;
   visibility: hidden;
@@ -406,8 +405,20 @@ html, body {
   z-index: 20;
 }
 
-.info-bubble:hover::after,
-.info-bubble:focus-visible::after {
+.info-bubble-tooltip pre {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  overflow-x: auto;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre;
+}
+
+.info-bubble:hover .info-bubble-tooltip,
+.info-bubble:focus-visible .info-bubble-tooltip {
   opacity: 1;
   visibility: visible;
 }

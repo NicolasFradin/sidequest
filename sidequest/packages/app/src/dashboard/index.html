@@ -151,12 +151,21 @@
             <div class="page-header-actions">
               <button id="generate-plan-btn" class="option-btn" data-i18n="plans.generate">✨ Générer avec l'IA</button>
               <button id="import-plan-btn" class="option-btn" data-i18n="plans.import">Importer un plan</button>
-              <span
-                class="info-bubble"
-                tabindex="0"
-                data-i18n-title="plans.import.infoTitle"
-                title="Format attendu : un fichier JSON avec un nom, une liste de quêtes, et en option ta propre mascotte (image intégrée en base64)."
-                >ⓘ</span
+              <span class="info-bubble" tabindex="0"
+                >ⓘ<span class="info-bubble-tooltip" data-i18n-html="plans.import.infoTooltip"
+                  >Format attendu (fichier JSON) :
+                  <pre>{
+  "name": "Mon pack",
+  "mascot": {
+    "label": "Ma mascotte",
+    "image": "data:image/png;base64,iVBORw0KGgo..."
+  },
+  "exercises": [
+    { "label": "Ma quête", "durationSec": 30, "category": "détente" }
+  ]
+}</pre>
+                  La mascotte est optionnelle.</span
+                ></span
               >
               <button id="new-plan-btn" class="page-action" data-i18n="plans.new">+ Nouveau plan</button>
             </div>
