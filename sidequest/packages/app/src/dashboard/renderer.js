@@ -13,42 +13,7 @@ themeToggle.addEventListener("click", async () => {
   applySettingsToUI(next);
 });
 
-const MASCOT_LABELS = {
-  "ronnie-coleman": "Ronnie Coleman",
-  "miami-80s": "Miami 80s",
-  "arnold-80s": "Arnold 80s",
-  sergeant: "Sergent",
-  "sergeant-desert": "Sergent (désert)",
-  goku: "Goku",
-  centurion: "Centurion",
-};
-const MASCOT_IMAGES = {
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
-  "arnold-80s": "../../assets/mascots/arnold-80s.png",
-  sergeant: "../../assets/mascots/sergeant.png",
-  "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
-  goku: "../../assets/mascots/goku.png",
-  centurion: "../../assets/mascots/centurion.png",
-};
-/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
-const MASCOTS_BY_THEME = {
-  "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
-  "military-camo": ["sergeant"],
-  dragonball: ["goku"],
-  "roman-empire": ["centurion"],
-};
-/**
- * Variante d'une mascotte à afficher en mode clair, si elle existe (sinon la mascotte normale
- * sert pour les deux modes) — sert de base à resolveMascotImage(). Mécanisme générique, pas
- * limité à Military camo, voir plan-theme-global.md sprint 5.
- */
-const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
-
-function resolveMascotImage(mascotId, theme) {
-  const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
-}
+const { MASCOT_LABELS, MASCOT_IMAGES, MASCOTS_BY_THEME, resolveMascotImage } = window.sqMascots;
 
 const languageButtons = [...document.querySelectorAll("#language-options .language-bubble")];
 languageButtons.forEach((btn) =>

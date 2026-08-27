@@ -11,6 +11,7 @@ const TRANSLATIONS = {
     importDialogTitle: "Importer un plan",
     errorInvalidJson: "Ce fichier n'est pas un JSON valide.",
     errorInvalidShape: "Ce fichier n'a pas le format d'un plan SideQuest (nom + exercices attendus).",
+    errorInvalidMascot: "L'image de mascotte est invalide ou dépasse 3 Mo.",
   },
   en: {
     trayOpenDashboard: "Open dashboard",
@@ -23,6 +24,7 @@ const TRANSLATIONS = {
     importDialogTitle: "Import a plan",
     errorInvalidJson: "This file isn't valid JSON.",
     errorInvalidShape: "This file isn't in the SideQuest plan format (expected a name and exercises).",
+    errorInvalidMascot: "The mascot image is invalid or larger than 3 MB.",
   },
 };
 

@@ -206,9 +206,25 @@ describe("Storage — plans custom", () => {
     expect(created.id).toBeTruthy();
     expect(created.name).toBe("Mon plan");
     expect(created.exercises).toEqual(exercises);
+    expect(created.source).toBe("custom");
+    expect(created.mascot).toBeUndefined();
 
     expect(storage.getPlan(created.id)).toEqual(created);
     expect(storage.getPlans()).toEqual([created]);
+  });
+
+  it("crée un plan avec une source, une mascotte et une couleur explicites", () => {
+    const mascot = { id: "custom:foo", label: "Foo", imagePath: "/tmp/foo.png" };
+    const created = storage.createPlan("Pack importé", exercises, {
+      source: "imported",
+      mascot,
+      color: "#3ecfd6",
+    });
+
+    expect(created.source).toBe("imported");
+    expect(created.mascot).toEqual(mascot);
+    expect(created.color).toBe("#3ecfd6");
+    expect(storage.getPlan(created.id)).toEqual(created);
   });
 
   it("retourne undefined pour un plan inconnu", () => {

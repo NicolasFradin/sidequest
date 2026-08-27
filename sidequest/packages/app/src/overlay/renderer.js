@@ -1,19 +1,4 @@
-const mascotImages = {
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
-  "arnold-80s": "../../assets/mascots/arnold-80s.png",
-  sergeant: "../../assets/mascots/sergeant.png",
-  "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
-  goku: "../../assets/mascots/goku.png",
-  centurion: "../../assets/mascots/centurion.png",
-};
-/** Variante d'une mascotte à afficher en mode clair, si elle existe — voir plan-theme-global.md sprint 5. */
-const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
-
-function resolveMascotImage(mascotId, theme) {
-  const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return mascotImages[variantId ?? mascotId] ?? mascotImages["ronnie-coleman"];
-}
+const { resolveMascotImage } = window.sqMascots;
 
 const mascotImg = document.getElementById("mascot-img");
 const exerciseLabel = document.getElementById("exercise-label");
@@ -23,10 +8,12 @@ const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
 
 let currentMascotId = null;
+let currentMascotImage = null;
 
-window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking, language }) => {
+window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, theme, blocking, language }) => {
   currentMascotId = mascot;
-  mascotImg.src = resolveMascotImage(mascot, theme ?? "dark");
+  currentMascotImage = mascotImage ?? null;
+  mascotImg.src = resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
   exerciseLabel.textContent = exercise.label;
   document.documentElement.dataset.theme = theme ?? "dark";
   document.documentElement.lang = language ?? "fr";
@@ -38,7 +25,7 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, theme, blocking, language }
 
 window.mascotAPI.onThemeChanged((theme) => {
   document.documentElement.dataset.theme = theme;
-  if (currentMascotId) mascotImg.src = resolveMascotImage(currentMascotId, theme);
+  if (currentMascotId) mascotImg.src = resolveMascotImage(currentMascotId, theme, currentMascotImage);
 });
 
 window.mascotAPI.onLanguageChanged((language) => {

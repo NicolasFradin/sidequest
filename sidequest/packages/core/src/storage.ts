@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import type { Exercise } from "./packs.js";
+import type { Exercise, Pack, PackSource, PackMascot } from "./packs.js";
 
 export type SessionStatus = "done" | "skipped" | "missed";
 export type TriggerType = "timer" | "hook";
@@ -38,11 +38,8 @@ export interface Settings {
   language: Language;
 }
 
-export interface Plan {
-  id: string;
-  name: string;
-  exercises: Exercise[];
-}
+/** Un `Plan` est un `Pack` — SQLite (CRUD dashboard) et JSON embarqué partagent désormais la même forme. */
+export type Plan = Pack;
 
 export interface SessionRecord {
   id?: number;
@@ -92,6 +89,11 @@ interface PlanRow {
   id: string;
   name: string;
   exercises: string;
+  source: PackSource;
+  mascot_id: string | null;
+  mascot_label: string | null;
+  mascot_image_path: string | null;
+  color: string | null;
 }
 
 export class Storage {
@@ -128,12 +130,29 @@ export class Storage {
     `);
 
     // Migrations pour les bases créées avant l'ajout de ces colonnes.
-    const columns = this.db.prepare("PRAGMA table_info(sessions)").all() as { name: string }[];
-    if (!columns.some((c) => c.name === "mascot")) {
+    const sessionColumns = this.db.prepare("PRAGMA table_info(sessions)").all() as { name: string }[];
+    if (!sessionColumns.some((c) => c.name === "mascot")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN mascot TEXT NOT NULL DEFAULT 'ronnie-coleman'");
     }
-    if (!columns.some((c) => c.name === "mode")) {
+    if (!sessionColumns.some((c) => c.name === "mode")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'notify'");
+    }
+
+    const planColumns = this.db.prepare("PRAGMA table_info(plans)").all() as { name: string }[];
+    if (!planColumns.some((c) => c.name === "source")) {
+      this.db.exec("ALTER TABLE plans ADD COLUMN source TEXT NOT NULL DEFAULT 'custom'");
+    }
+    if (!planColumns.some((c) => c.name === "mascot_id")) {
+      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_id TEXT");
+    }
+    if (!planColumns.some((c) => c.name === "mascot_label")) {
+      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_label TEXT");
+    }
+    if (!planColumns.some((c) => c.name === "mascot_image_path")) {
+      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_image_path TEXT");
+    }
+    if (!planColumns.some((c) => c.name === "color")) {
+      this.db.exec("ALTER TABLE plans ADD COLUMN color TEXT");
     }
   }
 
@@ -258,7 +277,17 @@ export class Storage {
   }
 
   private rowToPlan(row: PlanRow): Plan {
-    return { id: row.id, name: row.name, exercises: JSON.parse(row.exercises) as Exercise[] };
+    const mascot: PackMascot | undefined = row.mascot_image_path
+      ? { id: row.mascot_id ?? row.id, label: row.mascot_label ?? row.name, imagePath: row.mascot_image_path }
+      : undefined;
+    return {
+      id: row.id,
+      name: row.name,
+      exercises: JSON.parse(row.exercises) as Exercise[],
+      source: row.source,
+      mascot,
+      color: row.color ?? undefined,
+    };
   }
 
   getPlans(): Plan[] {
@@ -271,11 +300,34 @@ export class Storage {
     return row ? this.rowToPlan(row) : undefined;
   }
 
-  createPlan(name: string, exercises: Exercise[]): Plan {
-    const plan: Plan = { id: randomUUID(), name, exercises };
+  createPlan(
+    name: string,
+    exercises: Exercise[],
+    opts?: { source?: PackSource; mascot?: PackMascot; color?: string }
+  ): Plan {
+    const plan: Plan = {
+      id: randomUUID(),
+      name,
+      exercises,
+      source: opts?.source ?? "custom",
+      mascot: opts?.mascot,
+      color: opts?.color,
+    };
     this.db
-      .prepare("INSERT INTO plans (id, name, exercises) VALUES (@id, @name, @exercises)")
-      .run({ id: plan.id, name: plan.name, exercises: JSON.stringify(plan.exercises) });
+      .prepare(
+        `INSERT INTO plans (id, name, exercises, source, mascot_id, mascot_label, mascot_image_path, color)
+         VALUES (@id, @name, @exercises, @source, @mascotId, @mascotLabel, @mascotImagePath, @color)`
+      )
+      .run({
+        id: plan.id,
+        name: plan.name,
+        exercises: JSON.stringify(plan.exercises),
+        source: plan.source,
+        mascotId: plan.mascot?.id ?? null,
+        mascotLabel: plan.mascot?.label ?? null,
+        mascotImagePath: plan.mascot?.imagePath ?? null,
+        color: plan.color ?? null,
+      });
     return plan;
   }
 

@@ -28,6 +28,11 @@ const OVERLAY_DIR = path.join(__dirname, "..", "overlay");
 const DASHBOARD_DIR = path.join(__dirname, "..", "dashboard");
 const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
 const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
+/** Mascottes custom décodées depuis un import de pack (voir dashboard:import-plan) — jamais le base64 en base SQLite, juste ce chemin. */
+const CUSTOM_MASCOTS_DIR = () => path.join(app.getPath("userData"), "custom-mascots");
+const MAX_MASCOT_IMAGE_BYTES = 3 * 1024 * 1024;
+/** mime -> extension de fichier pour les mascottes custom décodées depuis un data URI base64. */
+const MASCOT_MIME_EXTENSIONS = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
 
 let tray = null;
 let overlayWindow = null;
@@ -201,6 +206,41 @@ function loadActiveProgram(settings) {
   return plan.exercises.length > 0 ? plan : loadPack("sport-basic");
 }
 
+/**
+ * Décode un data URI base64 (`data:image/png;base64,...`) et écrit l'image sur disque, sous
+ * `userData/custom-mascots/` — jamais le base64 lui-même en base SQLite, seul ce chemin l'est
+ * (voir Storage.createPlan). Retourne `null` si le format ou la taille (>3 Mo décodé) est invalide.
+ * @returns {string | null} chemin fichier absolu
+ */
+function decodeMascotImage(image) {
+  const match = /^data:image\/(png|jpe?g|webp);base64,([a-zA-Z0-9+/=]+)$/.exec(image ?? "");
+  if (!match) return null;
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+
+  const ext = MASCOT_MIME_EXTENSIONS[match[1].toLowerCase()] ?? "png";
+  const dir = CUSTOM_MASCOTS_DIR();
+  mkdirSync(dir, { recursive: true });
+  const imagePath = path.join(dir, `${randomUUID()}.${ext}`);
+  writeFileSync(imagePath, buffer);
+  return imagePath;
+}
+
+/** Ré-encode la mascotte d'un plan en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-plan). */
+function mascotToDataUri(mascot) {
+  if (!mascot?.imagePath) return null;
+  try {
+    const ext = path.extname(mascot.imagePath).slice(1).toLowerCase();
+    const mime = ext === "jpg" ? "jpeg" : ext;
+    const buffer = readFileSync(mascot.imagePath);
+    return `data:image/${mime};base64,${buffer.toString("base64")}`;
+  } catch {
+    // Fichier mascotte introuvable (ex. userData déplacé/nettoyé à la main) — on exporte sans
+    // mascotte plutôt que de faire échouer tout l'export.
+    return null;
+  }
+}
+
 function showExercise() {
   const settings = storage.getSettings();
   const pack = loadActiveProgram(settings);
@@ -218,6 +258,9 @@ function showExercise() {
   const payload = {
     exercise,
     mascot: settings.activeMascot,
+    // Mascotte propre au pack (importée avec sa propre image) — l'overlay n'a pas besoin
+    // d'accès fichier lui-même, ce chemin absolu résolu côté main lui suffit.
+    mascotImage: pack.mascot ? `file://${pack.mascot.imagePath}` : null,
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
@@ -510,7 +553,17 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {
+      const plan = storage.getPlan(id);
       storage.deletePlan(id);
+      // Best-effort : ne nettoie que les mascottes qu'on a nous-mêmes décodées sous userData
+      // (jamais les PNG embarqués avec l'app) ; une erreur ici ne doit jamais bloquer la suppression.
+      if (plan?.mascot?.imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) {
+        try {
+          unlinkSync(plan.mascot.imagePath);
+        } catch {
+          // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
+        }
+      }
       return storage.getSettings();
     });
 
@@ -526,7 +579,13 @@ if (!gotSingleInstanceLock) {
       });
       if (canceled || !filePath) return { exported: false };
 
-      writeFileSync(filePath, JSON.stringify({ name: plan.name, exercises: plan.exercises }, null, 2), "utf-8");
+      const mascotImage = mascotToDataUri(plan.mascot);
+      const exported = {
+        name: plan.name,
+        exercises: plan.exercises,
+        ...(mascotImage ? { mascot: { label: plan.mascot.label, image: mascotImage } } : {}),
+      };
+      writeFileSync(filePath, JSON.stringify(exported, null, 2), "utf-8");
       return { exported: true };
     });
 
@@ -558,7 +617,15 @@ if (!gotSingleInstanceLock) {
         category: String(e?.category ?? ""),
       }));
 
-      const plan = storage.createPlan(data.name.trim(), exercises);
+      // La mascotte est optionnelle — sans elle, comportement inchangé (mascotte globale).
+      let mascot;
+      if (data.mascot !== undefined) {
+        const imagePath = decodeMascotImage(data.mascot?.image);
+        if (!imagePath) return { imported: false, error: t(lang, "errorInvalidMascot") };
+        mascot = { id: `custom:${randomUUID()}`, label: String(data.mascot?.label ?? data.name), imagePath };
+      }
+
+      const plan = storage.createPlan(data.name.trim(), exercises, { source: "imported", mascot });
       return { imported: true, plan };
     });
 
