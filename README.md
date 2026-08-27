@@ -23,9 +23,9 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | 🦜 **SideParrot** — language learning | planned | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
 | 🧘 **SideYoga** — relaxation | planned | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
 | 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
-| 🧓 **SideMamie** — check in on your grandma | planned | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
+| 🧓 **SideMamie** — check in on your grandma | ships today | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
 
-SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/SideCodingGame/SideMamie are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
+SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
 
 ## How it works
 
@@ -34,6 +34,40 @@ SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/Side
 - Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the quest — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
 - A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file, or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
 - Give any pack **its own mascot** right in its editor — pick one of the bundled ones or upload your own image, no JSON editing needed.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    Timer["⏱ Timer\n(every N min)"]
+    Hook["🪝 Claude Code hook\ncurl → 127.0.0.1 only"]
+
+    subgraph Main["Electron main process"]
+        HookServer["HookServer\n(local HTTP, loopback only)"]
+        Scheduler["Scheduler"]
+        Storage[("SQLite\nsettings · sessions · packs")]
+    end
+
+    Overlay["Overlay window\nmascot + quest + Done/Skip"]
+    Dashboard["Dashboard window\nsettings · history · packs gallery"]
+
+    subgraph AI["AI pack generation (opt-in, off by default)"]
+        API["Anthropic / OpenAI API key"]
+        CLI["Claude Code / Codex CLI bridge"]
+        Ollama["Local Ollama"]
+    end
+
+    Timer --> Scheduler
+    Hook --> HookServer --> Scheduler
+    Scheduler <--> Storage
+    Scheduler --> Overlay
+    Overlay -- "Done / Skip" --> Storage
+    Dashboard <--> Storage
+    Dashboard -- "Generate pack" --> AI
+    AI -- "sanitized JSON, same validator as manual import" --> Storage
+```
+
+Everything above the `AI` box runs 100% local, no network calls — SQLite on disk, a loopback-only HTTP server for the Claude Code hook. The only opt-in exception is AI pack generation, which is off until you configure a provider in Settings.
 
 If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
 

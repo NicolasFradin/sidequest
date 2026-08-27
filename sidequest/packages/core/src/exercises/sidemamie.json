@@ -1,0 +1,16 @@
+{
+  "id": "sidemamie",
+  "name": "SideMamie - Prends des nouvelles de ta mamie",
+  "nameEn": "SideMamie - Check In On Your Grandma",
+  "color": "#D98A8A",
+  "exercises": [
+    { "id": "mamie-text", "label": "Envoie-lui un texto", "labelEn": "Send her a text", "durationSec": 15, "category": "texto", "categoryEn": "text" },
+    { "id": "mamie-call", "label": "Appelle-la 30 secondes", "labelEn": "Call her for 30 seconds", "durationSec": 30, "category": "appel", "categoryEn": "call" },
+    { "id": "mamie-photo", "label": "Envoie-lui une photo de ta journée", "labelEn": "Send her a photo of your day", "durationSec": 15, "category": "photo", "categoryEn": "photo" },
+    { "id": "mamie-ask", "label": "Demande-lui comment elle va", "labelEn": "Ask her how she's doing", "durationSec": 20, "category": "appel", "categoryEn": "call" },
+    { "id": "mamie-story", "label": "Raconte-lui une anecdote de ta journée", "labelEn": "Tell her a story from your day", "durationSec": 30, "category": "appel", "categoryEn": "call" },
+    { "id": "mamie-heart", "label": "Envoie-lui un petit cœur", "labelEn": "Send her a little heart", "durationSec": 10, "category": "texto", "categoryEn": "text" },
+    { "id": "mamie-date", "label": "Note une date à ne pas oublier", "labelEn": "Note a date not to forget", "durationSec": 20, "category": "souvenir", "categoryEn": "reminder" },
+    { "id": "mamie-thinking", "label": "Dis-lui que tu penses à elle", "labelEn": "Tell her you're thinking of her", "durationSec": 15, "category": "texto", "categoryEn": "text" }
+  ]
+}
