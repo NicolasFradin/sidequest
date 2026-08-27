@@ -11,7 +11,18 @@
 
 **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm.
 
-SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. Today that quest is fitness (the **SideGym** pack). The idea is bigger than sport: SideQuest is meant to grow into a marketplace of idle-time quests — language learning, relaxation, coding practice, whatever fits in 30 seconds between two prompts — including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
+SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. It's built to grow into a marketplace of idle-time quests, not just one: whatever fits in 30 seconds between two prompts, including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
+
+### The quest packs
+
+| Pack | Status | |
+|---|---|---|
+| 🏋️ **SideGym** — fitness | ships today | **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm. |
+| 🦜 **SideParrot** — language learning | planned | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
+| 🧘 **SideYoga** — relaxation | planned | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
+| 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
+
+Only SideGym ships in the app today — the rest are names reserved for the next packs. Plan import/export (JSON) already works, so you can build your own pack right now if you don't want to wait.
 
 ## How it works
 
