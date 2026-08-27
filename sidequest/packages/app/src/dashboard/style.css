@@ -412,6 +412,10 @@ html, body {
   padding: 20px 24px;
 }
 
+#plan-edit-view .card + .card {
+  margin-top: 20px;
+}
+
 .field-label {
   display: block;
   font-size: 14px;
