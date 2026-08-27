@@ -6,7 +6,7 @@
 const TRANSLATIONS = {
   fr: {
     "nav.settings": "Réglages",
-    "nav.plans": "Plans",
+    "nav.plans": "Packs",
     "nav.history": "Historique",
     "theme.button": "Thème",
     "theme.toggle.title": "Changer de thème",
@@ -61,10 +61,11 @@ const TRANSLATIONS = {
 
     "toast.saved": "Enregistré",
 
-    "plans.pageTitle": "Plans d'entraînement",
-    "plans.import": "Importer un plan",
-    "plans.new": "+ Nouveau plan",
-    "plans.badge.default": "Défaut",
+    "plans.pageTitle": "Galerie de packs",
+    "plans.import": "Importer un pack",
+    "plans.new": "+ Nouveau pack",
+    "plans.badge.bundled": "Officiel",
+    "plans.badge.imported": "Importé",
     "plans.badge.active": "Actif",
     "plans.count": (n) => `${n} exercice${n > 1 ? "s" : ""}`,
     "plans.action.open": "Ouvrir",
@@ -114,7 +115,7 @@ const TRANSLATIONS = {
   },
   en: {
     "nav.settings": "Settings",
-    "nav.plans": "Plans",
+    "nav.plans": "Packs",
     "nav.history": "History",
     "theme.button": "Theme",
     "theme.toggle.title": "Switch theme",
@@ -169,10 +170,11 @@ const TRANSLATIONS = {
 
     "toast.saved": "Saved",
 
-    "plans.pageTitle": "Training plans",
-    "plans.import": "Import a plan",
-    "plans.new": "+ New plan",
-    "plans.badge.default": "Default",
+    "plans.pageTitle": "Packs gallery",
+    "plans.import": "Import a pack",
+    "plans.new": "+ New pack",
+    "plans.badge.bundled": "Official",
+    "plans.badge.imported": "Imported",
     "plans.badge.active": "Active",
     "plans.count": (n) => `${n} exercise${n > 1 ? "s" : ""}`,
     "plans.action.open": "Open",

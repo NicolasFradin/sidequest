@@ -345,12 +345,21 @@ const newPlanBtn = document.getElementById("new-plan-btn");
 const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
 
-let plansState = { defaultPlan: null, customPlans: [] };
-/** Plan en cours d'édition (copie locale) : { id, name, exercises, isDefault } */
+let plansState = { bundledPacks: [], customPlans: [] };
+/** Plan en cours d'édition (copie locale) : { id, name, exercises, isBundled } */
 let editingPlan = null;
 
 function allPlans() {
-  return plansState.defaultPlan ? [plansState.defaultPlan, ...plansState.customPlans] : plansState.customPlans;
+  return [...plansState.bundledPacks, ...plansState.customPlans];
+}
+
+/** Image de la carte d'un pack dans la galerie : sa propre mascotte si elle en a une (pack
+    importé avec sa propre image), sinon la mascotte globale actuellement choisie — c'est
+    effectivement celle qui s'affichera à l'écran si ce pack est activé. */
+function planCardMascotImage(plan) {
+  const overrideUrl = plan.mascot?.imagePath ? `file://${plan.mascot.imagePath}` : null;
+  const mascotId = plan.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
+  return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
 
 function findPlan(id) {
@@ -364,7 +373,7 @@ function planExerciseCountLabel(plan) {
 function renderPlansGrid() {
   plansGrid.innerHTML = "";
   allPlans().forEach((plan) => {
-    const isDefault = plan.id === DEFAULT_PLAN_ID;
+    const isBundled = plan.source === "bundled";
     const isActive = currentSettings?.activeProgram === plan.id;
 
     const card = document.createElement("div");
@@ -372,6 +381,13 @@ function renderPlansGrid() {
 
     const header = document.createElement("div");
     header.className = "plan-card-header";
+
+    const mascotThumb = document.createElement("img");
+    mascotThumb.className = "plan-card-mascot";
+    mascotThumb.src = planCardMascotImage(plan);
+    mascotThumb.alt = "";
+    header.appendChild(mascotThumb);
+
     const name = document.createElement("span");
     name.className = "plan-card-name";
     name.textContent = plan.name;
@@ -379,11 +395,18 @@ function renderPlansGrid() {
 
     const badges = document.createElement("div");
     badges.className = "plan-card-badges";
-    if (isDefault) {
-      const defaultBadge = document.createElement("span");
-      defaultBadge.className = "status-badge default";
-      defaultBadge.textContent = i18n.t("plans.badge.default");
-      badges.appendChild(defaultBadge);
+    // Officiel (embarqué avec l'app) / Importé (fichier JSON avec sa propre mascotte) / rien
+    // pour un pack créé à la main dans le dashboard ("Perso") — voir plan.source, Phase 0.
+    if (isBundled) {
+      const bundledBadge = document.createElement("span");
+      bundledBadge.className = "status-badge bundled";
+      bundledBadge.textContent = i18n.t("plans.badge.bundled");
+      badges.appendChild(bundledBadge);
+    } else if (plan.source === "imported") {
+      const importedBadge = document.createElement("span");
+      importedBadge.className = "status-badge imported";
+      importedBadge.textContent = i18n.t("plans.badge.imported");
+      badges.appendChild(importedBadge);
     }
     if (isActive) {
       const activeBadge = document.createElement("span");
@@ -430,7 +453,7 @@ function renderPlansGrid() {
 
     actions.append(openBtn, duplicateBtn, toggleBtn, exportBtn);
 
-    if (!isDefault) {
+    if (!isBundled) {
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "option-btn option-btn-sm option-btn-danger";
       deleteBtn.textContent = i18n.t("plans.action.delete");
@@ -491,12 +514,12 @@ function openPlanEditor(id) {
     id: plan.id,
     name: plan.name,
     exercises: structuredClone(plan.exercises),
-    isDefault: plan.id === DEFAULT_PLAN_ID,
+    isBundled: plan.source === "bundled",
   };
   planEditTitle.textContent = plan.name;
   planNameInput.value = plan.name;
-  planNameInput.disabled = editingPlan.isDefault;
-  planAddExerciseBtn.hidden = editingPlan.isDefault;
+  planNameInput.disabled = editingPlan.isBundled;
+  planAddExerciseBtn.hidden = editingPlan.isBundled;
   renderPlanExercises();
   plansListView.hidden = true;
   planEditView.hidden = false;
@@ -521,7 +544,7 @@ function renderPlanExercises() {
     labelInput.className = "text-input plan-exercise-label";
     labelInput.placeholder = i18n.t("planEditor.labelPlaceholder");
     labelInput.value = exercise.label;
-    labelInput.disabled = editingPlan.isDefault;
+    labelInput.disabled = editingPlan.isBundled;
     labelInput.addEventListener("change", () => updateExerciseField(index, "label", labelInput.value));
 
     const categoryInput = document.createElement("input");
@@ -530,7 +553,7 @@ function renderPlanExercises() {
     categoryInput.placeholder = i18n.t("planEditor.categoryPlaceholder");
     categoryInput.setAttribute("list", "exercise-category-options");
     categoryInput.value = exercise.category;
-    categoryInput.disabled = editingPlan.isDefault;
+    categoryInput.disabled = editingPlan.isBundled;
     categoryInput.addEventListener("change", () => updateExerciseField(index, "category", categoryInput.value));
 
     const durationInput = document.createElement("input");
@@ -539,14 +562,14 @@ function renderPlanExercises() {
     durationInput.step = "5";
     durationInput.className = "text-input plan-exercise-duration";
     durationInput.value = exercise.durationSec;
-    durationInput.disabled = editingPlan.isDefault;
+    durationInput.disabled = editingPlan.isBundled;
     durationInput.addEventListener("change", () =>
       updateExerciseField(index, "durationSec", Math.max(5, Number(durationInput.value) || 5))
     );
 
     row.append(labelInput, categoryInput, durationInput);
 
-    if (!editingPlan.isDefault) {
+    if (!editingPlan.isBundled) {
       const removeBtn = document.createElement("button");
       removeBtn.className = "plan-exercise-remove-btn";
       removeBtn.textContent = "✕";

@@ -8,6 +8,7 @@ import {
   Scheduler,
   Storage,
   loadPack,
+  listBundledPacks,
   pickRandomExercise,
   HookServer,
   isInstalled as isClaudeHookInstalled,
@@ -547,7 +548,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
     ipcMain.handle("dashboard:get-plans", () => ({
-      defaultPlan: loadPack("sport-basic"),
+      bundledPacks: listBundledPacks(),
       customPlans: storage.getPlans(),
     }));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
@@ -568,7 +569,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle("dashboard:export-plan", async (_event, id) => {
-      const plan = storage.getPlan(id) ?? (id === "sport-basic" ? loadPack("sport-basic") : null);
+      const plan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
       if (!plan) return { exported: false };
 
       const lang = storage.getSettings().language;

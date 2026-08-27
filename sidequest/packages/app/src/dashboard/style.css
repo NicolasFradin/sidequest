@@ -587,13 +587,22 @@ html, body {
 .plan-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+}
+
+.plan-card-mascot {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  flex-shrink: 0;
 }
 
 .plan-card-name {
   font-weight: 700;
   font-size: 15px;
+  flex: 1;
 }
 
 .plan-card-badges {
@@ -827,9 +836,14 @@ html, body {
   border-color: var(--border-subtle);
 }
 
-.status-badge.default {
+.status-badge.bundled {
   color: var(--accent-blue);
   border-color: var(--accent-blue);
+}
+
+.status-badge.imported {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
 }
 
 .hook-status-row {
