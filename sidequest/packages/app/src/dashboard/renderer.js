@@ -13,7 +13,10 @@ themeToggle.addEventListener("click", async () => {
   applySettingsToUI(next);
 });
 
-const { MASCOT_LABELS, MASCOT_IMAGES, MASCOTS_BY_THEME, resolveMascotImage } = window.sqMascots;
+// Pas de déstructuration ici : les <script> classiques partagent la même portée de haut niveau
+// dans le document, donc `const { MASCOT_LABELS } = ...` entrerait en conflit avec le `const
+// MASCOT_LABELS` déjà déclaré par shared/mascots.js (chargé juste avant) — d'où cet alias unique.
+const sqMascots = window.sqMascots;
 
 const languageButtons = [...document.querySelectorAll("#language-options .language-bubble")];
 languageButtons.forEach((btn) =>
@@ -56,7 +59,7 @@ function formatInterval(minutes) {
 /** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif — l'aperçu de
     chacune suit le mode clair/sombre (ex. sergent désertique en clair, forêt en sombre). */
 function renderMascotOptions(visualTheme, activeMascot, theme) {
-  const mascotIds = MASCOTS_BY_THEME[visualTheme] ?? MASCOTS_BY_THEME["miami-80s"];
+  const mascotIds = sqMascots.MASCOTS_BY_THEME[visualTheme] ?? sqMascots.MASCOTS_BY_THEME["miami-80s"];
   mascotOptionsContainer.innerHTML = "";
   mascotIds.forEach((mascotId) => {
     const btn = document.createElement("button");
@@ -65,11 +68,11 @@ function renderMascotOptions(visualTheme, activeMascot, theme) {
     btn.dataset.mascot = mascotId;
 
     const img = document.createElement("img");
-    img.src = resolveMascotImage(mascotId, theme);
-    img.alt = MASCOT_LABELS[mascotId] ?? mascotId;
+    img.src = sqMascots.resolveMascotImage(mascotId, theme);
+    img.alt = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
 
     const label = document.createElement("span");
-    label.textContent = MASCOT_LABELS[mascotId] ?? mascotId;
+    label.textContent = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
 
     btn.append(img, label);
     btn.addEventListener("click", () => save({ activeMascot: mascotId }));
@@ -156,7 +159,7 @@ hookTriggerModeButtons.forEach((btn) =>
 visualThemeButtons.forEach((btn) =>
   btn.addEventListener("click", () => {
     const nextTheme = btn.dataset.visualTheme;
-    const validMascots = MASCOTS_BY_THEME[nextTheme] ?? [];
+    const validMascots = sqMascots.MASCOTS_BY_THEME[nextTheme] ?? [];
     const partial = { visualTheme: nextTheme };
     // La mascotte active n'existe pas forcément dans le nouveau thème (ex. "sergeant" n'a de
     // sens que pour "military-camo") — on bascule alors sur la première mascotte du thème.
@@ -284,10 +287,10 @@ function renderHistoryTable(sessions, exerciseLabels) {
     const mascotWrap = document.createElement("span");
     mascotWrap.className = "history-mascot";
     const mascotImg = document.createElement("img");
-    mascotImg.src = MASCOT_IMAGES[session.mascot] ?? MASCOT_IMAGES["ronnie-coleman"];
+    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["ronnie-coleman"];
     mascotImg.alt = "";
     const mascotLabel = document.createElement("span");
-    mascotLabel.textContent = MASCOT_LABELS[session.mascot] ?? session.mascot;
+    mascotLabel.textContent = sqMascots.MASCOT_LABELS[session.mascot] ?? session.mascot;
     mascotWrap.append(mascotImg, mascotLabel);
     mascotCell.appendChild(mascotWrap);
 

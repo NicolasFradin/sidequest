@@ -1,4 +1,7 @@
-const { resolveMascotImage } = window.sqMascots;
+// Pas de déstructuration ici : les <script> classiques partagent la même portée de haut niveau
+// dans le document, donc `const { resolveMascotImage } = ...` entrerait en conflit avec la
+// `function resolveMascotImage` déjà déclarée par shared/mascots.js (chargé juste avant).
+const sqMascots = window.sqMascots;
 
 const mascotImg = document.getElementById("mascot-img");
 const exerciseLabel = document.getElementById("exercise-label");
@@ -13,7 +16,7 @@ let currentMascotImage = null;
 window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, theme, blocking, language }) => {
   currentMascotId = mascot;
   currentMascotImage = mascotImage ?? null;
-  mascotImg.src = resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
+  mascotImg.src = sqMascots.resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
   exerciseLabel.textContent = exercise.label;
   document.documentElement.dataset.theme = theme ?? "dark";
   document.documentElement.lang = language ?? "fr";
@@ -25,7 +28,7 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, theme, blockin
 
 window.mascotAPI.onThemeChanged((theme) => {
   document.documentElement.dataset.theme = theme;
-  if (currentMascotId) mascotImg.src = resolveMascotImage(currentMascotId, theme, currentMascotImage);
+  if (currentMascotId) mascotImg.src = sqMascots.resolveMascotImage(currentMascotId, theme, currentMascotImage);
 });
 
 window.mascotAPI.onLanguageChanged((language) => {
