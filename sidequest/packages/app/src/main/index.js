@@ -10,12 +10,19 @@ import {
   loadPack,
   listBundledPacks,
   pickRandomExercise,
+  parsePackJson,
   HookServer,
   isInstalled as isClaudeHookInstalled,
   install as installClaudeHook,
   uninstall as uninstallClaudeHook,
+  resolveProvider,
+  generatePack,
+  isClaudeCliAvailable,
+  isCodexCliAvailable,
+  listOllamaModels,
 } from "@sidequest/core";
 import { t } from "./i18n.js";
+import { isEncryptionAvailable, setApiKey, getApiKey, hasApiKey } from "./llm-credentials.js";
 
 app.setName("SideQuest");
 // App tray-only en arrière-plan : pas de menu applicatif par défaut. Ça évite aussi les
@@ -269,6 +276,23 @@ function resolvePackColor(pack) {
   for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 65%, 55%)`;
+}
+
+/** Traduit un code d'erreur `parsePackJson`/`generatePack` (packages/core) en clé i18n — un seul endroit pour les deux flux (import manuel, génération LLM). */
+function packParseErrorKey(error) {
+  switch (error) {
+    case "empty":
+      return "errorEmptyExercises";
+    case "too-many-exercises":
+      return "errorTooManyExercises";
+    case "invalid-json":
+      return "errorLlmInvalidJson";
+    case "provider-error":
+      return "errorLlmProviderError";
+    case "invalid-shape":
+    default:
+      return "errorInvalidShape";
+  }
 }
 
 function showExercise() {
@@ -646,29 +670,116 @@ if (!gotSingleInstanceLock) {
       } catch {
         return { imported: false, error: t(lang, "errorInvalidJson") };
       }
-      if (typeof data.name !== "string" || !data.name.trim() || !Array.isArray(data.exercises)) {
-        return { imported: false, error: t(lang, "errorInvalidShape") };
-      }
 
-      // Tolérant sur la forme de chaque exercice (fichier potentiellement édité à la main) :
-      // ré-assigne un id si absent/invalide plutôt que de rejeter tout le fichier.
-      const exercises = data.exercises.map((e) => ({
-        id: typeof e?.id === "string" && e.id ? e.id : randomUUID(),
-        label: String(e?.label ?? ""),
-        durationSec: Number(e?.durationSec) > 0 ? Number(e.durationSec) : 30,
-        category: String(e?.category ?? ""),
-      }));
+      // Même sanitizer que la génération LLM (dashboard:generate-plan) — un fichier édité à la
+      // main et un texte produit par un modèle sont tous les deux des données non fiables,
+      // mêmes règles pour les deux (voir packs.ts, plan-llm-pack-generation.md § 3.1).
+      const parsed = parsePackJson(data);
+      if ("error" in parsed) return { imported: false, error: t(lang, packParseErrorKey(parsed.error)) };
+      const { name, exercises } = parsed;
 
       // La mascotte est optionnelle — sans elle, comportement inchangé (mascotte globale).
       let mascot;
       if (data.mascot !== undefined) {
         const imagePath = decodeMascotImage(data.mascot?.image);
         if (!imagePath) return { imported: false, error: t(lang, "errorInvalidMascot") };
-        mascot = { id: `custom:${randomUUID()}`, label: String(data.mascot?.label ?? data.name), imagePath };
+        mascot = { id: `custom:${randomUUID()}`, label: String(data.mascot?.label ?? name), imagePath };
       }
 
-      const plan = storage.createPlan(data.name.trim(), exercises, { source: "imported", mascot });
+      const plan = storage.createPlan(name, exercises, { source: "imported", mascot });
       return { imported: true, plan };
+    });
+
+    // --- Génération de pack par LLM (plan-llm-pack-generation.md) — premier point d'entrée
+    // réseau/process-externe de l'app ; voir § 3.5 du plan pour la posture de sécurité (clé
+    // jamais en clair/SQLite, Ollama en loopback par défaut, args de tableau jamais un shell).
+    ipcMain.handle("dashboard:get-llm-status", async () => {
+      const [claudeCliAvailable, codexCliAvailable] = await Promise.all([
+        isClaudeCliAvailable(),
+        isCodexCliAvailable(),
+      ]);
+      return {
+        hasAnthropicKey: hasApiKey("anthropic-api"),
+        hasOpenaiKey: hasApiKey("openai-api"),
+        claudeCliAvailable,
+        codexCliAvailable,
+        encryptionAvailable: isEncryptionAvailable(),
+      };
+    });
+
+    ipcMain.handle("dashboard:set-llm-api-key", (_event, { provider, key }) => {
+      try {
+        setApiKey(provider, key);
+        return { ok: true };
+      } catch {
+        return { ok: false };
+      }
+    });
+
+    /** Construit les options d'appel d'un provider à partir des Settings courants — jamais la clé en dur nulle part, lue à la demande. */
+    function llmOptionsFromSettings(settings) {
+      const provider = settings.llmProvider;
+      const apiKeyProvider = provider === "anthropic-api" || provider === "openai-api" ? provider : null;
+      return {
+        apiKey: apiKeyProvider ? (getApiKey(apiKeyProvider) ?? undefined) : undefined,
+        model:
+          provider === "anthropic-api"
+            ? settings.anthropicModel
+            : provider === "openai-api"
+              ? settings.openaiModel
+              : provider === "ollama"
+                ? settings.ollamaModel
+                : undefined,
+        baseUrl: provider === "ollama" ? settings.ollamaBaseUrl : undefined,
+      };
+    }
+
+    ipcMain.handle("dashboard:test-llm-connection", async (_event, providerId) => {
+      const settings = storage.getSettings();
+      if (providerId === "claude-cli") return { ok: await isClaudeCliAvailable() };
+      if (providerId === "codex-cli") return { ok: await isCodexCliAvailable() };
+      if (providerId === "ollama") {
+        try {
+          await listOllamaModels(settings.ollamaBaseUrl);
+          return { ok: true };
+        } catch {
+          return { ok: false };
+        }
+      }
+      const provider = resolveProvider(providerId);
+      if (!provider) return { ok: false };
+      try {
+        // Appel minimal réel plutôt qu'un simple ping — pas d'endpoint de healthcheck dédié
+        // chez Anthropic/OpenAI, donc un aller-retour trivial fait office de test de connexion.
+        await provider.generate('Reply with only this exact JSON: {"ok":true}', llmOptionsFromSettings(settings));
+        return { ok: true };
+      } catch {
+        return { ok: false };
+      }
+    });
+
+    ipcMain.handle("dashboard:get-ollama-models", async (_event, baseUrl) => {
+      try {
+        return { models: await listOllamaModels(baseUrl) };
+      } catch {
+        return { models: [] };
+      }
+    });
+
+    ipcMain.handle("dashboard:generate-plan", async (_event, prompt) => {
+      const settings = storage.getSettings();
+      const provider = resolveProvider(settings.llmProvider);
+      if (!provider) {
+        return { generated: false, error: t(settings.language, "errorLlmNotConfigured") };
+      }
+
+      const result = await generatePack(provider, prompt, llmOptionsFromSettings(settings));
+      if ("error" in result) {
+        return { generated: false, error: t(settings.language, packParseErrorKey(result.error)) };
+      }
+
+      const plan = storage.createPlan(result.name, result.exercises, { source: "generated" });
+      return { generated: true, plan };
     });
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));

@@ -99,6 +99,43 @@
         </div>
 
         <div class="card">
+          <label class="field-label" data-i18n="llm.label">Génération de pack par IA</label>
+          <p class="field-hint" data-i18n="llm.hint">Optionnel — décris ce que tu veux dans la galerie de packs et un LLM le génère. Rien n'est envoyé nulle part tant qu'aucun fournisseur n'est choisi ci-dessous.</p>
+
+          <div class="option-row" id="llm-provider-options">
+            <button class="option-btn" data-llm-provider="none" data-i18n="llm.provider.none">Désactivé</button>
+            <button class="option-btn" data-llm-provider="anthropic-api" data-i18n="llm.provider.anthropicApi">Clé API Anthropic</button>
+            <button class="option-btn" data-llm-provider="openai-api" data-i18n="llm.provider.openaiApi">Clé API OpenAI</button>
+            <button class="option-btn" data-llm-provider="claude-cli" data-i18n="llm.provider.claudeCli">Claude Code (CLI)</button>
+            <button class="option-btn" data-llm-provider="codex-cli" data-i18n="llm.provider.codexCli">Codex (CLI)</button>
+            <button class="option-btn" data-llm-provider="ollama" data-i18n="llm.provider.ollama">Ollama (local)</button>
+          </div>
+
+          <div class="interval-row llm-key-row" id="llm-key-row" hidden>
+            <input type="password" id="llm-api-key-input" class="text-input" data-i18n-placeholder="llm.apiKeyPlaceholder" placeholder="sk-…" autocomplete="off" />
+            <button class="option-btn" id="llm-save-key-btn" data-i18n="llm.saveKey">Enregistrer</button>
+          </div>
+          <p class="field-hint" id="llm-key-status" hidden></p>
+
+          <div class="interval-row llm-model-row" id="llm-model-row" hidden>
+            <label class="field-sublabel" for="llm-model-input" data-i18n="llm.model">Modèle</label>
+            <input type="text" id="llm-model-input" class="text-input" />
+          </div>
+
+          <div class="interval-row llm-base-url-row" id="llm-base-url-row" hidden>
+            <label class="field-sublabel" for="llm-base-url-input" data-i18n="llm.baseUrl">Adresse du serveur</label>
+            <input type="text" id="llm-base-url-input" class="text-input" />
+          </div>
+
+          <p class="field-hint" id="llm-cli-status" hidden></p>
+
+          <div class="hook-status-row" id="llm-test-row" hidden>
+            <span class="status-badge" id="llm-test-badge">…</span>
+            <button class="option-btn" id="llm-test-btn" data-i18n="llm.testConnection">Tester la connexion</button>
+          </div>
+        </div>
+
+        <div class="card">
           <label class="field-label" data-i18n="mascot.label">Mascotte</label>
           <div class="mascot-row" id="mascot-options"></div>
           <p class="field-hint" data-i18n="mascot.hint">Les mascottes disponibles dépendent du thème choisi ci-dessus.</p>
@@ -118,6 +155,7 @@
           <div class="page-header">
             <h1 class="page-title" data-i18n="plans.pageTitle">Plans d'entraînement</h1>
             <div class="page-header-actions">
+              <button id="generate-plan-btn" class="option-btn" data-i18n="plans.generate">✨ Générer avec l'IA</button>
               <button id="import-plan-btn" class="option-btn" data-i18n="plans.import">Importer un plan</button>
               <button id="new-plan-btn" class="page-action" data-i18n="plans.new">+ Nouveau plan</button>
             </div>
@@ -147,6 +185,19 @@
               <option value="cardio"></option>
               <option value="étirement"></option>
             </datalist>
+          </div>
+        </div>
+
+        <div class="modal-overlay" id="generate-plan-modal" hidden>
+          <div class="modal-card">
+            <h2 class="page-title" data-i18n="plans.generateModal.title">Générer un pack</h2>
+            <p class="field-hint" data-i18n="plans.generateModal.hint">Décris ce que tu veux en quelques mots — le pack généré apparaîtra dans la galerie.</p>
+            <textarea id="generate-plan-prompt" class="text-input" rows="3" data-i18n-placeholder="plans.generateModal.placeholder" placeholder="Ex : un pack de 5 minutes pour se détendre les yeux devant l'écran"></textarea>
+            <p class="field-hint modal-error" id="generate-plan-error" hidden></p>
+            <div class="modal-actions">
+              <button class="option-btn" id="generate-plan-cancel-btn" data-i18n="plans.generateModal.cancel">Annuler</button>
+              <button class="page-action" id="generate-plan-submit-btn" data-i18n="plans.generateModal.submit">Générer</button>
+            </div>
           </div>
         </div>
       </section>
