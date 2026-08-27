@@ -23,8 +23,9 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | 🦜 **SideParrot** — language learning | planned | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
 | 🧘 **SideYoga** — relaxation | planned | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
 | 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
+| 🧓 **SideMamie** — check in on your grandma | planned | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
 
-SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
+SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/SideCodingGame/SideMamie are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
 
 ## How it works
 
