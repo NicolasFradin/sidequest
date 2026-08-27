@@ -46,7 +46,6 @@ const intervalValue = document.getElementById("interval-value");
 const modeButtons = [...document.querySelectorAll("#mode-options .option-btn")];
 const triggerSourceButtons = [...document.querySelectorAll("#trigger-source-options .option-btn")];
 const hookTriggerModeButtons = [...document.querySelectorAll("#hook-trigger-mode-options .option-btn")];
-const mascotOptionsContainer = document.getElementById("mascot-options");
 const visualThemeButtons = [...document.querySelectorAll("#visual-theme-options .visual-theme-bubble")];
 const hookEveryNInput = document.getElementById("hook-every-n-input");
 const autolaunchToggle = document.getElementById("autolaunch-toggle");
@@ -54,30 +53,6 @@ const toast = document.getElementById("toast");
 
 function formatInterval(minutes) {
   return minutes < 1 ? `${Math.round(minutes * 60)} sec` : `${minutes} min`;
-}
-
-/** Reconstruit les boutons de mascotte pour ne proposer que celles du thème actif — l'aperçu de
-    chacune suit le mode clair/sombre (ex. sergent désertique en clair, forêt en sombre). */
-function renderMascotOptions(visualTheme, activeMascot, theme) {
-  const mascotIds = sqMascots.MASCOTS_BY_THEME[visualTheme] ?? sqMascots.MASCOTS_BY_THEME["miami-80s"];
-  mascotOptionsContainer.innerHTML = "";
-  mascotIds.forEach((mascotId) => {
-    const btn = document.createElement("button");
-    btn.className = "mascot-option";
-    btn.classList.toggle("active", mascotId === activeMascot);
-    btn.dataset.mascot = mascotId;
-
-    const img = document.createElement("img");
-    img.src = sqMascots.resolveMascotImage(mascotId, theme);
-    img.alt = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
-
-    const label = document.createElement("span");
-    label.textContent = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
-
-    btn.append(img, label);
-    btn.addEventListener("click", () => save({ activeMascot: mascotId }));
-    mascotOptionsContainer.appendChild(btn);
-  });
 }
 
 let currentSettings = null;
@@ -94,7 +69,6 @@ function applySettingsToUI(settings) {
   hookTriggerModeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.hookTriggerMode === settings.hookTriggerMode)
   );
-  renderMascotOptions(settings.visualTheme, settings.activeMascot, settings.theme);
   visualThemeButtons.forEach((btn) =>
     btn.classList.toggle("active", btn.dataset.visualTheme === settings.visualTheme)
   );

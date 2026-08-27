@@ -40,8 +40,25 @@ const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
 /** Mascottes custom décodées depuis un import de pack (voir dashboard:import-plan) — jamais le base64 en base SQLite, juste ce chemin. */
 const CUSTOM_MASCOTS_DIR = () => path.join(app.getPath("userData"), "custom-mascots");
 const MAX_MASCOT_IMAGE_BYTES = 3 * 1024 * 1024;
+/** Marge large au-dessus de l'affichage réel (72px) — borne un fichier qui mentirait sur son poids compressé (image massive mais bien compressée) plutôt que de faire confiance au seul poids du fichier. */
+const MAX_MASCOT_DIMENSION_PX = 2048;
 /** mime -> extension de fichier pour les mascottes custom décodées depuis un data URI base64. */
 const MASCOT_MIME_EXTENSIONS = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
+
+/**
+ * Valide qu'un buffer est *réellement* une image décodable (pas juste un fichier dont
+ * l'extension/l'en-tête MIME prétend en être une) et reste sous des bornes raisonnables — poids
+ * (déjà vérifié par l'appelant en amont pour éviter de décoder un fichier énorme pour rien) et
+ * dimensions en pixels. `nativeImage.createFromBuffer` ne lève jamais d'exception sur un contenu
+ * invalide, elle renvoie une image "vide" (`isEmpty()`) — c'est le signal à vérifier.
+ */
+function isValidMascotImageBuffer(buffer) {
+  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return false;
+  const image = nativeImage.createFromBuffer(buffer);
+  if (image.isEmpty()) return false;
+  const { width, height } = image.getSize();
+  return width > 0 && height > 0 && width <= MAX_MASCOT_DIMENSION_PX && height <= MAX_MASCOT_DIMENSION_PX;
+}
 
 let tray = null;
 let overlayWindow = null;
@@ -233,7 +250,7 @@ function decodeMascotImage(image) {
   const match = /^data:image\/(png|jpe?g|webp);base64,([a-zA-Z0-9+/=]+)$/.exec(image ?? "");
   if (!match) return null;
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+  if (!isValidMascotImageBuffer(buffer)) return null;
 
   const ext = MASCOT_MIME_EXTENSIONS[match[1].toLowerCase()] ?? "png";
   const dir = CUSTOM_MASCOTS_DIR();
@@ -247,8 +264,9 @@ function decodeMascotImage(image) {
  * Copie un fichier image choisi via un dialogue natif (mascotte propre à un pack, § "sélection
  * de mascotte au niveau du pack") sous `userData/custom-mascots/` — même dossier/mêmes bornes que
  * `decodeMascotImage`, mais lit un fichier réel plutôt qu'un data URI base64 (pas besoin de passer
- * par du base64 quand on a déjà un chemin de fichier natif). Retourne `null` si l'extension ou la
- * taille (>3 Mo) est invalide.
+ * par du base64 quand on a déjà un chemin de fichier natif). Retourne `null` si l'extension, la
+ * taille, le contenu (pas une image décodable malgré l'extension) ou les dimensions sont invalides
+ * — voir `isValidMascotImageBuffer`.
  * @returns {string | null} chemin fichier absolu
  */
 function storeMascotFile(sourcePath) {
@@ -263,7 +281,7 @@ function storeMascotFile(sourcePath) {
   } catch {
     return null;
   }
-  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+  if (!isValidMascotImageBuffer(buffer)) return null;
 
   const dir = CUSTOM_MASCOTS_DIR();
   mkdirSync(dir, { recursive: true });
