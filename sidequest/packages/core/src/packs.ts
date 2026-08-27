@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 export interface Exercise {
@@ -9,8 +10,8 @@ export interface Exercise {
   category: string;
 }
 
-/** Provenance d'un pack : embarqué avec l'app, importé par l'utilisateur (fichier JSON), ou créé à la main dans le dashboard. */
-export type PackSource = "bundled" | "imported" | "custom";
+/** Provenance d'un pack : embarqué avec l'app, importé par l'utilisateur (fichier JSON), créé à la main dans le dashboard, ou généré par un LLM (voir plan-llm-pack-generation.md). */
+export type PackSource = "bundled" | "imported" | "custom" | "generated";
 
 export interface PackStage {
   /** Niveau (XP) à partir duquel cette image de mascotte remplace la précédente. */
@@ -65,4 +66,41 @@ export function listBundledPacks(): Pack[] {
 export function pickRandomExercise(pack: Pack): Exercise {
   const idx = Math.floor(Math.random() * pack.exercises.length);
   return pack.exercises[idx];
+}
+
+/** Nombre max d'exercices accepté par `parsePackJson` — un pack reste une micro-pause, pas un programme complet. */
+export const MAX_PACK_EXERCISES = 12;
+
+export type ParsePackJsonError = "invalid-shape" | "empty" | "too-many-exercises";
+
+/**
+ * Sanitize un JSON de pack non fiable (import manuel comme génération LLM — voir
+ * plan-llm-pack-generation.md § 3.1) vers `{ name, exercises }` : tolérant sur la forme de
+ * chaque exercice (id manquant/invalide -> `randomUUID()`, durée manquante/invalide -> 30s),
+ * mais rejette un JSON qui n'a pas la forme de base d'un pack. Un seul point de validation pour
+ * `dashboard:import-plan` et `dashboard:generate-plan` — mêmes règles, mêmes bornes, dans les
+ * deux cas des données non fiables (fichier édité à la main ou texte produit par un LLM).
+ */
+export function parsePackJson(
+  data: unknown
+): { name: string; exercises: Exercise[] } | { error: ParsePackJsonError } {
+  if (typeof data !== "object" || data === null) return { error: "invalid-shape" };
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.name !== "string" || !obj.name.trim() || !Array.isArray(obj.exercises)) {
+    return { error: "invalid-shape" };
+  }
+  if (obj.exercises.length === 0) return { error: "empty" };
+  if (obj.exercises.length > MAX_PACK_EXERCISES) return { error: "too-many-exercises" };
+
+  const exercises = obj.exercises.map((raw) => {
+    const e = raw as Record<string, unknown>;
+    return {
+      id: typeof e?.id === "string" && e.id ? e.id : randomUUID(),
+      label: String(e?.label ?? ""),
+      durationSec: Number(e?.durationSec) > 0 ? Number(e.durationSec) : 30,
+      category: String(e?.category ?? ""),
+    };
+  });
+
+  return { name: obj.name.trim(), exercises };
 }

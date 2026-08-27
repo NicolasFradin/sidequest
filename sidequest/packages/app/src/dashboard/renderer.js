@@ -101,6 +101,7 @@ function applySettingsToUI(settings) {
   languageButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.language === settings.language));
   hookEveryNInput.value = settings.hookEveryN;
   autolaunchToggle.checked = settings.autolaunch;
+  renderLlmFields(settings);
   applyTheme(settings.theme);
   document.documentElement.dataset.visualTheme = settings.visualTheme;
 
@@ -204,6 +205,170 @@ hookToggleBtn.addEventListener("click", async () => {
 });
 
 window.dashboardAPI.isHookInstalled().then(applyHookStatus);
+
+// --- Génération de pack par IA (plan-llm-pack-generation.md) ---
+
+const llmProviderButtons = [...document.querySelectorAll("#llm-provider-options .option-btn")];
+const llmKeyRow = document.getElementById("llm-key-row");
+const llmKeyInput = document.getElementById("llm-api-key-input");
+const llmSaveKeyBtn = document.getElementById("llm-save-key-btn");
+const llmKeyStatus = document.getElementById("llm-key-status");
+const llmModelRow = document.getElementById("llm-model-row");
+const llmModelInput = document.getElementById("llm-model-input");
+const llmBaseUrlRow = document.getElementById("llm-base-url-row");
+const llmBaseUrlInput = document.getElementById("llm-base-url-input");
+const llmCliStatus = document.getElementById("llm-cli-status");
+const llmTestRow = document.getElementById("llm-test-row");
+const llmTestBadge = document.getElementById("llm-test-badge");
+const llmTestBtn = document.getElementById("llm-test-btn");
+
+const LLM_KEY_PROVIDERS = new Set(["anthropic-api", "openai-api"]);
+const LLM_MODEL_PROVIDERS = new Set(["anthropic-api", "openai-api", "ollama"]);
+const LLM_CLI_PROVIDERS = new Set(["claude-cli", "codex-cli"]);
+
+/** Statut chargé une fois au démarrage (§ 3.4 du plan) : présence de clé par fournisseur (pas la clé elle-même, jamais renvoyée au renderer) + disponibilité des CLI. */
+let llmStatus = { hasAnthropicKey: false, hasOpenaiKey: false, claudeCliAvailable: false, codexCliAvailable: false };
+
+function llmHasKeyFor(provider) {
+  if (provider === "anthropic-api") return llmStatus.hasAnthropicKey;
+  if (provider === "openai-api") return llmStatus.hasOpenaiKey;
+  return false;
+}
+
+function llmModelValueFor(provider, settings) {
+  if (provider === "anthropic-api") return settings.anthropicModel;
+  if (provider === "openai-api") return settings.openaiModel;
+  if (provider === "ollama") return settings.ollamaModel;
+  return "";
+}
+
+/** Un seul jeu de champs, réétiqueté/masqué selon le fournisseur choisi — plutôt que dupliquer le
+    markup par fournisseur (un seul est actif à la fois, cf. mode/triggerSource/hookTriggerMode). */
+function renderLlmFields(settings) {
+  const provider = settings.llmProvider;
+  llmProviderButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.llmProvider === provider));
+
+  const showKey = LLM_KEY_PROVIDERS.has(provider);
+  llmKeyRow.hidden = !showKey;
+  llmKeyStatus.hidden = !showKey;
+  if (showKey) {
+    llmKeyInput.value = "";
+    llmKeyStatus.textContent = llmHasKeyFor(provider) ? i18n.t("llm.keyStored") : i18n.t("llm.keyMissing");
+  }
+
+  const showModel = LLM_MODEL_PROVIDERS.has(provider);
+  llmModelRow.hidden = !showModel;
+  if (showModel) llmModelInput.value = llmModelValueFor(provider, settings);
+
+  const showBaseUrl = provider === "ollama";
+  llmBaseUrlRow.hidden = !showBaseUrl;
+  if (showBaseUrl) llmBaseUrlInput.value = settings.ollamaBaseUrl;
+
+  const showCli = LLM_CLI_PROVIDERS.has(provider);
+  llmCliStatus.hidden = !showCli;
+  if (provider === "claude-cli") {
+    llmCliStatus.textContent = llmStatus.claudeCliAvailable ? i18n.t("llm.cli.available") : i18n.t("llm.cli.unavailable");
+  } else if (provider === "codex-cli") {
+    llmCliStatus.textContent = llmStatus.codexCliAvailable ? i18n.t("llm.cli.available") : i18n.t("llm.cli.unavailable");
+  }
+
+  llmTestRow.hidden = provider === "none";
+  llmTestBadge.textContent = "…";
+  llmTestBadge.className = "status-badge";
+}
+
+llmProviderButtons.forEach((btn) =>
+  btn.addEventListener("click", () => save({ llmProvider: btn.dataset.llmProvider }))
+);
+
+llmSaveKeyBtn.addEventListener("click", async () => {
+  const key = llmKeyInput.value.trim();
+  if (!key) return;
+  const provider = currentSettings.llmProvider;
+  const { ok } = await window.dashboardAPI.setLlmApiKey(provider, key);
+  if (!ok) {
+    showToast(i18n.t("llm.toast.keyStorageFailed"), "warning");
+    return;
+  }
+  if (provider === "anthropic-api") llmStatus.hasAnthropicKey = true;
+  if (provider === "openai-api") llmStatus.hasOpenaiKey = true;
+  renderLlmFields(currentSettings);
+  showToast(i18n.t("llm.toast.keySaved"));
+});
+
+llmModelInput.addEventListener("change", () => {
+  const provider = currentSettings.llmProvider;
+  const field = provider === "anthropic-api" ? "anthropicModel" : provider === "openai-api" ? "openaiModel" : "ollamaModel";
+  save({ [field]: llmModelInput.value.trim() });
+});
+
+llmBaseUrlInput.addEventListener("change", () => save({ ollamaBaseUrl: llmBaseUrlInput.value.trim() }));
+
+llmTestBtn.addEventListener("click", async () => {
+  llmTestBadge.textContent = i18n.t("llm.testing");
+  llmTestBadge.className = "status-badge";
+  const { ok } = await window.dashboardAPI.testLlmConnection(currentSettings.llmProvider);
+  llmTestBadge.textContent = ok ? i18n.t("llm.testOk") : i18n.t("llm.testFailed");
+  llmTestBadge.className = `status-badge ${ok ? "installed" : "not-installed"}`;
+});
+
+window.dashboardAPI.getLlmStatus().then((status) => {
+  llmStatus = status;
+  if (currentSettings) renderLlmFields(currentSettings);
+});
+
+// --- Bouton "Générer" de la galerie de packs ---
+
+const generatePlanBtn = document.getElementById("generate-plan-btn");
+const generatePlanModal = document.getElementById("generate-plan-modal");
+const generatePlanPrompt = document.getElementById("generate-plan-prompt");
+const generatePlanError = document.getElementById("generate-plan-error");
+const generatePlanCancelBtn = document.getElementById("generate-plan-cancel-btn");
+const generatePlanSubmitBtn = document.getElementById("generate-plan-submit-btn");
+
+generatePlanBtn.addEventListener("click", () => {
+  // Pas de fournisseur configuré : on n'ouvre pas la modale pour rien, on renvoie vers les
+  // réglages (même logique de "découverte progressive" que le bouton d'intégration Claude Code,
+  // toujours visible avec un état actionnable plutôt que masqué).
+  if (currentSettings.llmProvider === "none") {
+    tabs.find((tab) => tab.dataset.tab === "settings")?.click();
+    showToast(i18n.t("llm.toast.configureFirst"), "warning");
+    return;
+  }
+  generatePlanPrompt.value = "";
+  generatePlanError.hidden = true;
+  generatePlanModal.hidden = false;
+  generatePlanPrompt.focus();
+});
+
+generatePlanCancelBtn.addEventListener("click", () => {
+  generatePlanModal.hidden = true;
+});
+
+generatePlanSubmitBtn.addEventListener("click", async () => {
+  const prompt = generatePlanPrompt.value.trim();
+  if (!prompt) return;
+
+  generatePlanSubmitBtn.disabled = true;
+  generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submitting");
+  generatePlanError.hidden = true;
+
+  const { generated, error, plan } = await window.dashboardAPI.generatePlan(prompt);
+
+  generatePlanSubmitBtn.disabled = false;
+  generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submit");
+
+  if (!generated) {
+    generatePlanError.textContent = error;
+    generatePlanError.hidden = false;
+    return;
+  }
+
+  generatePlanModal.hidden = true;
+  plansState.customPlans.push(plan);
+  openPlanEditor(plan.id);
+  showToast(i18n.t("plans.toast.generated"));
+});
 
 const statStreak = document.getElementById("stat-streak");
 const statWeek = document.getElementById("stat-week");
@@ -399,8 +564,9 @@ function renderPlansGrid() {
 
     const badges = document.createElement("div");
     badges.className = "plan-card-badges";
-    // Officiel (embarqué avec l'app) / Importé (fichier JSON avec sa propre mascotte) / rien
-    // pour un pack créé à la main dans le dashboard ("Perso") — voir plan.source, Phase 0.
+    // Officiel (embarqué avec l'app) / Importé (fichier JSON) / Généré par IA / rien pour un
+    // pack créé à la main dans le dashboard ("Perso") — voir plan.source, Phase 0 et
+    // plan-llm-pack-generation.md § 3.1 pour "generated".
     if (isBundled) {
       const bundledBadge = document.createElement("span");
       bundledBadge.className = "status-badge bundled";
@@ -411,6 +577,11 @@ function renderPlansGrid() {
       importedBadge.className = "status-badge imported";
       importedBadge.textContent = i18n.t("plans.badge.imported");
       badges.appendChild(importedBadge);
+    } else if (plan.source === "generated") {
+      const generatedBadge = document.createElement("span");
+      generatedBadge.className = "status-badge generated";
+      generatedBadge.textContent = i18n.t("plans.badge.generated");
+      badges.appendChild(generatedBadge);
     }
     if (isActive) {
       const activeBadge = document.createElement("span");

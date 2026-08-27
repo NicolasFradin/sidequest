@@ -425,6 +425,13 @@ html, body {
   margin-top: 10px;
 }
 
+/* Sans ça, [hidden] (display:none du UA stylesheet) perd contre le display:flex ci-dessous —
+   même correctif que .onboarding-banner[hidden] plus haut, générique pour toute .interval-row
+   masquée dynamiquement (ex. les champs de la section IA qui changent selon le fournisseur). */
+.interval-row[hidden] {
+  display: none;
+}
+
 .interval-row {
   display: flex;
   align-items: center;
@@ -876,6 +883,15 @@ html, body {
   border-color: var(--accent-gold);
 }
 
+.status-badge.generated {
+  color: var(--accent-magenta);
+  border-color: var(--accent-magenta);
+}
+
+.hook-status-row[hidden] {
+  display: none;
+}
+
 .hook-status-row {
   display: flex;
   align-items: center;
@@ -910,4 +926,45 @@ html, body {
   background: var(--toast-bg-warning);
   border-color: var(--accent-gold);
   color: var(--toast-warning-text);
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 24px;
+  width: min(480px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-card textarea.text-input {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.modal-error {
+  color: var(--accent-magenta);
 }

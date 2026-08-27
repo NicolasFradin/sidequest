@@ -18,6 +18,12 @@ export type Language = "fr" | "en";
  * court délai (évite de proposer l'exercice sur des échanges rapides) — voir plan V0.5 sprint 6.
  */
 export type HookTriggerMode = "stop" | "start" | "thinking";
+/**
+ * Fournisseur LLM pour la génération de pack (voir plan-llm-pack-generation.md) — "none" tant
+ * que rien n'est configuré. La clé API elle-même n'est jamais stockée ici (ni en SQLite) : voir
+ * packages/app/src/main/llm-credentials.js (chiffrement OS via safeStorage, hors de core).
+ */
+export type LlmProviderId = "none" | "anthropic-api" | "openai-api" | "claude-cli" | "codex-cli" | "ollama";
 
 export interface Settings {
   intervalMinutes: number;
@@ -36,6 +42,13 @@ export interface Settings {
   hookTriggerMode: HookTriggerMode;
   /** Langue de l'interface — voir Language */
   language: Language;
+  /** Fournisseur LLM actif pour la génération de pack — voir LlmProviderId */
+  llmProvider: LlmProviderId;
+  anthropicModel: string;
+  openaiModel: string;
+  /** Local uniquement par défaut (127.0.0.1) — pointer vers un hôte distant est un choix explicite de l'utilisateur, jamais le défaut (même posture que HookServer). */
+  ollamaBaseUrl: string;
+  ollamaModel: string;
 }
 
 /** Un `Plan` est un `Pack` — SQLite (CRUD dashboard) et JSON embarqué partagent désormais la même forme. */
@@ -67,6 +80,11 @@ const DEFAULT_SETTINGS: Settings = {
   visualTheme: "miami-80s",
   hookTriggerMode: "stop",
   language: "fr",
+  llmProvider: "none",
+  anthropicModel: "claude-sonnet-5",
+  openaiModel: "gpt-4.1",
+  ollamaBaseUrl: "http://127.0.0.1:11434",
+  ollamaModel: "llama3.1",
 };
 
 interface SettingsRow {
@@ -191,6 +209,11 @@ export class Storage {
       visualTheme: (stored.visualTheme as VisualTheme) ?? DEFAULT_SETTINGS.visualTheme,
       hookTriggerMode: (stored.hookTriggerMode as HookTriggerMode) ?? DEFAULT_SETTINGS.hookTriggerMode,
       language: (stored.language as Language) ?? DEFAULT_SETTINGS.language,
+      llmProvider: (stored.llmProvider as LlmProviderId) ?? DEFAULT_SETTINGS.llmProvider,
+      anthropicModel: stored.anthropicModel ?? DEFAULT_SETTINGS.anthropicModel,
+      openaiModel: stored.openaiModel ?? DEFAULT_SETTINGS.openaiModel,
+      ollamaBaseUrl: stored.ollamaBaseUrl ?? DEFAULT_SETTINGS.ollamaBaseUrl,
+      ollamaModel: stored.ollamaModel ?? DEFAULT_SETTINGS.ollamaModel,
     };
   }
 

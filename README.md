@@ -18,18 +18,20 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | Pack | Status | |
 |---|---|---|
 | 🏋️ **SideGym** — fitness | ships today | **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm. |
+| 🐱 **SideCat** — look after your cat | ships today | **Your cat exists even when you're coding.** A pet, a bowl, 30 seconds. It grows with your streak, not your guilt. |
+| 🐣 **SideTama** — grow a tamagotchi | ships today | **Your tamagotchi doesn't judge your commits, it grows with them.** 30 seconds, one more level. |
 | 🦜 **SideParrot** — language learning | planned | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
 | 🧘 **SideYoga** — relaxation | planned | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
 | 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
 
-Only SideGym ships in the app today — the rest are names reserved for the next packs. Plan import/export (JSON) already works, so you can build your own pack right now if you don't want to wait.
+SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
 
 ## How it works
 
-- A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active plan.
+- A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active pack.
 - A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook SideQuest installs into `~/.claude/settings.json` for you.
 - Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the exercise — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
-- Build your own **training plans** in the dashboard — a name and a list of exercises — or start from the bundled default plan (SideGym). Only one plan is active at a time. Export/import as JSON to share a plan with someone else.
+- A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file (with its own mascot), or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
 
 If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
 
@@ -68,7 +70,7 @@ sidequest/
 └── packages/app/    # Electron app: tray, mascot overlay, dashboard
 ```
 
-Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan and [`docs/plan-v0.5-hooks-claude-code.md`](docs/plan-v0.5-hooks-claude-code.md) for the Claude Code hooks design.
+Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan, [`docs/plan-marketplace-packs.md`](docs/plan-marketplace-packs.md) for the packs gallery/import/XP design, and [`docs/plan-llm-pack-generation.md`](docs/plan-llm-pack-generation.md) for AI pack generation.
 
 ## Roadmap — major next steps
 
@@ -76,8 +78,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/exercise/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
-- **LLM-generated exercises** — personalized programs generated via the Claude API instead of hand-written JSON packs.
-- **Marketplace of quests** — SideGym (fitness) is the first quest pack. Plan import/export (JSON) already ships as a stepping stone toward an installable pack registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
+- **Marketplace of quests** — SideGym, SideCat and SideTama ship today. Pack import/export (JSON) and AI generation already work as stepping stones toward an installable pack registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
@@ -86,7 +87,7 @@ Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
 
 **Is this an Anthropic product?** Nope. Personal project, not affiliated.
 
-**Does it phone home?** No. The Claude Code integration is a local HTTP hook on `127.0.0.1` — zero network calls, zero telemetry. Everything (settings, history, plans) is stored locally in SQLite.
+**Does it phone home?** By default, no — zero network calls, zero telemetry, everything (settings, history, packs) stored locally in SQLite. The one opt-in exception: AI pack generation. Turn it on in Settings and pick a remote provider (an Anthropic/OpenAI API key, or a non-local Ollama server) and *that specific action* calls out to generate a pack — nothing else in the app does, and it stays off until you configure it. The Claude Code integration itself stays a local HTTP hook on `127.0.0.1`, unrelated to this.
 
 ## Disclaimer
 
