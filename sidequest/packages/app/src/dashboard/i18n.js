@@ -16,7 +16,7 @@ const TRANSLATIONS = {
 
     "onboarding.title": "Bienvenue sur SideQuest 👋",
     "onboarding.text":
-      "Choisis ton intervalle, ta mascotte, et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.",
+      "Choisis ton intervalle et active le lancement au démarrage si tu veux — tout reste modifiable à tout moment.",
     "onboarding.dismiss": "J'ai compris",
 
     "interval.label": "Intervalle entre deux exercices",
@@ -71,9 +71,6 @@ const TRANSLATIONS = {
     "llm.toast.keyStorageFailed": "Impossible d'enregistrer la clé (chiffrement indisponible sur cette machine).",
     "llm.toast.configureFirst": "Choisis d'abord un fournisseur IA dans les réglages.",
 
-    "mascot.label": "Mascotte",
-    "mascot.hint": "Les mascottes disponibles dépendent du thème choisi ci-dessus.",
-
     "autolaunch.label": "Lancer au démarrage",
     "autolaunch.hint": "Ouvre SideQuest automatiquement à la connexion.",
 
@@ -121,6 +118,11 @@ const TRANSLATIONS = {
 
     "planEditor.backTitle": "Retour",
     "planEditor.nameLabel": "Nom du plan",
+    "planEditor.mascotLabel": "Mascotte",
+    "planEditor.mascotHint": "Propre à ce pack — sinon la mascotte globale s'affiche. Choisis-en une, ou ajoute la tienne.",
+    "planEditor.mascotCustom": "Personnalisée",
+    "planEditor.mascotAdd": "+ Ajouter",
+    "planEditor.toast.mascotUpdated": "Mascotte mise à jour",
     "planEditor.exercisesLabel": "Exercices",
     "planEditor.addExercise": "+ Ajouter un exercice",
     "planEditor.labelPlaceholder": "Nom de l'exercice",
@@ -160,7 +162,7 @@ const TRANSLATIONS = {
 
     "onboarding.title": "Welcome to SideQuest 👋",
     "onboarding.text":
-      "Pick your interval, your mascot, and turn on launch at startup if you'd like — everything stays editable anytime.",
+      "Pick your interval, and turn on launch at startup if you'd like — everything stays editable anytime.",
     "onboarding.dismiss": "Got it",
 
     "interval.label": "Interval between exercises",
@@ -215,9 +217,6 @@ const TRANSLATIONS = {
     "llm.toast.keyStorageFailed": "Couldn't save the key (encryption unavailable on this machine).",
     "llm.toast.configureFirst": "Pick an AI provider in settings first.",
 
-    "mascot.label": "Mascot",
-    "mascot.hint": "Available mascots depend on the theme chosen above.",
-
     "autolaunch.label": "Launch at startup",
     "autolaunch.hint": "Opens SideQuest automatically when you log in.",
 
@@ -265,6 +264,11 @@ const TRANSLATIONS = {
 
     "planEditor.backTitle": "Back",
     "planEditor.nameLabel": "Plan name",
+    "planEditor.mascotLabel": "Mascot",
+    "planEditor.mascotHint": "Specific to this pack — otherwise the global mascot shows. Pick one, or add your own.",
+    "planEditor.mascotCustom": "Custom",
+    "planEditor.mascotAdd": "+ Add",
+    "planEditor.toast.mascotUpdated": "Mascot updated",
     "planEditor.exercisesLabel": "Exercises",
     "planEditor.addExercise": "+ Add an exercise",
     "planEditor.labelPlaceholder": "Exercise name",

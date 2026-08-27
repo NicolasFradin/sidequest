@@ -32,7 +32,8 @@ SideGym, SideCat and SideTama ship in the app today — SideParrot/SideYoga/Side
 - A **timer** fires every N minutes (configurable) and shows a mascot with a random exercise from your active pack.
 - A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook SideQuest installs into `~/.claude/settings.json` for you.
 - Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the exercise — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
-- A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file (with its own mascot), or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
+- A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file, or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
+- Give any pack **its own mascot** right in its editor — pick one of the bundled ones or upload your own image, no JSON editing needed.
 
 If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
 

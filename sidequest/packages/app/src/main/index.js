@@ -11,6 +11,7 @@ import {
   listBundledPacks,
   pickRandomExercise,
   parsePackJson,
+  translatePack,
   HookServer,
   isInstalled as isClaudeHookInstalled,
   install as installClaudeHook,
@@ -39,8 +40,25 @@ const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
 /** Mascottes custom décodées depuis un import de pack (voir dashboard:import-plan) — jamais le base64 en base SQLite, juste ce chemin. */
 const CUSTOM_MASCOTS_DIR = () => path.join(app.getPath("userData"), "custom-mascots");
 const MAX_MASCOT_IMAGE_BYTES = 3 * 1024 * 1024;
+/** Marge large au-dessus de l'affichage réel (72px) — borne un fichier qui mentirait sur son poids compressé (image massive mais bien compressée) plutôt que de faire confiance au seul poids du fichier. */
+const MAX_MASCOT_DIMENSION_PX = 2048;
 /** mime -> extension de fichier pour les mascottes custom décodées depuis un data URI base64. */
 const MASCOT_MIME_EXTENSIONS = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
+
+/**
+ * Valide qu'un buffer est *réellement* une image décodable (pas juste un fichier dont
+ * l'extension/l'en-tête MIME prétend en être une) et reste sous des bornes raisonnables — poids
+ * (déjà vérifié par l'appelant en amont pour éviter de décoder un fichier énorme pour rien) et
+ * dimensions en pixels. `nativeImage.createFromBuffer` ne lève jamais d'exception sur un contenu
+ * invalide, elle renvoie une image "vide" (`isEmpty()`) — c'est le signal à vérifier.
+ */
+function isValidMascotImageBuffer(buffer) {
+  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return false;
+  const image = nativeImage.createFromBuffer(buffer);
+  if (image.isEmpty()) return false;
+  const { width, height } = image.getSize();
+  return width > 0 && height > 0 && width <= MAX_MASCOT_DIMENSION_PX && height <= MAX_MASCOT_DIMENSION_PX;
+}
 
 let tray = null;
 let overlayWindow = null;
@@ -212,10 +230,14 @@ function applyAutolaunch(enabled) {
  * Replie sur le plan par défaut si le résultat n'a aucun exercice (ex. plan custom créé mais pas
  * encore rempli, puis activé par erreur) — sinon pickRandomExercise() renvoie `undefined` et bloque
  * silencieusement les boutons Fait/Passer (voire le hook Claude Code en mode bloquant).
+ * Traduit selon la langue de l'UI (no-op sur un plan custom/importé/généré, qui n'a jamais de
+ * champs `*En` — voir translatePack()) : centralisé ici pour couvrir à la fois showExercise()
+ * (l'overlay) et dashboard:get-exercises (l'historique) sans dupliquer l'appel.
  */
 function loadActiveProgram(settings) {
   const plan = storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
-  return plan.exercises.length > 0 ? plan : loadPack("sport-basic");
+  const resolved = plan.exercises.length > 0 ? plan : loadPack("sport-basic");
+  return translatePack(resolved, settings.language);
 }
 
 /**
@@ -228,7 +250,7 @@ function decodeMascotImage(image) {
   const match = /^data:image\/(png|jpe?g|webp);base64,([a-zA-Z0-9+/=]+)$/.exec(image ?? "");
   if (!match) return null;
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+  if (!isValidMascotImageBuffer(buffer)) return null;
 
   const ext = MASCOT_MIME_EXTENSIONS[match[1].toLowerCase()] ?? "png";
   const dir = CUSTOM_MASCOTS_DIR();
@@ -236,6 +258,46 @@ function decodeMascotImage(image) {
   const imagePath = path.join(dir, `${randomUUID()}.${ext}`);
   writeFileSync(imagePath, buffer);
   return imagePath;
+}
+
+/**
+ * Copie un fichier image choisi via un dialogue natif (mascotte propre à un pack, § "sélection
+ * de mascotte au niveau du pack") sous `userData/custom-mascots/` — même dossier/mêmes bornes que
+ * `decodeMascotImage`, mais lit un fichier réel plutôt qu'un data URI base64 (pas besoin de passer
+ * par du base64 quand on a déjà un chemin de fichier natif). Retourne `null` si l'extension, la
+ * taille, le contenu (pas une image décodable malgré l'extension) ou les dimensions sont invalides
+ * — voir `isValidMascotImageBuffer`.
+ * @returns {string | null} chemin fichier absolu
+ */
+function storeMascotFile(sourcePath) {
+  const ext = path.extname(sourcePath).slice(1).toLowerCase();
+  // MASCOT_MIME_EXTENSIONS couvre déjà "jpg" et "jpeg" comme clés séparées (toutes deux -> "jpg").
+  const normalizedExt = MASCOT_MIME_EXTENSIONS[ext];
+  if (!normalizedExt) return null;
+
+  let buffer;
+  try {
+    buffer = readFileSync(sourcePath);
+  } catch {
+    return null;
+  }
+  if (!isValidMascotImageBuffer(buffer)) return null;
+
+  const dir = CUSTOM_MASCOTS_DIR();
+  mkdirSync(dir, { recursive: true });
+  const imagePath = path.join(dir, `${randomUUID()}.${normalizedExt}`);
+  writeFileSync(imagePath, buffer);
+  return imagePath;
+}
+
+/** Supprime le fichier d'une mascotte custom si elle vit bien sous userData (jamais un PNG embarqué avec l'app) — best-effort, ne doit jamais faire échouer l'appelant. */
+function cleanupCustomMascotFile(imagePath) {
+  if (!imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) return;
+  try {
+    unlinkSync(imagePath);
+  } catch {
+    // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
+  }
 }
 
 /** Ré-encode la mascotte d'un plan en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-plan). */
@@ -611,33 +673,72 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
-    ipcMain.handle("dashboard:get-plans", () => ({
-      bundledPacks: listBundledPacks(),
-      customPlans: storage.getPlans(),
-    }));
+    ipcMain.handle("dashboard:get-plans", () => {
+      const lang = storage.getSettings().language;
+      return {
+        bundledPacks: listBundledPacks().map((p) => translatePack(p, lang)),
+        customPlans: storage.getPlans(),
+      };
+    });
     ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
+
+    // --- Mascotte propre à un pack (galerie -> éditeur de pack -> section "Mascotte") ---
+    // Un pack bundled n'a pas cette section (champs désactivés côté renderer, cf. isBundled),
+    // mais ces handlers ne le vérifient pas eux-mêmes — storage.updatePlan() sur un id bundled
+    // échouerait de toute façon ("Plan inconnu", les packs embarqués ne sont pas en base).
+    ipcMain.handle("dashboard:set-plan-mascot-bundled", (_event, { planId, mascotId, label }) => {
+      const imagePath = path.join(ASSETS_DIR, "mascots", `${mascotId}.png`);
+      if (!existsSync(imagePath)) return { updated: false };
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, { mascot: { id: mascotId, label, imagePath } });
+      return { updated: true, plan };
+    });
+
+    ipcMain.handle("dashboard:set-plan-mascot-custom", async (_event, planId) => {
+      const lang = storage.getSettings().language;
+      const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
+        title: t(lang, "chooseMascotDialogTitle"),
+        filters: [{ name: t(lang, "imageFilterName"), extensions: ["png", "jpg", "jpeg", "webp"] }],
+        properties: ["openFile"],
+      });
+      if (canceled || filePaths.length === 0) return { updated: false, error: null };
+
+      const imagePath = storeMascotFile(filePaths[0]);
+      if (!imagePath) return { updated: false, error: t(lang, "errorInvalidMascot") };
+
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, {
+        mascot: { id: `custom:${randomUUID()}`, label: existing?.name ?? "", imagePath },
+      });
+      return { updated: true, plan };
+    });
+
+    ipcMain.handle("dashboard:clear-plan-mascot", (_event, planId) => {
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, { mascot: null });
+      return { updated: true, plan };
+    });
+
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {
       const plan = storage.getPlan(id);
       storage.deletePlan(id);
-      // Best-effort : ne nettoie que les mascottes qu'on a nous-mêmes décodées sous userData
-      // (jamais les PNG embarqués avec l'app) ; une erreur ici ne doit jamais bloquer la suppression.
-      if (plan?.mascot?.imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) {
-        try {
-          unlinkSync(plan.mascot.imagePath);
-        } catch {
-          // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
-        }
-      }
+      cleanupCustomMascotFile(plan?.mascot?.imagePath);
       return storage.getSettings();
     });
 
     ipcMain.handle("dashboard:export-plan", async (_event, id) => {
-      const plan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
-      if (!plan) return { exported: false };
-
       const lang = storage.getSettings().language;
+      const rawPlan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
+      if (!rawPlan) return { exported: false };
+      // Exporte dans la langue actuellement affichée (no-op sur un plan custom/importé/généré,
+      // qui n'a jamais de champs `*En`) — cohérent avec ce que l'utilisateur voit à l'écran.
+      const plan = translatePack(rawPlan, lang);
+
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
         title: t(lang, "exportDialogTitle"),
         defaultPath: `${plan.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,

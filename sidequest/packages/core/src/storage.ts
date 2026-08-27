@@ -360,13 +360,36 @@ export class Storage {
     return plan;
   }
 
-  updatePlan(id: string, partial: { name?: string; exercises?: Exercise[] }): Plan {
+  /**
+   * `mascot: null` efface la mascotte propre au pack (il retombe sur la mascotte globale) ;
+   * `mascot` absent du `partial` laisse la mascotte actuelle inchangée ; un `PackMascot` la
+   * remplace. Distinct de `undefined` volontairement — `"mascot" in partial` est la seule façon
+   * fiable de distinguer "pas touché" de "explicitement effacé" une fois passé par spread.
+   */
+  updatePlan(id: string, partial: { name?: string; exercises?: Exercise[]; mascot?: PackMascot | null }): Plan {
     const existing = this.getPlan(id);
     if (!existing) throw new Error(`Plan inconnu : ${id}`);
-    const next: Plan = { ...existing, ...partial };
+    const mascot = "mascot" in partial ? (partial.mascot ?? undefined) : existing.mascot;
+    const next: Plan = {
+      ...existing,
+      name: partial.name ?? existing.name,
+      exercises: partial.exercises ?? existing.exercises,
+      mascot,
+    };
     this.db
-      .prepare("UPDATE plans SET name = @name, exercises = @exercises WHERE id = @id")
-      .run({ id: next.id, name: next.name, exercises: JSON.stringify(next.exercises) });
+      .prepare(
+        `UPDATE plans SET name = @name, exercises = @exercises,
+           mascot_id = @mascotId, mascot_label = @mascotLabel, mascot_image_path = @mascotImagePath
+         WHERE id = @id`
+      )
+      .run({
+        id: next.id,
+        name: next.name,
+        exercises: JSON.stringify(next.exercises),
+        mascotId: mascot?.id ?? null,
+        mascotLabel: mascot?.label ?? null,
+        mascotImagePath: mascot?.imagePath ?? null,
+      });
     return next;
   }
 

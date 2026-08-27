@@ -412,6 +412,10 @@ html, body {
   padding: 20px 24px;
 }
 
+#plan-edit-view .card + .card {
+  margin-top: 20px;
+}
+
 .field-label {
   display: block;
   font-size: 14px;
@@ -511,6 +515,7 @@ html, body {
 
 .mascot-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
@@ -538,6 +543,27 @@ html, body {
 .mascot-option.active {
   border-color: var(--accent-magenta);
   color: var(--text-primary);
+}
+
+.mascot-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Case "+" pour ajouter sa propre mascotte à un pack — même gabarit que .mascot-option, bordure
+   pointillée plutôt qu'une image, pour rester visuellement distincte d'un choix existant. */
+.mascot-option-add {
+  border-style: dashed;
+}
+
+.mascot-option-add .mascot-option-plus {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--text-secondary);
 }
 
 .toggle-row {

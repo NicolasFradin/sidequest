@@ -8,6 +8,9 @@ export interface Exercise {
   label: string;
   durationSec: number;
   category: string;
+  /** Traduction anglaise optionnelle (packs embarqués uniquement — voir `translatePack()`). `label`/`category` restent la référence en français. */
+  labelEn?: string;
+  categoryEn?: string;
 }
 
 /** Provenance d'un pack : embarqué avec l'app, importé par l'utilisateur (fichier JSON), créé à la main dans le dashboard, ou généré par un LLM (voir plan-llm-pack-generation.md). */
@@ -31,6 +34,8 @@ export interface PackMascot {
 export interface Pack {
   id: string;
   name: string;
+  /** Traduction anglaise optionnelle du nom (packs embarqués uniquement — voir `translatePack()`). */
+  nameEn?: string;
   exercises: Exercise[];
   source: PackSource;
   mascot?: PackMascot;
@@ -66,6 +71,28 @@ export function listBundledPacks(): Pack[] {
 export function pickRandomExercise(pack: Pack): Exercise {
   const idx = Math.floor(Math.random() * pack.exercises.length);
   return pack.exercises[idx];
+}
+
+/**
+ * Résout un pack dans la langue de l'UI (`fr` | `en`) : le français des champs `name`/`label`/
+ * `category` reste la référence (celle qui vient de l'exercice `sport-basic.json` etc.), l'anglais
+ * est une traduction optionnelle (`nameEn`/`labelEn`/`categoryEn`) qui ne remplace que si présente
+ * — même logique de repli que `t()` dans les dictionnaires i18n de l'app (défaut fr, override en).
+ * Ne concerne que les packs embarqués : un pack importé/custom/généré n'a jamais ces champs `*En`
+ * (contenu de l'utilisateur, dans la langue qu'il a choisie), donc cette fonction ne fait rien
+ * dessus — sans risque de l'appeler partout, pas besoin de distinguer `source` à l'appel.
+ */
+export function translatePack(pack: Pack, language: "fr" | "en"): Pack {
+  if (language !== "en") return pack;
+  return {
+    ...pack,
+    name: pack.nameEn ?? pack.name,
+    exercises: pack.exercises.map((e) => ({
+      ...e,
+      label: e.labelEn ?? e.label,
+      category: e.categoryEn ?? e.category,
+    })),
+  };
 }
 
 /** Nombre max d'exercices accepté par `parsePackJson` — un pack reste une micro-pause, pas un programme complet. */
