@@ -243,6 +243,30 @@ describe("Storage — plans custom", () => {
     expect(updated2.exercises).toEqual(newExercises);
   });
 
+  it("assigne une mascotte à un plan, relue correctement", () => {
+    const created = storage.createPlan("Mon plan", exercises);
+    const mascot = { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" };
+    const updated = storage.updatePlan(created.id, { mascot });
+    expect(updated.mascot).toEqual(mascot);
+    expect(storage.getPlan(created.id)?.mascot).toEqual(mascot);
+  });
+
+  it("mascot: null efface la mascotte du plan", () => {
+    const created = storage.createPlan("Mon plan", exercises, {
+      mascot: { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" },
+    });
+    const updated = storage.updatePlan(created.id, { mascot: null });
+    expect(updated.mascot).toBeUndefined();
+    expect(storage.getPlan(created.id)?.mascot).toBeUndefined();
+  });
+
+  it("ne pas passer 'mascot' dans le partial laisse la mascotte existante inchangée", () => {
+    const mascot = { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" };
+    const created = storage.createPlan("Mon plan", exercises, { mascot });
+    const updated = storage.updatePlan(created.id, { name: "Renommé" });
+    expect(updated.mascot).toEqual(mascot);
+  });
+
   it("lève une erreur en mettant à jour un plan inconnu", () => {
     expect(() => storage.updatePlan("inexistant", { name: "x" })).toThrow();
   });

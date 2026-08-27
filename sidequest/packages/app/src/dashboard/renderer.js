@@ -509,12 +509,13 @@ const planEditTitle = document.getElementById("plan-edit-title");
 const planNameInput = document.getElementById("plan-name-input");
 const planExercisesList = document.getElementById("plan-exercises-list");
 const planAddExerciseBtn = document.getElementById("plan-add-exercise-btn");
+const planMascotOptionsContainer = document.getElementById("plan-mascot-options");
 const newPlanBtn = document.getElementById("new-plan-btn");
 const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
 
 let plansState = { bundledPacks: [], customPlans: [], progress: {} };
-/** Plan en cours d'édition (copie locale) : { id, name, exercises, isBundled } */
+/** Plan en cours d'édition (copie locale) : { id, name, exercises, mascot, isBundled } */
 let editingPlan = null;
 
 function allPlans() {
@@ -708,6 +709,7 @@ function openPlanEditor(id) {
     id: plan.id,
     name: plan.name,
     exercises: structuredClone(plan.exercises),
+    mascot: plan.mascot,
     isBundled: plan.source === "bundled",
   };
   planEditTitle.textContent = plan.name;
@@ -715,6 +717,7 @@ function openPlanEditor(id) {
   planNameInput.disabled = editingPlan.isBundled;
   planAddExerciseBtn.hidden = editingPlan.isBundled;
   renderPlanExercises();
+  renderPlanMascotOptions();
   plansListView.hidden = true;
   planEditView.hidden = false;
 }
@@ -724,6 +727,111 @@ function closePlanEditor() {
   planEditView.hidden = true;
   plansListView.hidden = false;
   renderPlansGrid();
+}
+
+/** Reconstruit les tuiles de mascotte de l'éditeur de pack : toutes les mascottes embarquées
+    (pas filtrées par thème, contrairement au sélecteur des réglages — l'identité d'un pack ne
+    dépend pas du skin choisi), la mascotte custom actuelle si le pack en a une, et une case "+"
+    pour en ajouter une (fichier local aujourd'hui ; génération IA envisagée plus tard, voir
+    plan-marketplace-packs.md). Désactivée pour un pack bundled, comme le reste de l'éditeur. */
+function renderPlanMascotOptions() {
+  planMascotOptionsContainer.innerHTML = "";
+  const disabled = editingPlan.isBundled;
+  const activeMascotId = editingPlan.mascot?.id;
+
+  Object.keys(sqMascots.MASCOT_IMAGES).forEach((mascotId) => {
+    const btn = document.createElement("button");
+    btn.className = "mascot-option";
+    btn.dataset.mascotId = mascotId;
+    btn.classList.toggle("active", activeMascotId === mascotId);
+    btn.disabled = disabled;
+
+    const img = document.createElement("img");
+    img.src = sqMascots.MASCOT_IMAGES[mascotId];
+    img.alt = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
+
+    const label = document.createElement("span");
+    label.textContent = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
+
+    btn.append(img, label);
+    // Recliquer sur la tuile déjà active l'efface (retombe sur la mascotte globale) — même
+    // convention "toggle" que le bouton Activer/Désactiver d'un pack dans la galerie.
+    if (!disabled) {
+      btn.addEventListener("click", () =>
+        activeMascotId === mascotId ? clearPlanMascot() : setPlanMascotBundled(mascotId)
+      );
+    }
+    planMascotOptionsContainer.appendChild(btn);
+  });
+
+  // Mascotte custom actuelle (id hors du catalogue embarqué : import avec sa propre image, ou
+  // ajoutée ici via "+") — affichée comme tuile active en plus, pour rester visible/repérable.
+  if (editingPlan.mascot && !sqMascots.MASCOT_IMAGES[activeMascotId]) {
+    const btn = document.createElement("button");
+    btn.className = "mascot-option active";
+    btn.disabled = disabled;
+
+    const img = document.createElement("img");
+    img.src = `file://${editingPlan.mascot.imagePath}`;
+    img.alt = editingPlan.mascot.label;
+
+    const label = document.createElement("span");
+    label.textContent = i18n.t("planEditor.mascotCustom");
+
+    btn.append(img, label);
+    // Recliquer efface (remplacer une custom = repasser par "+") — même convention toggle que les tuiles embarquées.
+    if (!disabled) btn.addEventListener("click", () => clearPlanMascot());
+    planMascotOptionsContainer.appendChild(btn);
+  }
+
+  if (!disabled) {
+    const addBtn = document.createElement("button");
+    addBtn.className = "mascot-option mascot-option-add";
+    const plus = document.createElement("span");
+    plus.className = "mascot-option-plus";
+    plus.textContent = "+";
+    const label = document.createElement("span");
+    label.textContent = i18n.t("planEditor.mascotAdd");
+    addBtn.append(plus, label);
+    addBtn.addEventListener("click", () => setPlanMascotCustom());
+    planMascotOptionsContainer.appendChild(addBtn);
+  }
+}
+
+/** Synchronise le cache local (galerie) avec un plan renvoyé par le main process après une mise à jour de mascotte. */
+function updateCachedPlan(plan) {
+  const idx = plansState.customPlans.findIndex((p) => p.id === plan.id);
+  if (idx !== -1) plansState.customPlans[idx] = plan;
+}
+
+async function clearPlanMascot() {
+  const { updated, plan } = await window.dashboardAPI.clearPlanMascot(editingPlan.id);
+  if (!updated) return;
+  editingPlan.mascot = plan.mascot;
+  updateCachedPlan(plan);
+  renderPlanMascotOptions();
+}
+
+async function setPlanMascotBundled(mascotId) {
+  const label = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
+  const { updated, plan } = await window.dashboardAPI.setPlanMascotBundled(editingPlan.id, mascotId, label);
+  if (!updated) return;
+  editingPlan.mascot = plan.mascot;
+  updateCachedPlan(plan);
+  renderPlanMascotOptions();
+}
+
+async function setPlanMascotCustom() {
+  const { updated, error, plan } = await window.dashboardAPI.setPlanMascotCustom(editingPlan.id);
+  if (error) {
+    showToast(error, "warning");
+    return;
+  }
+  if (!updated) return; // dialogue annulé par l'utilisateur
+  editingPlan.mascot = plan.mascot;
+  updateCachedPlan(plan);
+  renderPlanMascotOptions();
+  showToast(i18n.t("planEditor.toast.mascotUpdated"));
 }
 
 function renderPlanExercises() {

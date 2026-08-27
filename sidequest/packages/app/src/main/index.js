@@ -243,6 +243,45 @@ function decodeMascotImage(image) {
   return imagePath;
 }
 
+/**
+ * Copie un fichier image choisi via un dialogue natif (mascotte propre à un pack, § "sélection
+ * de mascotte au niveau du pack") sous `userData/custom-mascots/` — même dossier/mêmes bornes que
+ * `decodeMascotImage`, mais lit un fichier réel plutôt qu'un data URI base64 (pas besoin de passer
+ * par du base64 quand on a déjà un chemin de fichier natif). Retourne `null` si l'extension ou la
+ * taille (>3 Mo) est invalide.
+ * @returns {string | null} chemin fichier absolu
+ */
+function storeMascotFile(sourcePath) {
+  const ext = path.extname(sourcePath).slice(1).toLowerCase();
+  // MASCOT_MIME_EXTENSIONS couvre déjà "jpg" et "jpeg" comme clés séparées (toutes deux -> "jpg").
+  const normalizedExt = MASCOT_MIME_EXTENSIONS[ext];
+  if (!normalizedExt) return null;
+
+  let buffer;
+  try {
+    buffer = readFileSync(sourcePath);
+  } catch {
+    return null;
+  }
+  if (buffer.length === 0 || buffer.length > MAX_MASCOT_IMAGE_BYTES) return null;
+
+  const dir = CUSTOM_MASCOTS_DIR();
+  mkdirSync(dir, { recursive: true });
+  const imagePath = path.join(dir, `${randomUUID()}.${normalizedExt}`);
+  writeFileSync(imagePath, buffer);
+  return imagePath;
+}
+
+/** Supprime le fichier d'une mascotte custom si elle vit bien sous userData (jamais un PNG embarqué avec l'app) — best-effort, ne doit jamais faire échouer l'appelant. */
+function cleanupCustomMascotFile(imagePath) {
+  if (!imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) return;
+  try {
+    unlinkSync(imagePath);
+  } catch {
+    // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
+  }
+}
+
 /** Ré-encode la mascotte d'un plan en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-plan). */
 function mascotToDataUri(mascot) {
   if (!mascot?.imagePath) return null;
@@ -626,18 +665,51 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
+
+    // --- Mascotte propre à un pack (galerie -> éditeur de pack -> section "Mascotte") ---
+    // Un pack bundled n'a pas cette section (champs désactivés côté renderer, cf. isBundled),
+    // mais ces handlers ne le vérifient pas eux-mêmes — storage.updatePlan() sur un id bundled
+    // échouerait de toute façon ("Plan inconnu", les packs embarqués ne sont pas en base).
+    ipcMain.handle("dashboard:set-plan-mascot-bundled", (_event, { planId, mascotId, label }) => {
+      const imagePath = path.join(ASSETS_DIR, "mascots", `${mascotId}.png`);
+      if (!existsSync(imagePath)) return { updated: false };
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, { mascot: { id: mascotId, label, imagePath } });
+      return { updated: true, plan };
+    });
+
+    ipcMain.handle("dashboard:set-plan-mascot-custom", async (_event, planId) => {
+      const lang = storage.getSettings().language;
+      const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
+        title: t(lang, "chooseMascotDialogTitle"),
+        filters: [{ name: t(lang, "imageFilterName"), extensions: ["png", "jpg", "jpeg", "webp"] }],
+        properties: ["openFile"],
+      });
+      if (canceled || filePaths.length === 0) return { updated: false, error: null };
+
+      const imagePath = storeMascotFile(filePaths[0]);
+      if (!imagePath) return { updated: false, error: t(lang, "errorInvalidMascot") };
+
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, {
+        mascot: { id: `custom:${randomUUID()}`, label: existing?.name ?? "", imagePath },
+      });
+      return { updated: true, plan };
+    });
+
+    ipcMain.handle("dashboard:clear-plan-mascot", (_event, planId) => {
+      const existing = storage.getPlan(planId);
+      cleanupCustomMascotFile(existing?.mascot?.imagePath);
+      const plan = storage.updatePlan(planId, { mascot: null });
+      return { updated: true, plan };
+    });
+
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {
       const plan = storage.getPlan(id);
       storage.deletePlan(id);
-      // Best-effort : ne nettoie que les mascottes qu'on a nous-mêmes décodées sous userData
-      // (jamais les PNG embarqués avec l'app) ; une erreur ici ne doit jamais bloquer la suppression.
-      if (plan?.mascot?.imagePath?.startsWith(CUSTOM_MASCOTS_DIR())) {
-        try {
-          unlinkSync(plan.mascot.imagePath);
-        } catch {
-          // fichier déjà absent ou inaccessible — tant pis, pas bloquant.
-        }
-      }
+      cleanupCustomMascotFile(plan?.mascot?.imagePath);
       return storage.getSettings();
     });
 

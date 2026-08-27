@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   deletePlan: (id) => ipcRenderer.invoke("dashboard:delete-plan", id),
   exportPlan: (id) => ipcRenderer.invoke("dashboard:export-plan", id),
   importPlan: () => ipcRenderer.invoke("dashboard:import-plan"),
+  setPlanMascotBundled: (planId, mascotId, label) =>
+    ipcRenderer.invoke("dashboard:set-plan-mascot-bundled", { planId, mascotId, label }),
+  setPlanMascotCustom: (planId) => ipcRenderer.invoke("dashboard:set-plan-mascot-custom", planId),
+  clearPlanMascot: (planId) => ipcRenderer.invoke("dashboard:clear-plan-mascot", planId),
   getLlmStatus: () => ipcRenderer.invoke("dashboard:get-llm-status"),
   setLlmApiKey: (provider, key) => ipcRenderer.invoke("dashboard:set-llm-api-key", { provider, key }),
   testLlmConnection: (provider) => ipcRenderer.invoke("dashboard:test-llm-connection", provider),

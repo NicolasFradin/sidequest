@@ -121,6 +121,11 @@ const TRANSLATIONS = {
 
     "planEditor.backTitle": "Retour",
     "planEditor.nameLabel": "Nom du plan",
+    "planEditor.mascotLabel": "Mascotte",
+    "planEditor.mascotHint": "Propre à ce pack — sinon la mascotte globale s'affiche. Choisis-en une, ou ajoute la tienne.",
+    "planEditor.mascotCustom": "Personnalisée",
+    "planEditor.mascotAdd": "+ Ajouter",
+    "planEditor.toast.mascotUpdated": "Mascotte mise à jour",
     "planEditor.exercisesLabel": "Exercices",
     "planEditor.addExercise": "+ Ajouter un exercice",
     "planEditor.labelPlaceholder": "Nom de l'exercice",
@@ -265,6 +270,11 @@ const TRANSLATIONS = {
 
     "planEditor.backTitle": "Back",
     "planEditor.nameLabel": "Plan name",
+    "planEditor.mascotLabel": "Mascot",
+    "planEditor.mascotHint": "Specific to this pack — otherwise the global mascot shows. Pick one, or add your own.",
+    "planEditor.mascotCustom": "Custom",
+    "planEditor.mascotAdd": "+ Add",
+    "planEditor.toast.mascotUpdated": "Mascot updated",
     "planEditor.exercisesLabel": "Exercises",
     "planEditor.addExercise": "+ Add an exercise",
     "planEditor.labelPlaceholder": "Exercise name",
