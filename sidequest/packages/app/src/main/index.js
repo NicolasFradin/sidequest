@@ -61,6 +61,10 @@ let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
 let currentBlocking = false;
+/** Id du pack actif au moment du déclenchement — sert à créditer l'XP du bon pack dans recordAndHide(). */
+let currentPlanId = null;
+/** XP gagnée par exercice complété ("fait") — formule volontairement plate pour v1, pas de barème par pack/exercice. */
+const XP_PER_EXERCISE = 10;
 
 let overlayReady = false;
 let pendingPayload = null;
@@ -242,10 +246,23 @@ function mascotToDataUri(mascot) {
   }
 }
 
+/**
+ * Résout le chemin de l'image d'une mascotte de pack selon le niveau atteint (paliers de
+ * croissance optionnels, ex. SideCat/SideTama — voir `PackMascot.stages` dans @sidequest/core).
+ * Sans `stages`, `imagePath` sert pour tous les niveaux (comportement inchangé pour SideGym etc.).
+ */
+function resolvePackMascotImagePath(mascot, level) {
+  if (!mascot) return null;
+  if (!mascot.stages?.length) return mascot.imagePath;
+  const eligible = mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
+  return eligible[0]?.imagePath ?? mascot.imagePath;
+}
+
 function showExercise() {
   const settings = storage.getSettings();
   const pack = loadActiveProgram(settings);
   const exercise = pickRandomExercise(pack);
+  const packProgress = storage.getPackProgress(pack.id);
   const debt = storage.getDebt();
   // gate = toujours bloquant. mixed = bloquant seulement si on a trop esquivé (dette > 0),
   // sinon aussi souple que notify. notify = jamais bloquant.
@@ -255,13 +272,16 @@ function showExercise() {
   currentMascot = settings.activeMascot;
   currentMode = settings.mode;
   currentBlocking = blocking;
+  currentPlanId = pack.id;
 
+  const mascotStageImagePath = resolvePackMascotImagePath(pack.mascot, packProgress.level);
   const payload = {
     exercise,
     mascot: settings.activeMascot,
-    // Mascotte propre au pack (importée avec sa propre image) — l'overlay n'a pas besoin
-    // d'accès fichier lui-même, ce chemin absolu résolu côté main lui suffit.
-    mascotImage: pack.mascot ? `file://${pack.mascot.imagePath}` : null,
+    // Mascotte propre au pack (importée avec sa propre image, éventuellement un palier de
+    // croissance selon le niveau XP du pack) — l'overlay n'a pas besoin d'accès fichier
+    // lui-même, ce chemin absolu résolu côté main lui suffit.
+    mascotImage: mascotStageImagePath ? `file://${mascotStageImagePath}` : null,
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
@@ -303,10 +323,14 @@ function recordAndHide(status) {
     mascot: currentMascot ?? storage.getSettings().activeMascot,
     mode: currentMode ?? storage.getSettings().mode,
   });
+  if (status === "done" && currentPlanId) {
+    storage.addXp(currentPlanId, XP_PER_EXERCISE);
+  }
   currentExercise = null;
   currentMascot = null;
   currentMode = null;
   currentBlocking = false;
+  currentPlanId = null;
   overlayWindow.hide();
 
   // Libère le hook Claude Code retenu par ce même exercice (mode "stop"/"start" bloquant, voir
@@ -551,6 +575,7 @@ if (!gotSingleInstanceLock) {
       bundledPacks: listBundledPacks(),
       customPlans: storage.getPlans(),
     }));
+    ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
     ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
     ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
     ipcMain.handle("dashboard:delete-plan", (_event, id) => {

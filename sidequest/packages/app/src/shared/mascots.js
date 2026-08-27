@@ -49,4 +49,26 @@ function resolveMascotImage(mascotId, theme, overrideImageUrl) {
   return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
 }
 
-window.sqMascots = { MASCOT_LABELS, MASCOT_IMAGES, MASCOTS_BY_THEME, MASCOT_LIGHT_VARIANTS, resolveMascotImage };
+/**
+ * Résout le chemin d'image d'une mascotte de pack selon le niveau XP atteint (paliers de
+ * croissance optionnels, ex. SideCat/SideTama — `mascot.stages: [{minLevel, imagePath}]`).
+ * Sans `stages`, `mascot.imagePath` sert pour tous les niveaux. Miroir de la fonction équivalente
+ * côté main process (packages/app/src/main/index.js) — celle-ci sert la galerie du dashboard,
+ * l'autre construit le payload envoyé à l'overlay ; même logique, deux contextes JS séparés
+ * (Node vs. renderer), pas de module partagé possible entre les deux.
+ */
+function resolvePackMascotStage(mascot, level) {
+  if (!mascot) return null;
+  if (!mascot.stages?.length) return mascot.imagePath;
+  const eligible = mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
+  return eligible[0]?.imagePath ?? mascot.imagePath;
+}
+
+window.sqMascots = {
+  MASCOT_LABELS,
+  MASCOT_IMAGES,
+  MASCOTS_BY_THEME,
+  MASCOT_LIGHT_VARIANTS,
+  resolveMascotImage,
+  resolvePackMascotStage,
+};

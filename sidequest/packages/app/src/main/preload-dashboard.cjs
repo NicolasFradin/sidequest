@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   installHook: () => ipcRenderer.invoke("dashboard:hook-install"),
   uninstallHook: () => ipcRenderer.invoke("dashboard:hook-uninstall"),
   getPlans: () => ipcRenderer.invoke("dashboard:get-plans"),
+  getPackProgress: (id) => ipcRenderer.invoke("dashboard:get-pack-progress", id),
   createPlan: (name, exercises) => ipcRenderer.invoke("dashboard:create-plan", { name, exercises }),
   updatePlan: (id, partial) => ipcRenderer.invoke("dashboard:update-plan", { id, partial }),
   deletePlan: (id) => ipcRenderer.invoke("dashboard:delete-plan", id),

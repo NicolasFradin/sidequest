@@ -345,7 +345,7 @@ const newPlanBtn = document.getElementById("new-plan-btn");
 const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
 
-let plansState = { bundledPacks: [], customPlans: [] };
+let plansState = { bundledPacks: [], customPlans: [], progress: {} };
 /** Plan en cours d'édition (copie locale) : { id, name, exercises, isBundled } */
 let editingPlan = null;
 
@@ -354,10 +354,13 @@ function allPlans() {
 }
 
 /** Image de la carte d'un pack dans la galerie : sa propre mascotte si elle en a une (pack
-    importé avec sa propre image), sinon la mascotte globale actuellement choisie — c'est
-    effectivement celle qui s'affichera à l'écran si ce pack est activé. */
+    importé avec sa propre image, éventuellement un palier de croissance selon le niveau XP
+    du pack), sinon la mascotte globale actuellement choisie — c'est effectivement celle qui
+    s'affichera à l'écran si ce pack est activé. */
 function planCardMascotImage(plan) {
-  const overrideUrl = plan.mascot?.imagePath ? `file://${plan.mascot.imagePath}` : null;
+  const level = plansState.progress?.[plan.id]?.level ?? 1;
+  const stageImagePath = sqMascots.resolvePackMascotStage(plan.mascot, level);
+  const overrideUrl = stageImagePath ? `file://${stageImagePath}` : null;
   const mascotId = plan.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
   return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
@@ -420,6 +423,22 @@ function renderPlansGrid() {
     count.className = "plan-card-count";
     count.textContent = planExerciseCountLabel(plan);
 
+    // Barre d'XP (gamification transverse à tous les packs) — voir Storage.addXp/getPackProgress.
+    // Palier tous les 100 xp (formule v1 volontairement simple, cf. plan-marketplace-packs.md § 3.4).
+    const progress = plansState.progress?.[plan.id] ?? { xp: 0, level: 1 };
+    const xpBar = document.createElement("div");
+    xpBar.className = "plan-card-xp";
+    const xpTrack = document.createElement("div");
+    xpTrack.className = "plan-card-xp-track";
+    const xpFill = document.createElement("div");
+    xpFill.className = "plan-card-xp-fill";
+    xpFill.style.width = `${progress.xp % 100}%`;
+    xpTrack.appendChild(xpFill);
+    const xpLabel = document.createElement("span");
+    xpLabel.className = "plan-card-xp-label";
+    xpLabel.textContent = i18n.t("plans.level", progress.level);
+    xpBar.append(xpTrack, xpLabel);
+
     const actions = document.createElement("div");
     actions.className = "plan-card-actions";
 
@@ -461,7 +480,7 @@ function renderPlansGrid() {
       actions.appendChild(deleteBtn);
     }
 
-    card.append(header, count, actions);
+    card.append(header, count, xpBar, actions);
     plansGrid.appendChild(card);
   });
 }
@@ -634,6 +653,11 @@ importPlanBtn.addEventListener("click", () => importPlan());
 planBackBtn.addEventListener("click", () => closePlanEditor());
 
 async function refreshPlans() {
-  plansState = await window.dashboardAPI.getPlans();
+  const { bundledPacks, customPlans } = await window.dashboardAPI.getPlans();
+  const packs = [...bundledPacks, ...customPlans];
+  const progressEntries = await Promise.all(
+    packs.map(async (p) => [p.id, await window.dashboardAPI.getPackProgress(p.id)])
+  );
+  plansState = { bundledPacks, customPlans, progress: Object.fromEntries(progressEntries) };
   renderPlansGrid();
 }

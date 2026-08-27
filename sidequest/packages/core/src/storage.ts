@@ -127,6 +127,12 @@ export class Storage {
         name TEXT NOT NULL,
         exercises TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS pack_progress (
+        plan_id TEXT PRIMARY KEY,
+        xp INTEGER NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 1
+      );
     `);
 
     // Migrations pour les bases créées avant l'ajout de ces colonnes.
@@ -347,6 +353,32 @@ export class Storage {
       this.updateSettings({ activeProgram: DEFAULT_SETTINGS.activeProgram });
     }
     this.db.prepare("DELETE FROM plans WHERE id = ?").run(id);
+    this.db.prepare("DELETE FROM pack_progress WHERE plan_id = ?").run(id);
+  }
+
+  /**
+   * Ajoute de l'XP à un pack et recalcule son niveau (formule volontairement simple pour v1 :
+   * un palier tous les 100 XP, pas de courbe par pack). Sert à faire grandir la barre de
+   * progression de la galerie, et la mascotte d'un pack qui définit des `stages` (SideCat/SideTama).
+   */
+  addXp(planId: string, amount: number): { xp: number; level: number } {
+    const current = this.getPackProgress(planId);
+    const xp = current.xp + amount;
+    const level = Math.floor(xp / 100) + 1;
+    this.db
+      .prepare(
+        `INSERT INTO pack_progress (plan_id, xp, level) VALUES (@planId, @xp, @level)
+         ON CONFLICT(plan_id) DO UPDATE SET xp = @xp, level = @level`
+      )
+      .run({ planId, xp, level });
+    return { xp, level };
+  }
+
+  getPackProgress(planId: string): { xp: number; level: number } {
+    const row = this.db.prepare("SELECT xp, level FROM pack_progress WHERE plan_id = ?").get(planId) as
+      | { xp: number; level: number }
+      | undefined;
+    return row ?? { xp: 0, level: 1 };
   }
 
   close(): void {

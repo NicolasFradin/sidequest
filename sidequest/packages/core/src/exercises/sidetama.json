@@ -1,0 +1,13 @@
+{
+  "id": "sidetama",
+  "name": "SideTama - Fais grandir ton tamagotchi",
+  "color": "#ecd8a8",
+  "exercises": [
+    { "id": "tama-feed", "label": "Nourris-le", "durationSec": 15, "category": "repas" },
+    { "id": "tama-play", "label": "Joue avec lui", "durationSec": 30, "category": "jeu" },
+    { "id": "tama-sleep", "label": "Laisse-le dormir un instant", "durationSec": 20, "category": "repos" },
+    { "id": "tama-clean", "label": "Nettoie son écran", "durationSec": 15, "category": "entretien" },
+    { "id": "tama-check", "label": "Regarde-le grandir 30 secondes", "durationSec": 30, "category": "jeu" },
+    { "id": "tama-praise", "label": "Félicite-le pour son niveau", "durationSec": 10, "category": "jeu" }
+  ]
+}

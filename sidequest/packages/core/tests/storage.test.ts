@@ -271,3 +271,43 @@ describe("Storage — plans custom", () => {
     expect(storage.getSettings().activeProgram).toBe("sport-basic");
   });
 });
+
+describe("Storage — progression XP des packs", () => {
+  let storage: Storage;
+
+  beforeEach(() => {
+    storage = new Storage(":memory:");
+  });
+
+  afterEach(() => {
+    storage.close();
+  });
+
+  it("retourne 0 xp / niveau 1 pour un pack sans progression", () => {
+    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 0, level: 1 });
+  });
+
+  it("addXp cumule l'xp et recalcule le niveau (palier tous les 100 xp)", () => {
+    expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 40, level: 1 });
+    expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 80, level: 1 });
+    expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 120, level: 2 });
+    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 120, level: 2 });
+  });
+
+  it("suit la progression de chaque pack indépendamment", () => {
+    storage.addXp("sport-basic", 50);
+    storage.addXp("sidecat", 10);
+    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 50, level: 1 });
+    expect(storage.getPackProgress("sidecat")).toEqual({ xp: 10, level: 1 });
+  });
+
+  it("supprimer un plan efface sa progression", () => {
+    const exercises = [{ id: "burpee-10", label: "10 burpees", durationSec: 30, category: "cardio" }];
+    const created = storage.createPlan("Mon plan", exercises);
+    storage.addXp(created.id, 50);
+    expect(storage.getPackProgress(created.id)).toEqual({ xp: 50, level: 1 });
+
+    storage.deletePlan(created.id);
+    expect(storage.getPackProgress(created.id)).toEqual({ xp: 0, level: 1 });
+  });
+});
