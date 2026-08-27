@@ -1,7 +1,7 @@
 # Development Plan — Marketplace Packs (custom import, gallery, gamification, community PR path)
 
 **Local repo**: `/Users/nicolas/perso/sidequest`
-**Status**: planned, not started — designed 2026-08-26/27 (see roadmap section 6 of [`plan-mvp-sidequest.md`](plan-mvp-sidequest.md), new "V1+" entry).
+**Status**: implemented 2026-08-27 (all 9 sprints below, see section 5) — folded into roadmap section 6 of [`plan-mvp-sidequest.md`](plan-mvp-sidequest.md) as the "V1+" entry.
 
 ## 1. Vision
 
@@ -163,4 +163,4 @@ Verified live: a new pack's editor renders all 8 tiles (7 bundled + "+"), pickin
 
 ## 6. Next
 
-Once sprints land, fold the "V1+" roadmap row below back into `plan-mvp-sidequest.md` section 6 as a completed/linked entry, the same way `plan-theme-global.md` and `plan-v0.5-hooks-claude-code.md` are referenced today.
+All 9 sprints are done. The "V1+" roadmap row in `plan-mvp-sidequest.md` section 6 already links here, the same way `plan-theme-global.md` and `plan-v0.5-hooks-claude-code.md` are referenced — nothing further to fold back. Remaining open threads live in the roadmap's V1.5 row (`plan-community-packs.md`'s bundled-mascot path-resolution gap, noted in Sprint 4/7 above) and are out of scope for this plan.
