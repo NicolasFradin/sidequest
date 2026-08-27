@@ -875,20 +875,27 @@ if (!gotSingleInstanceLock) {
       }
     });
 
-    ipcMain.handle("dashboard:generate-plan", async (_event, prompt) => {
+    ipcMain.handle("dashboard:generate-plan", async (_event, { prompt, mascotDescription }) => {
       const settings = storage.getSettings();
       const provider = resolveProvider(settings.llmProvider);
       if (!provider) {
         return { generated: false, error: t(settings.language, "errorLlmNotConfigured") };
       }
 
-      const result = await generatePack(provider, prompt, llmOptionsFromSettings(settings));
+      const result = await generatePack(
+        provider,
+        prompt,
+        llmOptionsFromSettings(settings),
+        mascotDescription
+      );
       if ("error" in result) {
         return { generated: false, error: t(settings.language, packParseErrorKey(result.error)) };
       }
 
       const plan = storage.createPlan(result.name, result.exercises, { source: "generated" });
-      return { generated: true, plan };
+      // Suggestion texte, jamais persistée — pas d'image générée (voir plan-llm-pack-generation.md),
+      // juste une idée affichée une fois dans l'éditeur pour guider le choix manuel de mascotte.
+      return { generated: true, plan, mascotIdea: result.mascotIdea };
     });
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));

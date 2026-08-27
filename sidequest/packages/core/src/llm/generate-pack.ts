@@ -16,7 +16,9 @@ async function attemptOnce(
   provider: LlmProvider,
   prompt: string,
   opts: LlmGenerateOptions
-): Promise<{ name: string; exercises: Exercise[] } | { error: GeneratePackError }> {
+): Promise<
+  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GeneratePackError }
+> {
   let text: string;
   try {
     text = await provider.generate(prompt, opts);
@@ -43,9 +45,12 @@ async function attemptOnce(
 export async function generatePack(
   provider: LlmProvider,
   userRequest: string,
-  opts: LlmGenerateOptions
-): Promise<{ name: string; exercises: Exercise[] } | { error: GeneratePackError }> {
-  const prompt = buildPackPrompt(userRequest);
+  opts: LlmGenerateOptions,
+  mascotDescription?: string
+): Promise<
+  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GeneratePackError }
+> {
+  const prompt = buildPackPrompt(userRequest, mascotDescription);
   const first = await attemptOnce(provider, prompt, opts);
   if (!("error" in first)) return first;
   if (first.error === "provider-error") return first; // pas la peine de retenter un fournisseur en échec (clé invalide, réseau down, etc.)

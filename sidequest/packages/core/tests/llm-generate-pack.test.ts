@@ -68,4 +68,33 @@ describe("generatePack", () => {
     const result = await generatePack(provider, "un pack", {});
     expect(result).toEqual({ error: "too-many-exercises" });
   });
+
+  it("inclut mascotIdea dans le prompt et le résultat quand une description de mascotte est fournie", async () => {
+    let receivedPrompt = "";
+    const withMascotIdea = JSON.stringify({
+      name: "Pack généré",
+      exercises: [{ label: "Respire", durationSec: 20, category: "souffle" }],
+      mascotIdea: "Un petit robot orange et rond",
+    });
+    const provider = fakeProvider(async (prompt) => {
+      receivedPrompt = prompt;
+      return withMascotIdea;
+    });
+    const result = await generatePack(provider, "un pack de respiration", {}, "un robot bricoleur");
+    expect(receivedPrompt).toContain("mascotIdea");
+    expect(receivedPrompt).toContain("un robot bricoleur");
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+    expect(result.mascotIdea).toBe("Un petit robot orange et rond");
+  });
+
+  it("ne demande pas mascotIdea quand aucune description de mascotte n'est fournie", async () => {
+    let receivedPrompt = "";
+    const provider = fakeProvider(async (prompt) => {
+      receivedPrompt = prompt;
+      return VALID_JSON;
+    });
+    await generatePack(provider, "un pack", {});
+    expect(receivedPrompt).not.toContain("mascotIdea");
+  });
 });

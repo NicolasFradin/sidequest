@@ -26,5 +26,6 @@ contextBridge.exposeInMainWorld("dashboardAPI", {
   setLlmApiKey: (provider, key) => ipcRenderer.invoke("dashboard:set-llm-api-key", { provider, key }),
   testLlmConnection: (provider) => ipcRenderer.invoke("dashboard:test-llm-connection", provider),
   getOllamaModels: (baseUrl) => ipcRenderer.invoke("dashboard:get-ollama-models", baseUrl),
-  generatePlan: (prompt) => ipcRenderer.invoke("dashboard:generate-plan", prompt),
+  generatePlan: (prompt, mascotDescription) =>
+    ipcRenderer.invoke("dashboard:generate-plan", { prompt, mascotDescription }),
 });

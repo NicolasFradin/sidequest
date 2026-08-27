@@ -299,6 +299,7 @@ window.dashboardAPI.getLlmStatus().then((status) => {
 const generatePlanBtn = document.getElementById("generate-plan-btn");
 const generatePlanModal = document.getElementById("generate-plan-modal");
 const generatePlanPrompt = document.getElementById("generate-plan-prompt");
+const generatePlanMascot = document.getElementById("generate-plan-mascot");
 const generatePlanError = document.getElementById("generate-plan-error");
 const generatePlanCancelBtn = document.getElementById("generate-plan-cancel-btn");
 const generatePlanSubmitBtn = document.getElementById("generate-plan-submit-btn");
@@ -313,6 +314,7 @@ generatePlanBtn.addEventListener("click", () => {
     return;
   }
   generatePlanPrompt.value = "";
+  generatePlanMascot.value = "";
   generatePlanError.hidden = true;
   generatePlanModal.hidden = false;
   generatePlanPrompt.focus();
@@ -330,7 +332,11 @@ generatePlanSubmitBtn.addEventListener("click", async () => {
   generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submitting");
   generatePlanError.hidden = true;
 
-  const { generated, error, plan } = await window.dashboardAPI.generatePlan(prompt);
+  const mascotDescription = generatePlanMascot.value.trim();
+  const { generated, error, plan, mascotIdea } = await window.dashboardAPI.generatePlan(
+    prompt,
+    mascotDescription || undefined
+  );
 
   generatePlanSubmitBtn.disabled = false;
   generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submit");
@@ -343,7 +349,7 @@ generatePlanSubmitBtn.addEventListener("click", async () => {
 
   generatePlanModal.hidden = true;
   plansState.customPlans.push(plan);
-  openPlanEditor(plan.id);
+  openPlanEditor(plan.id, mascotIdea);
   showToast(i18n.t("plans.toast.generated"));
 });
 
@@ -484,6 +490,7 @@ const planNameInput = document.getElementById("plan-name-input");
 const planExercisesList = document.getElementById("plan-exercises-list");
 const planAddExerciseBtn = document.getElementById("plan-add-exercise-btn");
 const planMascotOptionsContainer = document.getElementById("plan-mascot-options");
+const planMascotAiIdea = document.getElementById("plan-mascot-ai-idea");
 const newPlanBtn = document.getElementById("new-plan-btn");
 const importPlanBtn = document.getElementById("import-plan-btn");
 const planBackBtn = document.getElementById("plan-back-btn");
@@ -682,7 +689,7 @@ async function deletePlan(id) {
   showToast(i18n.t("plans.toast.deleted"));
 }
 
-function openPlanEditor(id) {
+function openPlanEditor(id, aiMascotIdea) {
   const plan = findPlan(id);
   if (!plan) return;
   editingPlan = {
@@ -698,6 +705,14 @@ function openPlanEditor(id) {
   planAddExerciseBtn.hidden = editingPlan.isBundled;
   renderPlanExercises();
   renderPlanMascotOptions();
+  // Idée de mascotte en texte suggérée par l'IA (dashboard:generate-plan) — affichée une seule
+  // fois à l'ouverture juste après une génération, jamais persistée (pas d'image générée).
+  if (aiMascotIdea) {
+    planMascotAiIdea.textContent = i18n.t("planEditor.aiMascotIdea", aiMascotIdea);
+    planMascotAiIdea.hidden = false;
+  } else {
+    planMascotAiIdea.hidden = true;
+  }
   plansListView.hidden = true;
   planEditView.hidden = false;
 }

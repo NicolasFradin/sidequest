@@ -93,6 +93,40 @@ describe("parsePackJson", () => {
     expect(parsePackJson({ name: "Pack", exercises })).toEqual({ error: "too-many-exercises" });
   });
 
+  it("récupère mascotIdea quand présent et le rogne à 300 caractères", () => {
+    const result = parsePackJson({
+      name: "Pack",
+      exercises: [{ label: "X" }],
+      mascotIdea: "  Un petit robot orange et rond  ",
+    });
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+    expect(result.mascotIdea).toBe("Un petit robot orange et rond");
+
+    const long = parsePackJson({
+      name: "Pack",
+      exercises: [{ label: "X" }],
+      mascotIdea: "a".repeat(400),
+    });
+    expect("error" in long).toBe(false);
+    if ("error" in long) return;
+    expect(long.mascotIdea).toHaveLength(300);
+  });
+
+  it("omet mascotIdea quand absent, vide, ou pas une string", () => {
+    const withoutField = parsePackJson({ name: "Pack", exercises: [{ label: "X" }] });
+    if ("error" in withoutField) throw new Error("unexpected error");
+    expect(withoutField.mascotIdea).toBeUndefined();
+
+    const blank = parsePackJson({ name: "Pack", exercises: [{ label: "X" }], mascotIdea: "   " });
+    if ("error" in blank) throw new Error("unexpected error");
+    expect(blank.mascotIdea).toBeUndefined();
+
+    const wrongType = parsePackJson({ name: "Pack", exercises: [{ label: "X" }], mascotIdea: 42 });
+    if ("error" in wrongType) throw new Error("unexpected error");
+    expect(wrongType.mascotIdea).toBeUndefined();
+  });
+
   it("rejette une valeur qui n'est pas un objet", () => {
     expect(parsePackJson(null)).toEqual({ error: "invalid-shape" });
     expect(parsePackJson("pas un objet")).toEqual({ error: "invalid-shape" });

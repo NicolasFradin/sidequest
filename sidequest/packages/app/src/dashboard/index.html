@@ -187,6 +187,7 @@
           <div class="card">
             <label class="field-label" data-i18n="planEditor.mascotLabel">Mascotte</label>
             <p class="field-hint" data-i18n="planEditor.mascotHint">Propre à ce pack — sinon la mascotte SideQuest par défaut s'affiche. Choisis-en une, ou ajoute la tienne.</p>
+            <p class="field-hint ai-suggestion" id="plan-mascot-ai-idea" hidden></p>
             <div class="mascot-row" id="plan-mascot-options"></div>
           </div>
 
@@ -209,6 +210,9 @@
             <h2 class="page-title" data-i18n="plans.generateModal.title">Générer un pack</h2>
             <p class="field-hint" data-i18n="plans.generateModal.hint">Décris ce que tu veux en quelques mots — le pack généré apparaîtra dans la galerie.</p>
             <textarea id="generate-plan-prompt" class="text-input" rows="3" data-i18n-placeholder="plans.generateModal.placeholder" placeholder="Ex : un pack de 5 minutes pour se détendre les yeux devant l'écran"></textarea>
+            <label class="field-label" for="generate-plan-mascot" data-i18n="plans.generateModal.mascotLabel">Mascotte (optionnel)</label>
+            <p class="field-hint" data-i18n="plans.generateModal.mascotHint">Décris la mascotte que tu imagines — l'IA proposera une idée en texte, à choisir ensuite dans l'éditeur (aucune image n'est générée).</p>
+            <textarea id="generate-plan-mascot" class="text-input" rows="2" data-i18n-placeholder="plans.generateModal.mascotPlaceholder" placeholder="Ex : un petit robot bricoleur, rond, orange et gris"></textarea>
             <p class="field-hint modal-error" id="generate-plan-error" hidden></p>
             <div class="modal-actions">
               <button class="option-btn" id="generate-plan-cancel-btn" data-i18n="plans.generateModal.cancel">Annuler</button>

@@ -497,6 +497,10 @@ html, body {
   margin-top: 10px;
 }
 
+.field-hint.ai-suggestion {
+  color: var(--accent-magenta);
+}
+
 /* Sans ça, [hidden] (display:none du UA stylesheet) perd contre le display:flex ci-dessous —
    même correctif que .onboarding-banner[hidden] plus haut, générique pour toute .interval-row
    masquée dynamiquement (ex. les champs de la section IA qui changent selon le fournisseur). */

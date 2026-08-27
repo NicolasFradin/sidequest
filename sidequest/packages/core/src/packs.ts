@@ -108,9 +108,12 @@ export type ParsePackJsonError = "invalid-shape" | "empty" | "too-many-exercises
  * `dashboard:import-plan` et `dashboard:generate-plan` — mêmes règles, mêmes bornes, dans les
  * deux cas des données non fiables (fichier édité à la main ou texte produit par un LLM).
  */
+/** Longueur max retenue pour `mascotIdea` — une suggestion tient en une phrase, pas un roman. */
+const MAX_MASCOT_IDEA_LENGTH = 300;
+
 export function parsePackJson(
   data: unknown
-): { name: string; exercises: Exercise[] } | { error: ParsePackJsonError } {
+): { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: ParsePackJsonError } {
   if (typeof data !== "object" || data === null) return { error: "invalid-shape" };
   const obj = data as Record<string, unknown>;
   if (typeof obj.name !== "string" || !obj.name.trim() || !Array.isArray(obj.exercises)) {
@@ -129,5 +132,12 @@ export function parsePackJson(
     };
   });
 
-  return { name: obj.name.trim(), exercises };
+  // Suggestion texte d'une mascotte (génération LLM uniquement, voir plan-llm-pack-generation.md)
+  // — jamais une image, juste un concept que l'utilisateur peut suivre à la main dans l'éditeur.
+  const mascotIdea =
+    typeof obj.mascotIdea === "string" && obj.mascotIdea.trim()
+      ? obj.mascotIdea.trim().slice(0, MAX_MASCOT_IDEA_LENGTH)
+      : undefined;
+
+  return { name: obj.name.trim(), exercises, ...(mascotIdea ? { mascotIdea } : {}) };
 }
