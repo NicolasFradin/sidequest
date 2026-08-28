@@ -5,6 +5,7 @@
  * existaient avant (une par renderer), qui dérivaient déjà l'une de l'autre.
  */
 const MASCOT_LABELS = {
+  sidequest: "SideQuest",
   "ronnie-coleman": "Ronnie Coleman",
   "miami-80s": "Miami 80s",
   "arnold-80s": "Arnold 80s",
@@ -14,6 +15,7 @@ const MASCOT_LABELS = {
   centurion: "Centurion",
 };
 const MASCOT_IMAGES = {
+  sidequest: "../../assets/mascots/sidequest.png",
   "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
   "miami-80s": "../../assets/mascots/miami-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
