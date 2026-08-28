@@ -13,7 +13,7 @@ const blockingBadge = document.getElementById("blocking-badge");
 let currentMascotId = null;
 let currentMascotImage = null;
 
-window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, packColor, theme, blocking, language }) => {
+window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, theme, blocking, language }) => {
   currentMascotId = mascot;
   currentMascotImage = mascotImage ?? null;
   mascotImg.src = sqMascots.resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
@@ -24,13 +24,13 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, packColor, the
   i18n.applyStaticTranslations();
   btnSkip.hidden = Boolean(blocking);
   blockingBadge.hidden = !blocking;
-  // Ambiance couleur du pack actif (bordure du bouton "Passer", halo de la mascotte) — voir
+  // Ambiance couleur du side actif (bordure du bouton "Passer", halo de la mascotte) — voir
   // style.css. removeProperty plutôt qu'une valeur vide : une custom property posée à "" reste
-  // valide et ne retombe pas sur le fallback de var(--pack-accent, ...).
-  if (packColor) {
-    document.documentElement.style.setProperty("--pack-accent", packColor);
+  // valide et ne retombe pas sur le fallback de var(--side-accent, ...).
+  if (sideColor) {
+    document.documentElement.style.setProperty("--side-accent", sideColor);
   } else {
-    document.documentElement.style.removeProperty("--pack-accent");
+    document.documentElement.style.removeProperty("--side-accent");
   }
 });
 

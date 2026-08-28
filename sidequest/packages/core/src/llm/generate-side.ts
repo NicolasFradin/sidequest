@@ -1,8 +1,8 @@
-import { parsePackJson, type Exercise, type ParsePackJsonError } from "../packs.js";
-import { buildPackPrompt } from "./prompt.js";
+import { parseSideJson, type Exercise, type ParseSideJsonError } from "../sides.js";
+import { buildSidePrompt } from "./prompt.js";
 import type { LlmGenerateOptions, LlmProvider } from "./types.js";
 
-export type GeneratePackError = "invalid-json" | ParsePackJsonError | "provider-error";
+export type GenerateSideError = "invalid-json" | ParseSideJsonError | "provider-error";
 
 /** Tolère un modèle qui entoure sa réponse de ```json ... ``` ou de texte malgré la consigne — ne garde que le premier objet `{...}` trouvé. */
 function extractJsonObject(text: string): string {
@@ -17,7 +17,7 @@ async function attemptOnce(
   prompt: string,
   opts: LlmGenerateOptions
 ): Promise<
-  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GeneratePackError }
+  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GenerateSideError }
 > {
   let text: string;
   try {
@@ -33,24 +33,24 @@ async function attemptOnce(
     return { error: "invalid-json" };
   }
 
-  return parsePackJson(parsed);
+  return parseSideJson(parsed);
 }
 
 /**
- * Génère un pack via un fournisseur LLM (§ 3.2/3.4 du plan) : construit le prompt, tente une
+ * Génère un side via un fournisseur LLM (§ 3.2/3.4 du plan) : construit le prompt, tente une
  * fois, et si la réponse n'est pas un JSON valide (ou pas la forme attendue), retente une fois
  * avec une consigne renforcée avant d'abandonner — jamais de boucle. Passe systématiquement par
- * `parsePackJson`, le même chemin de validation que l'import manuel (`dashboard:import-plan`).
+ * `parseSideJson`, le même chemin de validation que l'import manuel (`dashboard:import-side`).
  */
-export async function generatePack(
+export async function generateSide(
   provider: LlmProvider,
   userRequest: string,
   opts: LlmGenerateOptions,
   mascotDescription?: string
 ): Promise<
-  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GeneratePackError }
+  { name: string; exercises: Exercise[]; mascotIdea?: string } | { error: GenerateSideError }
 > {
-  const prompt = buildPackPrompt(userRequest, mascotDescription);
+  const prompt = buildSidePrompt(userRequest, mascotDescription);
   const first = await attemptOnce(provider, prompt, opts);
   if (!("error" in first)) return first;
   if (first.error === "provider-error") return first; // pas la peine de retenter un fournisseur en échec (clé invalide, réseau down, etc.)

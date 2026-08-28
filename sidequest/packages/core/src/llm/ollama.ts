@@ -4,7 +4,7 @@ const DEFAULT_BASE_URL = "http://127.0.0.1:11434";
 const DEFAULT_MODEL = "llama3.1";
 const DEFAULT_TIMEOUT_MS = 60_000; // les modèles locaux sont souvent plus lents qu'une API distante
 
-/** Fournisseur 100% local, aucune clé — voir plan-llm-pack-generation.md § 1 (3 façons d'atteindre un LLM). */
+/** Fournisseur 100% local, aucune clé — voir plan-llm-side-generation.md § 1 (3 façons d'atteindre un LLM). */
 export const ollamaProvider: LlmProvider = {
   id: "ollama",
   async generate(prompt, opts) {

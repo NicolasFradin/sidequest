@@ -37,19 +37,19 @@ const MASCOTS_BY_THEME = {
 const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
 
 /**
- * Mascotte par défaut d'un pack custom/importé/généré par IA qui n'a pas la sienne — remplace le
- * repli sur la mascotte globale active pour ces sources-là (un pack fabriqué par l'utilisateur ou
+ * Mascotte par défaut d'un side custom/importé/généré par IA qui n'a pas la sienne — remplace le
+ * repli sur la mascotte globale active pour ces sources-là (un side fabriqué par l'utilisateur ou
  * une IA ne devrait pas hériter du skin visuel en cours, ex. le sergent en mode Military camo).
- * Les packs bundled (SideGym...) gardent l'ancien comportement (repli sur la mascotte globale) —
- * voir planCardMascotImage() côté dashboard et showExercise() côté main (packages/app/src/main).
+ * Les sides bundled (SideGym...) gardent l'ancien comportement (repli sur la mascotte globale) —
+ * voir sideCardMascotImage() côté dashboard et showExercise() côté main (packages/app/src/main).
  */
-const DEFAULT_PACK_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
+const DEFAULT_SIDE_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
 
 /**
  * @param {string} mascotId
  * @param {"dark" | "light"} theme
  * @param {string | null} [overrideImageUrl] Image déjà résolue côté main (mascotte propre à un
- *   pack importé, `file://...` — voir dashboard:import-plan et showExercise()) : prioritaire sur
+ *   side importé, `file://...` — voir dashboard:import-side et showExercise()) : prioritaire sur
  *   la table statique ci-dessus quand fournie.
  */
 function resolveMascotImage(mascotId, theme, overrideImageUrl) {
@@ -59,14 +59,14 @@ function resolveMascotImage(mascotId, theme, overrideImageUrl) {
 }
 
 /**
- * Résout le chemin d'image d'une mascotte de pack selon le niveau XP atteint (paliers de
+ * Résout le chemin d'image d'une mascotte de side selon le niveau XP atteint (paliers de
  * croissance optionnels, ex. SideCat/SideTama — `mascot.stages: [{minLevel, imagePath}]`).
  * Sans `stages`, `mascot.imagePath` sert pour tous les niveaux. Miroir de la fonction équivalente
  * côté main process (packages/app/src/main/index.js) — celle-ci sert la galerie du dashboard,
  * l'autre construit le payload envoyé à l'overlay ; même logique, deux contextes JS séparés
  * (Node vs. renderer), pas de module partagé possible entre les deux.
  */
-function resolvePackMascotStage(mascot, level) {
+function resolveSideMascotStage(mascot, level) {
   if (!mascot) return null;
   if (!mascot.stages?.length) return mascot.imagePath;
   const eligible = mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
@@ -74,16 +74,16 @@ function resolvePackMascotStage(mascot, level) {
 }
 
 /**
- * Couleur d'accent d'un pack : celle définie dans son JSON (`pack.color`) si présente, sinon une
- * teinte stable dérivée d'un hash de son id (même pack -> même couleur à chaque relance de
+ * Couleur d'accent d'un side : celle définie dans son JSON (`side.color`) si présente, sinon une
+ * teinte stable dérivée d'un hash de son id (même side -> même couleur à chaque relance de
  * l'app, pas de tirage aléatoire) — évite d'imposer un sélecteur de couleur à l'import (v1).
  * Miroir de la fonction équivalente côté main process (packages/app/src/main/index.js), même
- * raison de duplication que resolvePackMascotStage ci-dessus.
+ * raison de duplication que resolveSideMascotStage ci-dessus.
  */
-function resolvePackColor(pack) {
-  if (pack.color) return pack.color;
+function resolveSideColor(side) {
+  if (side.color) return side.color;
   let hash = 0;
-  for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
+  for (let i = 0; i < side.id.length; i++) hash = (hash * 31 + side.id.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 65%, 55%)`;
 }
@@ -93,8 +93,8 @@ window.sqMascots = {
   MASCOT_IMAGES,
   MASCOTS_BY_THEME,
   MASCOT_LIGHT_VARIANTS,
-  DEFAULT_PACK_MASCOT_IMAGE,
+  DEFAULT_SIDE_MASCOT_IMAGE,
   resolveMascotImage,
-  resolvePackMascotStage,
-  resolvePackColor,
+  resolveSideMascotStage,
+  resolveSideColor,
 };

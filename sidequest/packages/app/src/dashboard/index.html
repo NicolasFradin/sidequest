@@ -13,8 +13,8 @@
         <button class="nav-item active" data-tab="settings">
           <span class="nav-icon">⚙</span> <span data-i18n="nav.settings">Réglages</span>
         </button>
-        <button class="nav-item" data-tab="plans">
-          <span class="nav-icon">📋</span> <span data-i18n="nav.plans">Plans</span>
+        <button class="nav-item" data-tab="sides">
+          <span class="nav-icon">📋</span> <span data-i18n="nav.sides">Sides</span>
         </button>
         <button class="nav-item" data-tab="history">
           <span class="nav-icon">📊</span> <span data-i18n="nav.history">Historique</span>
@@ -37,7 +37,7 @@
       <section class="tab-panel active" id="panel-settings">
         <div class="page-header">
           <h1 class="page-title" data-i18n="nav.settings">Réglages</h1>
-          <button id="trigger-exercise" class="page-action" data-i18n="settings.triggerNow" data-i18n-title="settings.triggerNow.title" title="Générer une quête maintenant">🎲 Générer une quête</button>
+          <button id="trigger-exercise" class="page-action" data-i18n="settings.triggerNow" data-i18n-title="settings.triggerNow.title" title="Générer une quest maintenant">🎲 Générer une quest</button>
         </div>
 
         <div class="onboarding-banner" id="onboarding-banner" hidden>
@@ -49,7 +49,7 @@
         </div>
 
         <div class="card">
-          <label class="field-label" data-i18n="interval.label">Intervalle entre deux quêtes</label>
+          <label class="field-label" data-i18n="interval.label">Intervalle entre deux quests</label>
           <div class="interval-row">
             <input type="range" id="interval-range" min="1" max="120" step="1" />
             <span class="interval-value" id="interval-value">30 min</span>
@@ -63,7 +63,7 @@
             <button class="option-btn" data-mode="gate" data-i18n="mode.gate">Blocage réel</button>
             <button class="option-btn" data-mode="mixed" data-i18n="mode.mixed">Mixte</button>
           </div>
-          <p class="field-hint" data-i18n-html="mode.hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire la quête. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
+          <p class="field-hint" data-i18n-html="mode.hint">Notification douce : "Passer" toujours possible. Blocage réel : impossible de fermer sans faire la quest. Mixte : "Passer" possible normalement, mais devient bloquant dès que tu as trop esquivé (dette &gt; 0, voir l'onglet Historique).</p>
         </div>
 
         <div class="card">
@@ -73,7 +73,7 @@
             <button class="option-btn" data-trigger-source="hook" data-i18n="triggerSource.hook">Hook Claude Code seul</button>
             <button class="option-btn" data-trigger-source="both" data-i18n="triggerSource.both">Les deux</button>
           </div>
-          <p class="field-hint" data-i18n="triggerSource.hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des quêtes. Les deux (défaut) : minuteur ET hook actifs.</p>
+          <p class="field-hint" data-i18n="triggerSource.hint">Minuteur seul : ignore le hook Claude Code s'il est configuré. Hook seul : le minuteur est en pause, seul le hook déclenche des quests. Les deux (défaut) : minuteur ET hook actifs.</p>
         </div>
 
         <div class="card">
@@ -99,8 +99,8 @@
         </div>
 
         <div class="card">
-          <label class="field-label" data-i18n="llm.label">Génération de pack par IA</label>
-          <p class="field-hint" data-i18n="llm.hint">Optionnel — décris ce que tu veux dans la galerie de packs et un LLM le génère. Rien n'est envoyé nulle part tant qu'aucun fournisseur n'est choisi ci-dessous.</p>
+          <label class="field-label" data-i18n="llm.label">Génération de side par IA</label>
+          <p class="field-hint" data-i18n="llm.hint">Optionnel — décris ce que tu veux dans la galerie de sides et un LLM le génère. Rien n'est envoyé nulle part tant qu'aucun fournisseur n'est choisi ci-dessous.</p>
 
           <div class="option-row" id="llm-provider-options">
             <button class="option-btn" data-llm-provider="none" data-i18n="llm.provider.none">Désactivé</button>
@@ -144,57 +144,57 @@
         </div>
       </section>
 
-      <section class="tab-panel plans-panel" id="panel-plans">
-        <div id="plans-list-view">
+      <section class="tab-panel sides-panel" id="panel-sides">
+        <div id="sides-list-view">
           <div class="page-header">
-            <h1 class="page-title" data-i18n="plans.pageTitle">Plans d'entraînement</h1>
+            <h1 class="page-title" data-i18n="sides.pageTitle">Galerie de sides</h1>
             <div class="page-header-actions">
-              <button id="generate-plan-btn" class="option-btn" data-i18n="plans.generate">✨ Générer avec l'IA</button>
-              <button id="import-plan-btn" class="option-btn" data-i18n="plans.import">Importer un plan</button>
+              <button id="generate-side-btn" class="option-btn" data-i18n="sides.generate">✨ Générer avec l'IA</button>
+              <button id="import-side-btn" class="option-btn" data-i18n="sides.import">Importer un side</button>
               <span class="info-bubble" tabindex="0"
-                >ⓘ<span class="info-bubble-tooltip" data-i18n-html="plans.import.infoTooltip"
+                >ⓘ<span class="info-bubble-tooltip" data-i18n-html="sides.import.infoTooltip"
                   >Format attendu (fichier JSON) :
                   <pre>{
-  "name": "Mon pack",
+  "name": "Mon side",
   "mascot": {
     "label": "Ma mascotte",
     "image": "data:image/png;base64,iVBORw0KGgo..."
   },
   "exercises": [
-    { "label": "Ma quête", "durationSec": 30, "category": "détente" }
+    { "label": "Ma quest", "durationSec": 30, "category": "détente" }
   ]
 }</pre>
                   La mascotte est optionnelle.</span
                 ></span
               >
-              <button id="new-plan-btn" class="page-action" data-i18n="plans.new">+ Nouveau plan</button>
+              <button id="new-side-btn" class="page-action" data-i18n="sides.new">+ Nouveau side</button>
             </div>
           </div>
-          <div class="plans-grid" id="plans-grid"></div>
+          <div class="sides-grid" id="sides-grid"></div>
         </div>
 
-        <div id="plan-edit-view" hidden>
+        <div id="side-edit-view" hidden>
           <div class="page-header">
-            <button id="plan-back-btn" class="page-icon-btn" data-i18n-title="planEditor.backTitle" title="Retour">←</button>
-            <h1 class="page-title" id="plan-edit-title">Plan</h1>
+            <button id="side-back-btn" class="page-icon-btn" data-i18n-title="sideEditor.backTitle" title="Retour">←</button>
+            <h1 class="page-title" id="side-edit-title">Side</h1>
           </div>
 
           <div class="card">
-            <label class="field-label" for="plan-name-input" data-i18n="planEditor.nameLabel">Nom du plan</label>
-            <input type="text" id="plan-name-input" class="text-input" />
+            <label class="field-label" for="side-name-input" data-i18n="sideEditor.nameLabel">Nom du side</label>
+            <input type="text" id="side-name-input" class="text-input" />
           </div>
 
           <div class="card">
-            <label class="field-label" data-i18n="planEditor.mascotLabel">Mascotte</label>
-            <p class="field-hint" data-i18n="planEditor.mascotHint">Propre à ce pack — sinon la mascotte SideQuest par défaut s'affiche. Choisis-en une, ou ajoute la tienne.</p>
-            <p class="field-hint ai-suggestion" id="plan-mascot-ai-idea" hidden></p>
-            <div class="mascot-row" id="plan-mascot-options"></div>
+            <label class="field-label" data-i18n="sideEditor.mascotLabel">Mascotte</label>
+            <p class="field-hint" data-i18n="sideEditor.mascotHint">Propre à ce side — sinon la mascotte SideQuest par défaut s'affiche. Choisis-en une, ou ajoute la tienne.</p>
+            <p class="field-hint ai-suggestion" id="side-mascot-ai-idea" hidden></p>
+            <div class="mascot-row" id="side-mascot-options"></div>
           </div>
 
           <div class="card">
-            <label class="field-label" data-i18n="planEditor.exercisesLabel">Quêtes</label>
-            <div class="plan-exercises-list" id="plan-exercises-list"></div>
-            <button id="plan-add-exercise-btn" class="option-btn" data-i18n="planEditor.addExercise">+ Ajouter une quête</button>
+            <label class="field-label" data-i18n="sideEditor.exercisesLabel">Quests</label>
+            <div class="side-exercises-list" id="side-exercises-list"></div>
+            <button id="side-add-exercise-btn" class="option-btn" data-i18n="sideEditor.addExercise">+ Ajouter une quest</button>
             <datalist id="exercise-category-options">
               <option value="jambes"></option>
               <option value="bras"></option>
@@ -205,18 +205,18 @@
           </div>
         </div>
 
-        <div class="modal-overlay" id="generate-plan-modal" hidden>
+        <div class="modal-overlay" id="generate-side-modal" hidden>
           <div class="modal-card">
-            <h2 class="page-title" data-i18n="plans.generateModal.title">Générer un pack</h2>
-            <p class="field-hint" data-i18n="plans.generateModal.hint">Décris ce que tu veux en quelques mots — le pack généré apparaîtra dans la galerie.</p>
-            <textarea id="generate-plan-prompt" class="text-input" rows="3" data-i18n-placeholder="plans.generateModal.placeholder" placeholder="Ex : un pack de 5 minutes pour se détendre les yeux devant l'écran"></textarea>
-            <label class="field-label" for="generate-plan-mascot" data-i18n="plans.generateModal.mascotLabel">Mascotte (optionnel)</label>
-            <p class="field-hint" data-i18n="plans.generateModal.mascotHint">Décris la mascotte que tu imagines — l'IA proposera une idée en texte, à choisir ensuite dans l'éditeur (aucune image n'est générée).</p>
-            <textarea id="generate-plan-mascot" class="text-input" rows="2" data-i18n-placeholder="plans.generateModal.mascotPlaceholder" placeholder="Ex : un petit robot bricoleur, rond, orange et gris"></textarea>
-            <p class="field-hint modal-error" id="generate-plan-error" hidden></p>
+            <h2 class="page-title" data-i18n="sides.generateModal.title">Générer un side</h2>
+            <p class="field-hint" data-i18n="sides.generateModal.hint">Décris ce que tu veux en quelques mots — le side généré apparaîtra dans la galerie.</p>
+            <textarea id="generate-side-prompt" class="text-input" rows="3" data-i18n-placeholder="sides.generateModal.placeholder" placeholder="Ex : un side de 5 minutes pour se détendre les yeux devant l'écran"></textarea>
+            <label class="field-label" for="generate-side-mascot" data-i18n="sides.generateModal.mascotLabel">Mascotte (optionnel)</label>
+            <p class="field-hint" data-i18n="sides.generateModal.mascotHint">Décris la mascotte que tu imagines — l'IA proposera une idée en texte, à choisir ensuite dans l'éditeur (aucune image n'est générée).</p>
+            <textarea id="generate-side-mascot" class="text-input" rows="2" data-i18n-placeholder="sides.generateModal.mascotPlaceholder" placeholder="Ex : un petit robot bricoleur, rond, orange et gris"></textarea>
+            <p class="field-hint modal-error" id="generate-side-error" hidden></p>
             <div class="modal-actions">
-              <button class="option-btn" id="generate-plan-cancel-btn" data-i18n="plans.generateModal.cancel">Annuler</button>
-              <button class="page-action" id="generate-plan-submit-btn" data-i18n="plans.generateModal.submit">Générer</button>
+              <button class="option-btn" id="generate-side-cancel-btn" data-i18n="sides.generateModal.cancel">Annuler</button>
+              <button class="page-action" id="generate-side-submit-btn" data-i18n="sides.generateModal.submit">Générer</button>
             </div>
           </div>
         </div>
@@ -258,7 +258,7 @@
             <thead>
               <tr>
                 <th data-i18n="history.table.date">Date</th>
-                <th data-i18n="history.table.exercise">Quête</th>
+                <th data-i18n="history.table.exercise">Quest</th>
                 <th data-i18n="history.table.mascot">Mascotte</th>
                 <th data-i18n="history.table.mode">Mode</th>
                 <th data-i18n="history.table.status">Statut</th>

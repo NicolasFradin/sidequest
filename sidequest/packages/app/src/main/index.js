@@ -7,17 +7,17 @@ import { randomUUID } from "node:crypto";
 import {
   Scheduler,
   Storage,
-  loadPack,
-  listBundledPacks,
+  loadSide,
+  listBundledSides,
   pickRandomExercise,
-  parsePackJson,
-  translatePack,
+  parseSideJson,
+  translateSide,
   HookServer,
   isInstalled as isClaudeHookInstalled,
   install as installClaudeHook,
   uninstall as uninstallClaudeHook,
   resolveProvider,
-  generatePack,
+  generateSide,
   isClaudeCliAvailable,
   isCodexCliAvailable,
   listOllamaModels,
@@ -37,7 +37,7 @@ const OVERLAY_DIR = path.join(__dirname, "..", "overlay");
 const DASHBOARD_DIR = path.join(__dirname, "..", "dashboard");
 const DASHBOARD_SHORTCUT = "CommandOrControl+Shift+M";
 const CLAUDE_SETTINGS_PATH = path.join(homedir(), ".claude", "settings.json");
-/** Mascottes custom décodées depuis un import de pack (voir dashboard:import-plan) — jamais le base64 en base SQLite, juste ce chemin. */
+/** Mascottes custom décodées depuis un import de side (voir dashboard:import-side) — jamais le base64 en base SQLite, juste ce chemin. */
 const CUSTOM_MASCOTS_DIR = () => path.join(app.getPath("userData"), "custom-mascots");
 const MAX_MASCOT_IMAGE_BYTES = 3 * 1024 * 1024;
 /** Marge large au-dessus de l'affichage réel (72px) — borne un fichier qui mentirait sur son poids compressé (image massive mais bien compressée) plutôt que de faire confiance au seul poids du fichier. */
@@ -86,9 +86,9 @@ let currentExercise = null;
 let currentMascot = null;
 let currentMode = null;
 let currentBlocking = false;
-/** Id du pack actif au moment du déclenchement — sert à créditer l'XP du bon pack dans recordAndHide(). */
-let currentPlanId = null;
-/** XP gagnée par exercice complété ("fait") — formule volontairement plate pour v1, pas de barème par pack/exercice. */
+/** Id du side actif au moment du déclenchement — sert à créditer l'XP du bon side dans recordAndHide(). */
+let currentSideId = null;
+/** XP gagnée par exercice complété ("fait") — formule volontairement plate pour v1, pas de barème par side/exercice. */
 const XP_PER_EXERCISE = 10;
 
 let overlayReady = false;
@@ -226,24 +226,24 @@ function applyAutolaunch(enabled) {
 }
 
 /**
- * Résout le programme actif : plan custom stocké en base, sinon pack JSON livré avec l'app.
- * Replie sur le plan par défaut si le résultat n'a aucun exercice (ex. plan custom créé mais pas
+ * Résout le programme actif : side custom stocké en base, sinon side JSON livré avec l'app.
+ * Replie sur le side par défaut si le résultat n'a aucun exercice (ex. side custom créé mais pas
  * encore rempli, puis activé par erreur) — sinon pickRandomExercise() renvoie `undefined` et bloque
  * silencieusement les boutons Fait/Passer (voire le hook Claude Code en mode bloquant).
- * Traduit selon la langue de l'UI (no-op sur un plan custom/importé/généré, qui n'a jamais de
- * champs `*En` — voir translatePack()) : centralisé ici pour couvrir à la fois showExercise()
+ * Traduit selon la langue de l'UI (no-op sur un side custom/importé/généré, qui n'a jamais de
+ * champs `*En` — voir translateSide()) : centralisé ici pour couvrir à la fois showExercise()
  * (l'overlay) et dashboard:get-exercises (l'historique) sans dupliquer l'appel.
  */
 function loadActiveProgram(settings) {
-  const plan = storage.getPlan(settings.activeProgram) ?? loadPack(settings.activeProgram);
-  const resolved = plan.exercises.length > 0 ? plan : loadPack("sport-basic");
-  return translatePack(resolved, settings.language);
+  const side = storage.getSide(settings.activeProgram) ?? loadSide(settings.activeProgram);
+  const resolved = side.exercises.length > 0 ? side : loadSide("sport-basic");
+  return translateSide(resolved, settings.language);
 }
 
 /**
  * Décode un data URI base64 (`data:image/png;base64,...`) et écrit l'image sur disque, sous
  * `userData/custom-mascots/` — jamais le base64 lui-même en base SQLite, seul ce chemin l'est
- * (voir Storage.createPlan). Retourne `null` si le format ou la taille (>3 Mo décodé) est invalide.
+ * (voir Storage.createSide). Retourne `null` si le format ou la taille (>3 Mo décodé) est invalide.
  * @returns {string | null} chemin fichier absolu
  */
 function decodeMascotImage(image) {
@@ -261,8 +261,8 @@ function decodeMascotImage(image) {
 }
 
 /**
- * Copie un fichier image choisi via un dialogue natif (mascotte propre à un pack, § "sélection
- * de mascotte au niveau du pack") sous `userData/custom-mascots/` — même dossier/mêmes bornes que
+ * Copie un fichier image choisi via un dialogue natif (mascotte propre à un side, § "sélection
+ * de mascotte au niveau du side") sous `userData/custom-mascots/` — même dossier/mêmes bornes que
  * `decodeMascotImage`, mais lit un fichier réel plutôt qu'un data URI base64 (pas besoin de passer
  * par du base64 quand on a déjà un chemin de fichier natif). Retourne `null` si l'extension, la
  * taille, le contenu (pas une image décodable malgré l'extension) ou les dimensions sont invalides
@@ -300,7 +300,7 @@ function cleanupCustomMascotFile(imagePath) {
   }
 }
 
-/** Ré-encode la mascotte d'un plan en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-plan). */
+/** Ré-encode la mascotte d'un side en data URI base64, pour un export JSON auto-suffisant (round-trip avec dashboard:import-side). */
 function mascotToDataUri(mascot) {
   if (!mascot?.imagePath) return null;
   try {
@@ -315,40 +315,40 @@ function mascotToDataUri(mascot) {
   }
 }
 
-/** Mascotte par défaut d'un pack custom/importé/généré par IA sans mascotte propre — miroir de
- * `DEFAULT_PACK_MASCOT_IMAGE` dans shared/mascots.js (dashboard), résolue ici en chemin absolu
+/** Mascotte par défaut d'un side custom/importé/généré par IA sans mascotte propre — miroir de
+ * `DEFAULT_SIDE_MASCOT_IMAGE` dans shared/mascots.js (dashboard), résolue ici en chemin absolu
  * puisque ce process ne connaît pas la racine relative de l'overlay/du dashboard. */
-const DEFAULT_PACK_MASCOT_PATH = path.join(ASSETS_DIR, "mascots", "sidequest.png");
+const DEFAULT_SIDE_MASCOT_PATH = path.join(ASSETS_DIR, "mascots", "sidequest.png");
 
 /**
- * Résout le chemin de l'image d'une mascotte de pack selon le niveau atteint (paliers de
- * croissance optionnels, ex. SideCat/SideTama — voir `PackMascot.stages` dans @sidequest/core).
+ * Résout le chemin de l'image d'une mascotte de side selon le niveau atteint (paliers de
+ * croissance optionnels, ex. SideCat/SideTama — voir `SideMascot.stages` dans @sidequest/core).
  * Sans `stages`, `imagePath` sert pour tous les niveaux (comportement inchangé pour SideGym etc.).
- * Un pack sans mascotte propre retombe sur `DEFAULT_PACK_MASCOT_PATH`, sauf s'il est bundled
+ * Un side sans mascotte propre retombe sur `DEFAULT_SIDE_MASCOT_PATH`, sauf s'il est bundled
  * (SideGym...), qui garde le repli sur la mascotte globale géré par l'appelant (`payload.mascot`).
  */
-function resolvePackMascotImagePath(pack, level) {
-  if (!pack.mascot) return pack.source === "bundled" ? null : DEFAULT_PACK_MASCOT_PATH;
-  if (!pack.mascot.stages?.length) return pack.mascot.imagePath;
-  const eligible = pack.mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
-  return eligible[0]?.imagePath ?? pack.mascot.imagePath;
+function resolveSideMascotImagePath(side, level) {
+  if (!side.mascot) return side.source === "bundled" ? null : DEFAULT_SIDE_MASCOT_PATH;
+  if (!side.mascot.stages?.length) return side.mascot.imagePath;
+  const eligible = side.mascot.stages.filter((s) => s.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel);
+  return eligible[0]?.imagePath ?? side.mascot.imagePath;
 }
 
 /**
- * Couleur d'accent d'un pack — miroir de `resolvePackColor` dans shared/mascots.js (dashboard),
+ * Couleur d'accent d'un side — miroir de `resolveSideColor` dans shared/mascots.js (dashboard),
  * dupliquée ici pour l'overlay qui tourne côté main process (contexte Node, pas de module partagé
- * possible avec le renderer). `pack.color` si défini, sinon une teinte stable dérivée de son id.
+ * possible avec le renderer). `side.color` si défini, sinon une teinte stable dérivée de son id.
  */
-function resolvePackColor(pack) {
-  if (pack.color) return pack.color;
+function resolveSideColor(side) {
+  if (side.color) return side.color;
   let hash = 0;
-  for (let i = 0; i < pack.id.length; i++) hash = (hash * 31 + pack.id.charCodeAt(i)) | 0;
+  for (let i = 0; i < side.id.length; i++) hash = (hash * 31 + side.id.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 65%, 55%)`;
 }
 
-/** Traduit un code d'erreur `parsePackJson`/`generatePack` (packages/core) en clé i18n — un seul endroit pour les deux flux (import manuel, génération LLM). */
-function packParseErrorKey(error) {
+/** Traduit un code d'erreur `parseSideJson`/`generateSide` (packages/core) en clé i18n — un seul endroit pour les deux flux (import manuel, génération LLM). */
+function sideParseErrorKey(error) {
   switch (error) {
     case "empty":
       return "errorEmptyExercises";
@@ -366,9 +366,9 @@ function packParseErrorKey(error) {
 
 function showExercise() {
   const settings = storage.getSettings();
-  const pack = loadActiveProgram(settings);
-  const exercise = pickRandomExercise(pack);
-  const packProgress = storage.getPackProgress(pack.id);
+  const side = loadActiveProgram(settings);
+  const exercise = pickRandomExercise(side);
+  const sideProgress = storage.getSideProgress(side.id);
   const debt = storage.getDebt();
   // gate = toujours bloquant. mixed = bloquant seulement si on a trop esquivé (dette > 0),
   // sinon aussi souple que notify. notify = jamais bloquant.
@@ -378,20 +378,20 @@ function showExercise() {
   currentMascot = settings.activeMascot;
   currentMode = settings.mode;
   currentBlocking = blocking;
-  currentPlanId = pack.id;
+  currentSideId = side.id;
 
-  const mascotStageImagePath = resolvePackMascotImagePath(pack, packProgress.level);
+  const mascotStageImagePath = resolveSideMascotImagePath(side, sideProgress.level);
   const payload = {
     exercise,
     mascot: settings.activeMascot,
-    // Mascotte propre au pack (importée avec sa propre image, éventuellement un palier de
-    // croissance selon le niveau XP du pack), ou la mascotte SideQuest par défaut pour un pack
-    // custom/importé/généré sans la sienne (voir resolvePackMascotImagePath) — l'overlay n'a
+    // Mascotte propre au side (importée avec sa propre image, éventuellement un palier de
+    // croissance selon le niveau XP du side), ou la mascotte SideQuest par défaut pour un side
+    // custom/importé/généré sans la sienne (voir resolveSideMascotImagePath) — l'overlay n'a
     // pas besoin d'accès fichier lui-même, ce chemin absolu résolu côté main lui suffit.
     mascotImage: mascotStageImagePath ? `file://${mascotStageImagePath}` : null,
-    // Couleur d'accent du pack actif — l'overlay la pose en variable CSS (--pack-accent),
+    // Couleur d'accent du side actif — l'overlay la pose en variable CSS (--side-accent),
     // consommée par son style.css (bordure du bouton "Passer", halo de la mascotte).
-    packColor: resolvePackColor(pack),
+    sideColor: resolveSideColor(side),
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
@@ -433,14 +433,14 @@ function recordAndHide(status) {
     mascot: currentMascot ?? storage.getSettings().activeMascot,
     mode: currentMode ?? storage.getSettings().mode,
   });
-  if (status === "done" && currentPlanId) {
-    storage.addXp(currentPlanId, XP_PER_EXERCISE);
+  if (status === "done" && currentSideId) {
+    storage.addXp(currentSideId, XP_PER_EXERCISE);
   }
   currentExercise = null;
   currentMascot = null;
   currentMode = null;
   currentBlocking = false;
-  currentPlanId = null;
+  currentSideId = null;
   overlayWindow.hide();
 
   // Libère le hook Claude Code retenu par ce même exercice (mode "stop"/"start" bloquant, voir
@@ -681,31 +681,31 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
-    ipcMain.handle("dashboard:get-plans", () => {
+    ipcMain.handle("dashboard:get-sides", () => {
       const lang = storage.getSettings().language;
       return {
-        bundledPacks: listBundledPacks().map((p) => translatePack(p, lang)),
-        customPlans: storage.getPlans(),
+        bundledSides: listBundledSides().map((p) => translateSide(p, lang)),
+        customSides: storage.getSides(),
       };
     });
-    ipcMain.handle("dashboard:get-pack-progress", (_event, id) => storage.getPackProgress(id));
-    ipcMain.handle("dashboard:create-plan", (_event, { name, exercises }) => storage.createPlan(name, exercises));
-    ipcMain.handle("dashboard:update-plan", (_event, { id, partial }) => storage.updatePlan(id, partial));
+    ipcMain.handle("dashboard:get-side-progress", (_event, id) => storage.getSideProgress(id));
+    ipcMain.handle("dashboard:create-side", (_event, { name, exercises }) => storage.createSide(name, exercises));
+    ipcMain.handle("dashboard:update-side", (_event, { id, partial }) => storage.updateSide(id, partial));
 
-    // --- Mascotte propre à un pack (galerie -> éditeur de pack -> section "Mascotte") ---
-    // Un pack bundled n'a pas cette section (champs désactivés côté renderer, cf. isBundled),
-    // mais ces handlers ne le vérifient pas eux-mêmes — storage.updatePlan() sur un id bundled
-    // échouerait de toute façon ("Plan inconnu", les packs embarqués ne sont pas en base).
-    ipcMain.handle("dashboard:set-plan-mascot-bundled", (_event, { planId, mascotId, label }) => {
+    // --- Mascotte propre à un side (galerie -> éditeur de side -> section "Mascotte") ---
+    // Un side bundled n'a pas cette section (champs désactivés côté renderer, cf. isBundled),
+    // mais ces handlers ne le vérifient pas eux-mêmes — storage.updateSide() sur un id bundled
+    // échouerait de toute façon ("Side inconnu", les sides embarqués ne sont pas en base).
+    ipcMain.handle("dashboard:set-side-mascot-bundled", (_event, { sideId, mascotId, label }) => {
       const imagePath = path.join(ASSETS_DIR, "mascots", `${mascotId}.png`);
       if (!existsSync(imagePath)) return { updated: false };
-      const existing = storage.getPlan(planId);
+      const existing = storage.getSide(sideId);
       cleanupCustomMascotFile(existing?.mascot?.imagePath);
-      const plan = storage.updatePlan(planId, { mascot: { id: mascotId, label, imagePath } });
-      return { updated: true, plan };
+      const side = storage.updateSide(sideId, { mascot: { id: mascotId, label, imagePath } });
+      return { updated: true, side };
     });
 
-    ipcMain.handle("dashboard:set-plan-mascot-custom", async (_event, planId) => {
+    ipcMain.handle("dashboard:set-side-mascot-custom", async (_event, sideId) => {
       const lang = storage.getSettings().language;
       const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
         title: t(lang, "chooseMascotDialogTitle"),
@@ -717,54 +717,54 @@ if (!gotSingleInstanceLock) {
       const imagePath = storeMascotFile(filePaths[0]);
       if (!imagePath) return { updated: false, error: t(lang, "errorInvalidMascot") };
 
-      const existing = storage.getPlan(planId);
+      const existing = storage.getSide(sideId);
       cleanupCustomMascotFile(existing?.mascot?.imagePath);
-      const plan = storage.updatePlan(planId, {
+      const side = storage.updateSide(sideId, {
         mascot: { id: `custom:${randomUUID()}`, label: existing?.name ?? "", imagePath },
       });
-      return { updated: true, plan };
+      return { updated: true, side };
     });
 
-    ipcMain.handle("dashboard:clear-plan-mascot", (_event, planId) => {
-      const existing = storage.getPlan(planId);
+    ipcMain.handle("dashboard:clear-side-mascot", (_event, sideId) => {
+      const existing = storage.getSide(sideId);
       cleanupCustomMascotFile(existing?.mascot?.imagePath);
-      const plan = storage.updatePlan(planId, { mascot: null });
-      return { updated: true, plan };
+      const side = storage.updateSide(sideId, { mascot: null });
+      return { updated: true, side };
     });
 
-    ipcMain.handle("dashboard:delete-plan", (_event, id) => {
-      const plan = storage.getPlan(id);
-      storage.deletePlan(id);
-      cleanupCustomMascotFile(plan?.mascot?.imagePath);
+    ipcMain.handle("dashboard:delete-side", (_event, id) => {
+      const side = storage.getSide(id);
+      storage.deleteSide(id);
+      cleanupCustomMascotFile(side?.mascot?.imagePath);
       return storage.getSettings();
     });
 
-    ipcMain.handle("dashboard:export-plan", async (_event, id) => {
+    ipcMain.handle("dashboard:export-side", async (_event, id) => {
       const lang = storage.getSettings().language;
-      const rawPlan = storage.getPlan(id) ?? listBundledPacks().find((p) => p.id === id) ?? null;
-      if (!rawPlan) return { exported: false };
-      // Exporte dans la langue actuellement affichée (no-op sur un plan custom/importé/généré,
+      const rawSide = storage.getSide(id) ?? listBundledSides().find((p) => p.id === id) ?? null;
+      if (!rawSide) return { exported: false };
+      // Exporte dans la langue actuellement affichée (no-op sur un side custom/importé/généré,
       // qui n'a jamais de champs `*En`) — cohérent avec ce que l'utilisateur voit à l'écran.
-      const plan = translatePack(rawPlan, lang);
+      const side = translateSide(rawSide, lang);
 
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
         title: t(lang, "exportDialogTitle"),
-        defaultPath: `${plan.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,
+        defaultPath: `${side.name.replace(/[^a-z0-9-_]+/gi, "-")}.json`,
         filters: [{ name: t(lang, "exportFilterName"), extensions: ["json"] }],
       });
       if (canceled || !filePath) return { exported: false };
 
-      const mascotImage = mascotToDataUri(plan.mascot);
+      const mascotImage = mascotToDataUri(side.mascot);
       const exported = {
-        name: plan.name,
-        exercises: plan.exercises,
-        ...(mascotImage ? { mascot: { label: plan.mascot.label, image: mascotImage } } : {}),
+        name: side.name,
+        exercises: side.exercises,
+        ...(mascotImage ? { mascot: { label: side.mascot.label, image: mascotImage } } : {}),
       };
       writeFileSync(filePath, JSON.stringify(exported, null, 2), "utf-8");
       return { exported: true };
     });
 
-    ipcMain.handle("dashboard:import-plan", async () => {
+    ipcMain.handle("dashboard:import-side", async () => {
       const lang = storage.getSettings().language;
       const { canceled, filePaths } = await dialog.showOpenDialog(dashboardWindow, {
         title: t(lang, "importDialogTitle"),
@@ -780,11 +780,11 @@ if (!gotSingleInstanceLock) {
         return { imported: false, error: t(lang, "errorInvalidJson") };
       }
 
-      // Même sanitizer que la génération LLM (dashboard:generate-plan) — un fichier édité à la
+      // Même sanitizer que la génération LLM (dashboard:generate-side) — un fichier édité à la
       // main et un texte produit par un modèle sont tous les deux des données non fiables,
-      // mêmes règles pour les deux (voir packs.ts, plan-llm-pack-generation.md § 3.1).
-      const parsed = parsePackJson(data);
-      if ("error" in parsed) return { imported: false, error: t(lang, packParseErrorKey(parsed.error)) };
+      // mêmes règles pour les deux (voir sides.ts, plan-llm-side-generation.md § 3.1).
+      const parsed = parseSideJson(data);
+      if ("error" in parsed) return { imported: false, error: t(lang, sideParseErrorKey(parsed.error)) };
       const { name, exercises } = parsed;
 
       // La mascotte est optionnelle — sans elle, comportement inchangé (mascotte globale).
@@ -795,11 +795,11 @@ if (!gotSingleInstanceLock) {
         mascot = { id: `custom:${randomUUID()}`, label: String(data.mascot?.label ?? name), imagePath };
       }
 
-      const plan = storage.createPlan(name, exercises, { source: "imported", mascot });
-      return { imported: true, plan };
+      const side = storage.createSide(name, exercises, { source: "imported", mascot });
+      return { imported: true, side };
     });
 
-    // --- Génération de pack par LLM (plan-llm-pack-generation.md) — premier point d'entrée
+    // --- Génération de side par LLM (plan-llm-side-generation.md) — premier point d'entrée
     // réseau/process-externe de l'app ; voir § 3.5 du plan pour la posture de sécurité (clé
     // jamais en clair/SQLite, Ollama en loopback par défaut, args de tableau jamais un shell).
     ipcMain.handle("dashboard:get-llm-status", async () => {
@@ -875,27 +875,27 @@ if (!gotSingleInstanceLock) {
       }
     });
 
-    ipcMain.handle("dashboard:generate-plan", async (_event, { prompt, mascotDescription }) => {
+    ipcMain.handle("dashboard:generate-side", async (_event, { prompt, mascotDescription }) => {
       const settings = storage.getSettings();
       const provider = resolveProvider(settings.llmProvider);
       if (!provider) {
         return { generated: false, error: t(settings.language, "errorLlmNotConfigured") };
       }
 
-      const result = await generatePack(
+      const result = await generateSide(
         provider,
         prompt,
         llmOptionsFromSettings(settings),
         mascotDescription
       );
       if ("error" in result) {
-        return { generated: false, error: t(settings.language, packParseErrorKey(result.error)) };
+        return { generated: false, error: t(settings.language, sideParseErrorKey(result.error)) };
       }
 
-      const plan = storage.createPlan(result.name, result.exercises, { source: "generated" });
-      // Suggestion texte, jamais persistée — pas d'image générée (voir plan-llm-pack-generation.md),
+      const side = storage.createSide(result.name, result.exercises, { source: "generated" });
+      // Suggestion texte, jamais persistée — pas d'image générée (voir plan-llm-side-generation.md),
       // juste une idée affichée une fois dans l'éditeur pour guider le choix manuel de mascotte.
-      return { generated: true, plan, mascotIdea: result.mascotIdea };
+      return { generated: true, side, mascotIdea: result.mascotIdea };
     });
 
     ipcMain.handle("dashboard:hook-is-installed", () => isClaudeHookInstalled(CLAUDE_SETTINGS_PATH));

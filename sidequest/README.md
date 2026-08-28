@@ -1,6 +1,6 @@
 # SideQuest — MVP
 
-Desktop app that shows a coach mascot during idle time, prompting quick quests (fitness today via the SideGym pack, more to come).
+Desktop app that shows a coach mascot during idle time, prompting quick quests (fitness today via the SideGym side, more to come).
 
 ## Installing the app (end users)
 
@@ -12,7 +12,7 @@ Download the latest release from the [GitHub Releases page](../../releases):
 
 ## Structure
 
-- `packages/core` — pure business logic (scheduler, SQLite storage, quest plans), no Electron dependency.
+- `packages/core` — pure business logic (scheduler, SQLite storage, quest sides), no Electron dependency.
 - `packages/app` — Electron app: tray (menu bar), mascot overlay, dashboard.
 
 ## Prerequisites (macOS)
@@ -81,7 +81,7 @@ On GitHub, pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`: auto
 
 ## Sprints shipped
 
-- [x] Sprint 1 — Monorepo skeleton + `core` (scheduler, storage, sport-basic pack, tests)
+- [x] Sprint 1 — Monorepo skeleton + `core` (scheduler, storage, sport-basic side, tests)
 - [x] Sprint 2 — Minimal Electron app (tray + overlay, mascot + exercise + done/skip buttons)
 - [x] Sprint 3 — Dashboard (settings, history, charts, light/dark theme)
 - [x] Sprint 4 — Gate mode (gate/mixed + honor-system debt of skipped sessions)

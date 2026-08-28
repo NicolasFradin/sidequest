@@ -14,7 +14,7 @@ const MAX_BUFFER_BYTES = 2 * 1024 * 1024;
  *   `claude -p 'Reply with exactly this JSON and nothing else: {"ok":true}' --output-format json`
  * returns a wrapper object, not raw model text — `{"type":"result","is_error":false,"result":"{\"ok\":true}",...}`.
  * The actual model reply is the `result` string, which is what this provider returns (still just
- * text — `generatePack()` is the one that JSON.parses/validates it, same as every other provider).
+ * text — `generateSide()` is the one that JSON.parses/validates it, same as every other provider).
  */
 export async function isClaudeCliAvailable(): Promise<boolean> {
   try {

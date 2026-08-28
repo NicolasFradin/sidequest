@@ -13,9 +13,9 @@
 
 SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. It's built to grow into a marketplace of idle-time quests, not just one: whatever fits in 30 seconds between two prompts, including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
 
-### The quest packs
+### The quest sides
 
-| Pack | Status | |
+| Side | Status | |
 |---|---|---|
 | 🏋️ **SideGym** — fitness | ships today | **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm. |
 | 🐱 **SideCat** — look after your cat | ships today | **Your cat exists even when you're coding.** A pet, a bowl, 30 seconds. It grows with your streak, not your guilt. |
@@ -25,15 +25,15 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
 | 🧓 **SideMamie** — check in on your grandma | ships today | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
 
-SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own pack from scratch, import a JSON file, or generate one with AI right from the packs gallery — see below.
+SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own side from scratch, import a JSON file, or generate one with AI right from the sides gallery — see below.
 
 ## How it works
 
-- A **timer** fires every N minutes (configurable) and shows a mascot with a random quest from your active pack.
+- A **timer** fires every N minutes (configurable) and shows a mascot with a random quest from your active side.
 - A **Claude Code hook** (optional) fires instead of or alongside the timer — at the end of Claude's response, at the start of your turn, or only if Claude is still working after a few seconds. No API keys, no network calls: just a local HTTP hook SideQuest installs into `~/.claude/settings.json` for you.
 - Three modes: **soft notification** (skip whenever), **hard gate** (can't dismiss without doing the quest — this can also hold your Claude Code hook open until you're done), or **mixed** (soft until you rack up a debt of skipped sessions, then it gates).
-- A **packs gallery** in the dashboard: browse the bundled packs, build your own from scratch, import a JSON file, or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one pack is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a pack with someone else.
-- Give any pack **its own mascot** right in its editor — pick one of the bundled ones or upload your own image, no JSON editing needed.
+- A **sides gallery** in the dashboard: browse the bundled sides, build your own from scratch, import a JSON file, or **generate one with AI** — your own Anthropic/OpenAI API key, the Claude Code/Codex CLI you already have installed (no key ever touches the app), or a fully local Ollama model, all optional and off by default. Only one side is active at a time; each tracks its own XP and level as you use it. Export/import as JSON to share a side with someone else.
+- Give any side **its own mascot** right in its editor — pick one of the bundled ones or upload your own image, no JSON editing needed.
 
 ### Architecture
 
@@ -45,13 +45,13 @@ flowchart LR
     subgraph Main["Electron main process"]
         HookServer["HookServer\n(local HTTP, loopback only)"]
         Scheduler["Scheduler"]
-        Storage[("SQLite\nsettings · sessions · packs")]
+        Storage[("SQLite\nsettings · sessions · sides")]
     end
 
     Overlay["Overlay window\nmascot + quest + Done/Skip"]
-    Dashboard["Dashboard window\nsettings · history · packs gallery"]
+    Dashboard["Dashboard window\nsettings · history · sides gallery"]
 
-    subgraph AI["AI pack generation (opt-in, off by default)"]
+    subgraph AI["AI side generation (opt-in, off by default)"]
         API["Anthropic / OpenAI API key"]
         CLI["Claude Code / Codex CLI bridge"]
         Ollama["Local Ollama"]
@@ -63,11 +63,11 @@ flowchart LR
     Scheduler --> Overlay
     Overlay -- "Done / Skip" --> Storage
     Dashboard <--> Storage
-    Dashboard -- "Generate pack" --> AI
+    Dashboard -- "Generate side" --> AI
     AI -- "sanitized JSON, same validator as manual import" --> Storage
 ```
 
-Everything above the `AI` box runs 100% local, no network calls — SQLite on disk, a loopback-only HTTP server for the Claude Code hook. The only opt-in exception is AI pack generation, which is off until you configure a provider in Settings.
+Everything above the `AI` box runs 100% local, no network calls — SQLite on disk, a loopback-only HTTP server for the Claude Code hook. The only opt-in exception is AI side generation, which is off until you configure a provider in Settings.
 
 If it saves your back even once, [leave a star](../../) — it helps other Claude Code users find this.
 
@@ -102,11 +102,11 @@ The app's code lives in [`sidequest/`](sidequest/) — see [`sidequest/README.md
 
 ```
 sidequest/
-├── packages/core/   # pure business logic (scheduler, SQLite storage, quest packs) — no Electron dependency
+├── packages/core/   # pure business logic (scheduler, SQLite storage, quest sides) — no Electron dependency
 └── packages/app/    # Electron app: tray, mascot overlay, dashboard
 ```
 
-Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan, [`docs/plan-marketplace-packs.md`](docs/plan-marketplace-packs.md) for the packs gallery/import/XP design, and [`docs/plan-llm-pack-generation.md`](docs/plan-llm-pack-generation.md) for AI pack generation.
+Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan, [`docs/plan-marketplace-sides.md`](docs/plan-marketplace-sides.md) for the sides gallery/import/XP design, and [`docs/plan-llm-side-generation.md`](docs/plan-llm-side-generation.md) for AI side generation.
 
 ## Roadmap — major next steps
 
@@ -114,7 +114,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
-- **Marketplace of quests** — SideGym, SideCat and SideTama ship today. Pack import/export (JSON) and AI generation already work as stepping stones toward an installable pack registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
+- **Marketplace of quests** — SideGym, SideCat and SideTama ship today. Side import/export (JSON) and AI generation already work as stepping stones toward an installable side registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
@@ -123,7 +123,7 @@ Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
 
 **Is this an Anthropic product?** Nope. Personal project, not affiliated.
 
-**Does it phone home?** By default, no — zero network calls, zero telemetry, everything (settings, history, packs) stored locally in SQLite. The one opt-in exception: AI pack generation. Turn it on in Settings and pick a remote provider (an Anthropic/OpenAI API key, or a non-local Ollama server) and *that specific action* calls out to generate a pack — nothing else in the app does, and it stays off until you configure it. The Claude Code integration itself stays a local HTTP hook on `127.0.0.1`, unrelated to this.
+**Does it phone home?** By default, no — zero network calls, zero telemetry, everything (settings, history, sides) stored locally in SQLite. The one opt-in exception: AI side generation. Turn it on in Settings and pick a remote provider (an Anthropic/OpenAI API key, or a non-local Ollama server) and *that specific action* calls out to generate a side — nothing else in the app does, and it stays off until you configure it. The Claude Code integration itself stays a local HTTP hook on `127.0.0.1`, unrelated to this.
 
 ## Disclaimer
 

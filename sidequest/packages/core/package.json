@@ -1,7 +1,7 @@
 {
   "name": "@sidequest/core",
   "version": "0.0.1",
-  "description": "Logique métier réutilisable : scheduler, storage, packs d'exercices, gate",
+  "description": "Logique métier réutilisable : scheduler, storage, sides de quêtes, gate",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
