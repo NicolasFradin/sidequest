@@ -7,17 +7,17 @@
 </head>
 <body>
   <div class="card" id="card">
-    <button id="btn-settings" class="settings-btn" data-i18n-title="overlay.settings.title" title="Réglages">⚙</button>
-    <div class="mini-timer" id="mini-timer" data-i18n-title="overlay.timer.title" title="Temps écoulé"></div>
-    <div class="blocking-badge" id="blocking-badge" data-i18n-title="overlay.blocking.title" title="Séance obligatoire" hidden>🔒</div>
+    <div class="icon-stack">
+      <button id="btn-settings" class="icon-bubble" data-i18n-title="overlay.settings.title" title="Réglages">⚙</button>
+      <div class="icon-bubble mini-timer" id="mini-timer" data-i18n-title="overlay.timer.title" title="Temps écoulé"></div>
+      <div class="icon-bubble blocking-badge" id="blocking-badge" data-i18n-title="overlay.blocking.title" title="Séance obligatoire" hidden>🔒</div>
+      <button id="btn-done" class="icon-bubble icon-bubble-primary" data-i18n-title="overlay.done" title="C'est fait 💪">✔</button>
+      <button id="btn-skip" class="icon-bubble" data-i18n-title="overlay.skip" title="Passer">⏭</button>
+    </div>
     <img id="mascot-img" class="mascot" src="" alt="Mascotte" />
     <div class="content">
       <p class="label" data-i18n="overlay.label">C'est l'heure de bouger !</p>
       <p class="exercise" id="exercise-label">—</p>
-      <div class="actions">
-        <button id="btn-done" class="btn btn-primary" data-i18n="overlay.done">C'est fait 💪</button>
-        <button id="btn-skip" class="btn btn-secondary" data-i18n="overlay.skip">Passer</button>
-      </div>
     </div>
   </div>
 

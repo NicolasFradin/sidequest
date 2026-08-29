@@ -10,34 +10,24 @@
 }
 
 :root[data-theme="dark"] {
-  --card-grad-start: #15182b;
-  --card-grad-end: #0b0e1a;
-  --card-border: #ff2d95;
-  --card-shadow-1: rgba(255, 45, 149, 0.35);
-  --card-shadow-2: rgba(0, 229, 212, 0.15);
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
-  --accent-teal: #00e5d4;
-  --accent-magenta: #ff2d95;
-  --accent-gold: #ffd23f;
+  --accent-teal: #22d3f0;
+  --accent-magenta: #e2574c;
+  --accent-gold: #f5a623;
   --btn-primary-text: #0b0e1a;
-  --settings-border: rgba(0, 229, 212, 0.4);
+  --settings-border: rgba(34, 211, 240, 0.4);
   --settings-bg: rgba(11, 14, 26, 0.6);
 }
 
 :root[data-theme="light"] {
-  --card-grad-start: #ffffff;
-  --card-grad-end: #f2f2f7;
-  --card-border: #ff2d95;
-  --card-shadow-1: rgba(255, 45, 149, 0.2);
-  --card-shadow-2: rgba(0, 200, 215, 0.2);
   --text-primary: #15182b;
   --text-secondary: #6b6b76;
-  --accent-teal: #00c8d7;
-  --accent-magenta: #ff2d95;
-  --accent-gold: #ffd54f;
+  --accent-teal: #0c93bd;
+  --accent-magenta: #d1483d;
+  --accent-gold: #e8951a;
   --btn-primary-text: #15182b;
-  --settings-border: rgba(0, 200, 215, 0.4);
+  --settings-border: rgba(12, 147, 189, 0.4);
   --settings-bg: rgba(255, 255, 255, 0.7);
 }
 
@@ -65,37 +55,49 @@ html, body {
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.settings-btn {
+/* Pile verticale des bulles d'action en haut à droite : réglages, timer, cadenas (si séance
+   bloquante) puis les bulles fait/passer. Un flex column + gap plutôt que des `top` codés en dur
+   par élément — un enfant `hidden` (ex. le cadenas hors mode bloquant, ou "passer" en mode
+   bloquant) sort simplement du flux sans laisser de trou ni recalcul manuel des offsets. */
+.icon-stack {
   position: absolute;
   top: 10px;
   right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.icon-bubble {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 30%;
   border: 1px solid var(--settings-border);
   background: var(--settings-bg);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  -webkit-app-region: no-drag;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-.settings-btn:hover {
+.icon-bubble:hover {
   color: var(--accent-teal);
   border-color: var(--accent-teal);
+  transform: translateY(-1px);
+}
+
+.icon-bubble[hidden] {
+  display: none;
 }
 
 .mini-timer {
-  position: absolute;
-  top: 42px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
   border: 2px solid var(--settings-border);
   border-top-color: var(--accent-teal);
-  -webkit-app-region: no-drag;
   animation: mini-timer-spin 1s linear infinite;
 }
 
@@ -105,11 +107,32 @@ html, body {
   }
 }
 
+.blocking-badge {
+  border-color: var(--accent-magenta);
+  color: var(--accent-magenta);
+  font-size: 13px;
+}
+
+/* Bulle "C'est fait" : seule action pleine (couleur du side actif si défini, sinon or), les
+   autres bulles restent en contour pour ne pas rivaliser visuellement avec elle. */
+.icon-bubble-primary {
+  background: var(--side-accent, var(--accent-gold));
+  border-color: transparent;
+  color: var(--btn-primary-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.icon-bubble-primary:hover {
+  color: var(--btn-primary-text);
+  border-color: transparent;
+  opacity: 0.9;
+}
+
 .mascot {
   width: 140px;
   height: 140px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--side-accent, var(--accent-teal)) 35%, transparent));
   margin-bottom: 8px;
 }
 
@@ -127,61 +150,8 @@ html, body {
   margin-bottom: 6px;
 }
 
-.blocking-badge[hidden] {
-  display: none;
-}
-
-.blocking-badge {
-  position: absolute;
-  top: 74px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--accent-magenta);
-  color: var(--accent-magenta);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  -webkit-app-region: no-drag;
-}
-
 .exercise {
   color: var(--text-primary);
   font-size: 20px;
   font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 10px 18px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
-}
-
-.btn-primary {
-  background: linear-gradient(90deg, var(--accent-magenta), var(--accent-gold));
-  color: var(--btn-primary-text);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--side-accent, var(--accent-teal));
-  border: 1.5px solid var(--side-accent, var(--accent-teal));
 }

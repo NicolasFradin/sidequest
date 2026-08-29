@@ -24,9 +24,9 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, the
   i18n.applyStaticTranslations();
   btnSkip.hidden = Boolean(blocking);
   blockingBadge.hidden = !blocking;
-  // Ambiance couleur du side actif (bordure du bouton "Passer", halo de la mascotte) — voir
-  // style.css. removeProperty plutôt qu'une valeur vide : une custom property posée à "" reste
-  // valide et ne retombe pas sur le fallback de var(--side-accent, ...).
+  // Ambiance couleur du side actif (fond de la bulle "C'est fait") — voir style.css.
+  // removeProperty plutôt qu'une valeur vide : une custom property posée à "" reste valide et ne
+  // retombe pas sur le fallback de var(--side-accent, ...).
   if (sideColor) {
     document.documentElement.style.setProperty("--side-accent", sideColor);
   } else {

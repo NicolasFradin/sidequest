@@ -417,7 +417,7 @@ function showExercise() {
 function recordAndHide(status) {
   if (!currentExercise) return;
   if (status === "skipped" && currentBlocking) {
-    // Filet de sécurité : le bouton "Passer" est masqué côté overlay en mode bloquant,
+    // Filet de sécurité : la bulle "Passer" est masquée côté overlay en mode bloquant,
     // mais on ignore quand même un éventuel skip pour ne pas casser la garantie de blocage.
     return;
   }
