@@ -134,3 +134,11 @@ If you feel any pain or discomfort, stop immediately and consult a physiotherapi
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE). Inspired by [claude-gym](https://github.com/477-Studio/claude-gym) (gentle notifications, local-only) and `workout-gate` (real session blocking).
+
+---
+
+<p align="center">
+  <img src="docs/branding/emblem/sidequest-emblem-color.png" alt="SideQuest emblem" width="120" />
+  <br />
+  <em>While Claude thinks, you lift. Fair trade.</em>
+</p>
