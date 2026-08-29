@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import type { Exercise, Pack, PackSource, PackMascot } from "./packs.js";
+import type { Exercise, Side, SideSource, SideMascot } from "./sides.js";
 
 export type SessionStatus = "done" | "skipped" | "missed";
 export type TriggerType = "timer" | "hook";
@@ -19,7 +19,7 @@ export type Language = "fr" | "en";
  */
 export type HookTriggerMode = "stop" | "start" | "thinking";
 /**
- * Fournisseur LLM pour la génération de pack (voir plan-llm-pack-generation.md) — "none" tant
+ * Fournisseur LLM pour la génération de side (voir plan-llm-side-generation.md) — "none" tant
  * que rien n'est configuré. La clé API elle-même n'est jamais stockée ici (ni en SQLite) : voir
  * packages/app/src/main/llm-credentials.js (chiffrement OS via safeStorage, hors de core).
  */
@@ -42,7 +42,7 @@ export interface Settings {
   hookTriggerMode: HookTriggerMode;
   /** Langue de l'interface — voir Language */
   language: Language;
-  /** Fournisseur LLM actif pour la génération de pack — voir LlmProviderId */
+  /** Fournisseur LLM actif pour la génération de side — voir LlmProviderId */
   llmProvider: LlmProviderId;
   anthropicModel: string;
   openaiModel: string;
@@ -50,9 +50,6 @@ export interface Settings {
   ollamaBaseUrl: string;
   ollamaModel: string;
 }
-
-/** Un `Plan` est un `Pack` — SQLite (CRUD dashboard) et JSON embarqué partagent désormais la même forme. */
-export type Plan = Pack;
 
 export interface SessionRecord {
   id?: number;
@@ -103,11 +100,11 @@ interface SessionRow {
   mode: string;
 }
 
-interface PlanRow {
+interface SideRow {
   id: string;
   name: string;
   exercises: string;
-  source: PackSource;
+  source: SideSource;
   mascot_id: string | null;
   mascot_label: string | null;
   mascot_image_path: string | null;
@@ -123,6 +120,8 @@ export class Storage {
   }
 
   private migrate(): void {
+    this.renameLegacyPackTables();
+
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
@@ -140,14 +139,14 @@ export class Storage {
         mode TEXT NOT NULL DEFAULT 'notify'
       );
 
-      CREATE TABLE IF NOT EXISTS plans (
+      CREATE TABLE IF NOT EXISTS sides (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         exercises TEXT NOT NULL
       );
 
-      CREATE TABLE IF NOT EXISTS pack_progress (
-        plan_id TEXT PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS side_progress (
+        side_id TEXT PRIMARY KEY,
         xp INTEGER NOT NULL DEFAULT 0,
         level INTEGER NOT NULL DEFAULT 1
       );
@@ -162,21 +161,45 @@ export class Storage {
       this.db.exec("ALTER TABLE sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'notify'");
     }
 
-    const planColumns = this.db.prepare("PRAGMA table_info(plans)").all() as { name: string }[];
-    if (!planColumns.some((c) => c.name === "source")) {
-      this.db.exec("ALTER TABLE plans ADD COLUMN source TEXT NOT NULL DEFAULT 'custom'");
+    const sideColumns = this.db.prepare("PRAGMA table_info(sides)").all() as { name: string }[];
+    if (!sideColumns.some((c) => c.name === "source")) {
+      this.db.exec("ALTER TABLE sides ADD COLUMN source TEXT NOT NULL DEFAULT 'custom'");
     }
-    if (!planColumns.some((c) => c.name === "mascot_id")) {
-      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_id TEXT");
+    if (!sideColumns.some((c) => c.name === "mascot_id")) {
+      this.db.exec("ALTER TABLE sides ADD COLUMN mascot_id TEXT");
     }
-    if (!planColumns.some((c) => c.name === "mascot_label")) {
-      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_label TEXT");
+    if (!sideColumns.some((c) => c.name === "mascot_label")) {
+      this.db.exec("ALTER TABLE sides ADD COLUMN mascot_label TEXT");
     }
-    if (!planColumns.some((c) => c.name === "mascot_image_path")) {
-      this.db.exec("ALTER TABLE plans ADD COLUMN mascot_image_path TEXT");
+    if (!sideColumns.some((c) => c.name === "mascot_image_path")) {
+      this.db.exec("ALTER TABLE sides ADD COLUMN mascot_image_path TEXT");
     }
-    if (!planColumns.some((c) => c.name === "color")) {
-      this.db.exec("ALTER TABLE plans ADD COLUMN color TEXT");
+    if (!sideColumns.some((c) => c.name === "color")) {
+      this.db.exec("ALTER TABLE sides ADD COLUMN color TEXT");
+    }
+  }
+
+  /**
+   * Bases créées avant le rename pack/plan → side : `plans`/`pack_progress` (et sa colonne
+   * `plan_id`) deviennent `sides`/`side_progress`/`side_id` en place, sans perte de données
+   * (parcours/XP existants). No-op sur une base fraîche (tables absentes) ou déjà migrée.
+   */
+  private renameLegacyPackTables(): void {
+    const tables = new Set(
+      (this.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map(
+        (t) => t.name
+      )
+    );
+    if (tables.has("plans") && !tables.has("sides")) {
+      this.db.exec("ALTER TABLE plans RENAME TO sides");
+    }
+    if (tables.has("pack_progress") && !tables.has("side_progress")) {
+      this.db.exec("ALTER TABLE pack_progress RENAME TO side_progress");
+    }
+    // Tables inexistantes : PRAGMA table_info() renvoie simplement 0 ligne, pas d'erreur.
+    const progressColumns = this.db.prepare("PRAGMA table_info(side_progress)").all() as { name: string }[];
+    if (progressColumns.some((c) => c.name === "plan_id") && !progressColumns.some((c) => c.name === "side_id")) {
+      this.db.exec("ALTER TABLE side_progress RENAME COLUMN plan_id TO side_id");
     }
   }
 
@@ -287,7 +310,7 @@ export class Storage {
     return debt;
   }
 
-  /** Nombre de jours consécutifs (en remontant depuis aujourd'hui) avec au moins un exercice "done" */
+  /** Nombre de jours consécutifs (en remontant depuis aujourd'hui) avec au moins une quête "done" */
   getCurrentStreak(): number {
     const doneDays = new Set(
       this.getSessions()
@@ -305,8 +328,8 @@ export class Storage {
     return streak;
   }
 
-  private rowToPlan(row: PlanRow): Plan {
-    const mascot: PackMascot | undefined = row.mascot_image_path
+  private rowToSide(row: SideRow): Side {
+    const mascot: SideMascot | undefined = row.mascot_image_path
       ? { id: row.mascot_id ?? row.id, label: row.mascot_label ?? row.name, imagePath: row.mascot_image_path }
       : undefined;
     return {
@@ -319,22 +342,22 @@ export class Storage {
     };
   }
 
-  getPlans(): Plan[] {
-    const rows = this.db.prepare("SELECT * FROM plans ORDER BY rowid ASC").all() as PlanRow[];
-    return rows.map((r) => this.rowToPlan(r));
+  getSides(): Side[] {
+    const rows = this.db.prepare("SELECT * FROM sides ORDER BY rowid ASC").all() as SideRow[];
+    return rows.map((r) => this.rowToSide(r));
   }
 
-  getPlan(id: string): Plan | undefined {
-    const row = this.db.prepare("SELECT * FROM plans WHERE id = ?").get(id) as PlanRow | undefined;
-    return row ? this.rowToPlan(row) : undefined;
+  getSide(id: string): Side | undefined {
+    const row = this.db.prepare("SELECT * FROM sides WHERE id = ?").get(id) as SideRow | undefined;
+    return row ? this.rowToSide(row) : undefined;
   }
 
-  createPlan(
+  createSide(
     name: string,
     exercises: Exercise[],
-    opts?: { source?: PackSource; mascot?: PackMascot; color?: string }
-  ): Plan {
-    const plan: Plan = {
+    opts?: { source?: SideSource; mascot?: SideMascot; color?: string }
+  ): Side {
+    const side: Side = {
       id: randomUUID(),
       name,
       exercises,
@@ -344,33 +367,33 @@ export class Storage {
     };
     this.db
       .prepare(
-        `INSERT INTO plans (id, name, exercises, source, mascot_id, mascot_label, mascot_image_path, color)
+        `INSERT INTO sides (id, name, exercises, source, mascot_id, mascot_label, mascot_image_path, color)
          VALUES (@id, @name, @exercises, @source, @mascotId, @mascotLabel, @mascotImagePath, @color)`
       )
       .run({
-        id: plan.id,
-        name: plan.name,
-        exercises: JSON.stringify(plan.exercises),
-        source: plan.source,
-        mascotId: plan.mascot?.id ?? null,
-        mascotLabel: plan.mascot?.label ?? null,
-        mascotImagePath: plan.mascot?.imagePath ?? null,
-        color: plan.color ?? null,
+        id: side.id,
+        name: side.name,
+        exercises: JSON.stringify(side.exercises),
+        source: side.source,
+        mascotId: side.mascot?.id ?? null,
+        mascotLabel: side.mascot?.label ?? null,
+        mascotImagePath: side.mascot?.imagePath ?? null,
+        color: side.color ?? null,
       });
-    return plan;
+    return side;
   }
 
   /**
-   * `mascot: null` efface la mascotte propre au pack (il retombe sur la mascotte globale) ;
-   * `mascot` absent du `partial` laisse la mascotte actuelle inchangée ; un `PackMascot` la
+   * `mascot: null` efface la mascotte propre au side (il retombe sur la mascotte globale) ;
+   * `mascot` absent du `partial` laisse la mascotte actuelle inchangée ; un `SideMascot` la
    * remplace. Distinct de `undefined` volontairement — `"mascot" in partial` est la seule façon
    * fiable de distinguer "pas touché" de "explicitement effacé" une fois passé par spread.
    */
-  updatePlan(id: string, partial: { name?: string; exercises?: Exercise[]; mascot?: PackMascot | null }): Plan {
-    const existing = this.getPlan(id);
-    if (!existing) throw new Error(`Plan inconnu : ${id}`);
+  updateSide(id: string, partial: { name?: string; exercises?: Exercise[]; mascot?: SideMascot | null }): Side {
+    const existing = this.getSide(id);
+    if (!existing) throw new Error(`Side inconnu : ${id}`);
     const mascot = "mascot" in partial ? (partial.mascot ?? undefined) : existing.mascot;
-    const next: Plan = {
+    const next: Side = {
       ...existing,
       name: partial.name ?? existing.name,
       exercises: partial.exercises ?? existing.exercises,
@@ -378,7 +401,7 @@ export class Storage {
     };
     this.db
       .prepare(
-        `UPDATE plans SET name = @name, exercises = @exercises,
+        `UPDATE sides SET name = @name, exercises = @exercises,
            mascot_id = @mascotId, mascot_label = @mascotLabel, mascot_image_path = @mascotImagePath
          WHERE id = @id`
       )
@@ -393,35 +416,35 @@ export class Storage {
     return next;
   }
 
-  /** Si le plan supprimé était actif, `activeProgram` revient au plan par défaut pour ne jamais pointer vers un id inexistant. */
-  deletePlan(id: string): void {
+  /** Si le side supprimé était actif, `activeProgram` revient au side par défaut pour ne jamais pointer vers un id inexistant. */
+  deleteSide(id: string): void {
     if (this.getSettings().activeProgram === id) {
       this.updateSettings({ activeProgram: DEFAULT_SETTINGS.activeProgram });
     }
-    this.db.prepare("DELETE FROM plans WHERE id = ?").run(id);
-    this.db.prepare("DELETE FROM pack_progress WHERE plan_id = ?").run(id);
+    this.db.prepare("DELETE FROM sides WHERE id = ?").run(id);
+    this.db.prepare("DELETE FROM side_progress WHERE side_id = ?").run(id);
   }
 
   /**
-   * Ajoute de l'XP à un pack et recalcule son niveau (formule volontairement simple pour v1 :
-   * un palier tous les 100 XP, pas de courbe par pack). Sert à faire grandir la barre de
-   * progression de la galerie, et la mascotte d'un pack qui définit des `stages` (SideCat/SideTama).
+   * Ajoute de l'XP à un side et recalcule son niveau (formule volontairement simple pour v1 :
+   * un palier tous les 100 XP, pas de courbe par side). Sert à faire grandir la barre de
+   * progression de la galerie, et la mascotte d'un side qui définit des `stages` (SideCat/SideTama).
    */
-  addXp(planId: string, amount: number): { xp: number; level: number } {
-    const current = this.getPackProgress(planId);
+  addXp(sideId: string, amount: number): { xp: number; level: number } {
+    const current = this.getSideProgress(sideId);
     const xp = current.xp + amount;
     const level = Math.floor(xp / 100) + 1;
     this.db
       .prepare(
-        `INSERT INTO pack_progress (plan_id, xp, level) VALUES (@planId, @xp, @level)
-         ON CONFLICT(plan_id) DO UPDATE SET xp = @xp, level = @level`
+        `INSERT INTO side_progress (side_id, xp, level) VALUES (@sideId, @xp, @level)
+         ON CONFLICT(side_id) DO UPDATE SET xp = @xp, level = @level`
       )
-      .run({ planId, xp, level });
+      .run({ sideId, xp, level });
     return { xp, level };
   }
 
-  getPackProgress(planId: string): { xp: number; level: number } {
-    const row = this.db.prepare("SELECT xp, level FROM pack_progress WHERE plan_id = ?").get(planId) as
+  getSideProgress(sideId: string): { xp: number; level: number } {
+    const row = this.db.prepare("SELECT xp, level FROM side_progress WHERE side_id = ?").get(sideId) as
       | { xp: number; level: number }
       | undefined;
     return row ?? { xp: 0, level: 1 };

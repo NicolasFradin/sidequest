@@ -1,6 +1,6 @@
 export type { LlmProvider, LlmGenerateOptions } from "./types.js";
-export { buildPackPrompt } from "./prompt.js";
-export { generatePack, type GeneratePackError } from "./generate-pack.js";
+export { buildSidePrompt } from "./prompt.js";
+export { generateSide, type GenerateSideError } from "./generate-side.js";
 export { anthropicApiProvider } from "./anthropic-api.js";
 export { openaiApiProvider } from "./openai-api.js";
 export { ollamaProvider, listOllamaModels } from "./ollama.js";

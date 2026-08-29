@@ -480,7 +480,7 @@ html, body {
   padding: 20px 24px;
 }
 
-#plan-edit-view .card + .card {
+#side-edit-view .card + .card {
   margin-top: 20px;
 }
 
@@ -495,6 +495,10 @@ html, body {
   color: var(--text-secondary);
   font-size: 12px;
   margin-top: 10px;
+}
+
+.field-hint.ai-suggestion {
+  color: var(--accent-magenta);
 }
 
 /* Sans ça, [hidden] (display:none du UA stylesheet) perd contre le display:flex ci-dessous —
@@ -618,7 +622,7 @@ html, body {
   cursor: default;
 }
 
-/* Case "+" pour ajouter sa propre mascotte à un pack — même gabarit que .mascot-option, bordure
+/* Case "+" pour ajouter sa propre mascotte à un side — même gabarit que .mascot-option, bordure
    pointillée plutôt qu'une image, pour rester visuellement distincte d'un choix existant. */
 .mascot-option-add {
   border-style: dashed;
@@ -649,7 +653,7 @@ html, body {
 }
 
 .history-panel,
-.plans-panel {
+.sides-panel {
   max-width: 720px;
 }
 
@@ -669,17 +673,17 @@ html, body {
   cursor: not-allowed;
 }
 
-.plans-grid {
+.sides-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.plan-card {
+.side-card {
   background: var(--bg-card);
-  /* --pack-accent posée en inline style par renderPlansGrid() (JS) — couleur propre au pack
-     (pack.color, sinon une teinte stable dérivée de son id, voir sqMascots.resolvePackColor). */
-  border: 1px solid color-mix(in srgb, var(--pack-accent) 45%, var(--border-card));
+  /* --side-accent posée en inline style par renderSidesGrid() (JS) — couleur propre au side
+     (side.color, sinon une teinte stable dérivée de son id, voir sqMascots.resolveSideColor). */
+  border: 1px solid color-mix(in srgb, var(--side-accent) 45%, var(--border-card));
   border-radius: 14px;
   padding: 18px 20px;
   display: flex;
@@ -687,13 +691,13 @@ html, body {
   gap: 10px;
 }
 
-.plan-card-header {
+.side-card-header {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.plan-card-mascot {
+.side-card-mascot {
   width: 32px;
   height: 32px;
   object-fit: contain;
@@ -702,30 +706,30 @@ html, body {
   flex-shrink: 0;
 }
 
-.plan-card-name {
+.side-card-name {
   font-weight: 700;
   font-size: 15px;
   flex: 1;
 }
 
-.plan-card-badges {
+.side-card-badges {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
 }
 
-.plan-card-count {
+.side-card-count {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.plan-card-xp {
+.side-card-xp {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.plan-card-xp-track {
+.side-card-xp-track {
   flex: 1;
   height: 6px;
   border-radius: 999px;
@@ -733,21 +737,21 @@ html, body {
   overflow: hidden;
 }
 
-.plan-card-xp-fill {
+.side-card-xp-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--pack-accent, var(--accent-teal));
+  background: var(--side-accent, var(--accent-teal));
   transition: width 0.3s ease;
 }
 
-.plan-card-xp-label {
+.side-card-xp-label {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
   flex-shrink: 0;
 }
 
-.plan-card-actions {
+.side-card-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -764,13 +768,13 @@ html, body {
   color: var(--accent-magenta);
 }
 
-.plan-exercises-list {
+.side-exercises-list {
   display: flex;
   flex-direction: column;
   margin-bottom: 16px;
 }
 
-.plan-exercise-row {
+.side-exercise-row {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -778,29 +782,29 @@ html, body {
   border-bottom: 1px solid var(--border-card);
 }
 
-.plan-exercise-row:last-child {
+.side-exercise-row:last-child {
   border-bottom: none;
 }
 
-.plan-exercise-row .text-input {
+.side-exercise-row .text-input {
   padding: 8px 10px;
   font-size: 13px;
 }
 
-.plan-exercise-label {
+.side-exercise-label {
   flex: 2;
 }
 
-.plan-exercise-category {
+.side-exercise-category {
   flex: 1;
 }
 
-.plan-exercise-duration {
+.side-exercise-duration {
   width: 64px;
   text-align: center;
 }
 
-.plan-exercise-remove-btn {
+.side-exercise-remove-btn {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
@@ -813,12 +817,12 @@ html, body {
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.plan-exercise-remove-btn:hover {
+.side-exercise-remove-btn:hover {
   border-color: var(--accent-magenta);
   color: var(--accent-magenta);
 }
 
-.plans-empty-hint {
+.sides-empty-hint {
   color: var(--text-secondary);
   font-size: 13px;
 }

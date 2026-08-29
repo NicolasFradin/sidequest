@@ -26,7 +26,7 @@ languageButtons.forEach((btn) =>
 const tabs = [...document.querySelectorAll(".nav-item")];
 const panels = {
   settings: document.getElementById("panel-settings"),
-  plans: document.getElementById("panel-plans"),
+  sides: document.getElementById("panel-sides"),
   history: document.getElementById("panel-history"),
 };
 
@@ -37,7 +37,7 @@ tabs.forEach((tab) => {
       panel.classList.toggle("active", key === tab.dataset.tab)
     );
     if (tab.dataset.tab === "history") refreshHistory();
-    if (tab.dataset.tab === "plans") refreshPlans();
+    if (tab.dataset.tab === "sides") refreshSides();
   });
 });
 
@@ -88,11 +88,11 @@ function applySettingsToUI(settings) {
   if (settings.language !== lastAppliedLanguage) {
     lastAppliedLanguage = settings.language;
     applyHookStatus(hookStatusBadge.classList.contains("installed"));
-    // refreshPlans() (re-fetch IPC), pas juste renderPlansGrid() (re-rendu du cache) : les packs
-    // embarqués sont traduits côté main process (translatePack(), voir @sidequest/core) selon la
+    // refreshSides() (re-fetch IPC), pas juste renderSidesGrid() (re-rendu du cache) : les sides
+    // embarqués sont traduits côté main process (translateSide(), voir @sidequest/core) selon la
     // langue au moment de l'appel — un simple re-rendu du cache garderait l'ancienne langue.
-    refreshPlans();
-    if (editingPlan) renderPlanExercises();
+    refreshSides();
+    if (editingSide) renderSideExercises();
     if (document.getElementById("panel-history").classList.contains("active")) refreshHistory();
   }
 }
@@ -183,7 +183,7 @@ hookToggleBtn.addEventListener("click", async () => {
 
 window.dashboardAPI.isHookInstalled().then(applyHookStatus);
 
-// --- Génération de pack par IA (plan-llm-pack-generation.md) ---
+// --- Génération de side par IA (plan-llm-side-generation.md) ---
 
 const llmProviderButtons = [...document.querySelectorAll("#llm-provider-options .option-btn")];
 const llmKeyRow = document.getElementById("llm-key-row");
@@ -294,16 +294,17 @@ window.dashboardAPI.getLlmStatus().then((status) => {
   if (currentSettings) renderLlmFields(currentSettings);
 });
 
-// --- Bouton "Générer" de la galerie de packs ---
+// --- Bouton "Générer" de la galerie de sides ---
 
-const generatePlanBtn = document.getElementById("generate-plan-btn");
-const generatePlanModal = document.getElementById("generate-plan-modal");
-const generatePlanPrompt = document.getElementById("generate-plan-prompt");
-const generatePlanError = document.getElementById("generate-plan-error");
-const generatePlanCancelBtn = document.getElementById("generate-plan-cancel-btn");
-const generatePlanSubmitBtn = document.getElementById("generate-plan-submit-btn");
+const generateSideBtn = document.getElementById("generate-side-btn");
+const generateSideModal = document.getElementById("generate-side-modal");
+const generateSidePrompt = document.getElementById("generate-side-prompt");
+const generateSideMascot = document.getElementById("generate-side-mascot");
+const generateSideError = document.getElementById("generate-side-error");
+const generateSideCancelBtn = document.getElementById("generate-side-cancel-btn");
+const generateSideSubmitBtn = document.getElementById("generate-side-submit-btn");
 
-generatePlanBtn.addEventListener("click", () => {
+generateSideBtn.addEventListener("click", () => {
   // Pas de fournisseur configuré : on n'ouvre pas la modale pour rien, on renvoie vers les
   // réglages (même logique de "découverte progressive" que le bouton d'intégration Claude Code,
   // toujours visible avec un état actionnable plutôt que masqué).
@@ -312,39 +313,44 @@ generatePlanBtn.addEventListener("click", () => {
     showToast(i18n.t("llm.toast.configureFirst"), "warning");
     return;
   }
-  generatePlanPrompt.value = "";
-  generatePlanError.hidden = true;
-  generatePlanModal.hidden = false;
-  generatePlanPrompt.focus();
+  generateSidePrompt.value = "";
+  generateSideMascot.value = "";
+  generateSideError.hidden = true;
+  generateSideModal.hidden = false;
+  generateSidePrompt.focus();
 });
 
-generatePlanCancelBtn.addEventListener("click", () => {
-  generatePlanModal.hidden = true;
+generateSideCancelBtn.addEventListener("click", () => {
+  generateSideModal.hidden = true;
 });
 
-generatePlanSubmitBtn.addEventListener("click", async () => {
-  const prompt = generatePlanPrompt.value.trim();
+generateSideSubmitBtn.addEventListener("click", async () => {
+  const prompt = generateSidePrompt.value.trim();
   if (!prompt) return;
 
-  generatePlanSubmitBtn.disabled = true;
-  generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submitting");
-  generatePlanError.hidden = true;
+  generateSideSubmitBtn.disabled = true;
+  generateSideSubmitBtn.textContent = i18n.t("sides.generateModal.submitting");
+  generateSideError.hidden = true;
 
-  const { generated, error, plan } = await window.dashboardAPI.generatePlan(prompt);
+  const mascotDescription = generateSideMascot.value.trim();
+  const { generated, error, side, mascotIdea } = await window.dashboardAPI.generateSide(
+    prompt,
+    mascotDescription || undefined
+  );
 
-  generatePlanSubmitBtn.disabled = false;
-  generatePlanSubmitBtn.textContent = i18n.t("plans.generateModal.submit");
+  generateSideSubmitBtn.disabled = false;
+  generateSideSubmitBtn.textContent = i18n.t("sides.generateModal.submit");
 
   if (!generated) {
-    generatePlanError.textContent = error;
-    generatePlanError.hidden = false;
+    generateSideError.textContent = error;
+    generateSideError.hidden = false;
     return;
   }
 
-  generatePlanModal.hidden = true;
-  plansState.customPlans.push(plan);
-  openPlanEditor(plan.id);
-  showToast(i18n.t("plans.toast.generated"));
+  generateSideModal.hidden = true;
+  sidesState.customSides.push(side);
+  openSideEditor(side.id, mascotIdea);
+  showToast(i18n.t("sides.toast.generated"));
 });
 
 const statStreak = document.getElementById("stat-streak");
@@ -472,252 +478,261 @@ refreshHistoryBtn.addEventListener("click", () => refreshHistory());
 
 refreshHistory();
 
-// --- Plans d'entraînement personnalisés ---
+// --- Sides personnalisés ---
 
-const DEFAULT_PLAN_ID = "sport-basic";
+const DEFAULT_SIDE_ID = "sport-basic";
 
-const plansGrid = document.getElementById("plans-grid");
-const plansListView = document.getElementById("plans-list-view");
-const planEditView = document.getElementById("plan-edit-view");
-const planEditTitle = document.getElementById("plan-edit-title");
-const planNameInput = document.getElementById("plan-name-input");
-const planExercisesList = document.getElementById("plan-exercises-list");
-const planAddExerciseBtn = document.getElementById("plan-add-exercise-btn");
-const planMascotOptionsContainer = document.getElementById("plan-mascot-options");
-const newPlanBtn = document.getElementById("new-plan-btn");
-const importPlanBtn = document.getElementById("import-plan-btn");
-const planBackBtn = document.getElementById("plan-back-btn");
+const sidesGrid = document.getElementById("sides-grid");
+const sidesListView = document.getElementById("sides-list-view");
+const sideEditView = document.getElementById("side-edit-view");
+const sideEditTitle = document.getElementById("side-edit-title");
+const sideNameInput = document.getElementById("side-name-input");
+const sideExercisesList = document.getElementById("side-exercises-list");
+const sideAddExerciseBtn = document.getElementById("side-add-exercise-btn");
+const sideMascotOptionsContainer = document.getElementById("side-mascot-options");
+const sideMascotAiIdea = document.getElementById("side-mascot-ai-idea");
+const newSideBtn = document.getElementById("new-side-btn");
+const importSideBtn = document.getElementById("import-side-btn");
+const sideBackBtn = document.getElementById("side-back-btn");
 
-let plansState = { bundledPacks: [], customPlans: [], progress: {} };
-/** Plan en cours d'édition (copie locale) : { id, name, exercises, mascot, isBundled } */
-let editingPlan = null;
+let sidesState = { bundledSides: [], customSides: [], progress: {} };
+/** Side en cours d'édition (copie locale) : { id, name, exercises, mascot, isBundled } */
+let editingSide = null;
 
-function allPlans() {
-  return [...plansState.bundledPacks, ...plansState.customPlans];
+function allSides() {
+  return [...sidesState.bundledSides, ...sidesState.customSides];
 }
 
-/** Image de la carte d'un pack dans la galerie : sa propre mascotte si elle en a une (pack
+/** Image de la carte d'un side dans la galerie : sa propre mascotte si elle en a une (side
     importé avec sa propre image, éventuellement un palier de croissance selon le niveau XP
-    du pack) ; à défaut, un pack bundled (SideGym...) retombe sur la mascotte globale
-    actuellement choisie — c'est effectivement celle qui s'affichera à l'écran si ce pack est
-    activé — tandis qu'un pack custom/importé/généré par IA retombe sur la mascotte SideQuest
+    du side) ; à défaut, un side bundled (SideGym...) retombe sur la mascotte globale
+    actuellement choisie — c'est effectivement celle qui s'affichera à l'écran si ce side est
+    activé — tandis qu'un side custom/importé/généré par IA retombe sur la mascotte SideQuest
     par défaut plutôt que d'hériter du skin visuel en cours. */
-function planCardMascotImage(plan) {
-  const level = plansState.progress?.[plan.id]?.level ?? 1;
-  const stageImagePath = sqMascots.resolvePackMascotStage(plan.mascot, level);
+function sideCardMascotImage(side) {
+  const level = sidesState.progress?.[side.id]?.level ?? 1;
+  const stageImagePath = sqMascots.resolveSideMascotStage(side.mascot, level);
   const overrideUrl = stageImagePath
     ? `file://${stageImagePath}`
-    : plan.source !== "bundled"
-      ? sqMascots.DEFAULT_PACK_MASCOT_IMAGE
+    : side.source !== "bundled"
+      ? sqMascots.DEFAULT_SIDE_MASCOT_IMAGE
       : null;
-  const mascotId = plan.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
+  const mascotId = side.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
   return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
 
-function findPlan(id) {
-  return allPlans().find((p) => p.id === id);
+function findSide(id) {
+  return allSides().find((p) => p.id === id);
 }
 
-function planExerciseCountLabel(plan) {
-  return i18n.t("plans.count", plan.exercises.length);
+function sideExerciseCountLabel(side) {
+  return i18n.t("sides.count", side.exercises.length);
 }
 
-function renderPlansGrid() {
-  plansGrid.innerHTML = "";
-  allPlans().forEach((plan) => {
-    const isBundled = plan.source === "bundled";
-    const isActive = currentSettings?.activeProgram === plan.id;
+function renderSidesGrid() {
+  sidesGrid.innerHTML = "";
+  allSides().forEach((side) => {
+    const isBundled = side.source === "bundled";
+    const isActive = currentSettings?.activeProgram === side.id;
 
     const card = document.createElement("div");
-    card.className = "plan-card";
-    card.style.setProperty("--pack-accent", sqMascots.resolvePackColor(plan));
+    card.className = "side-card";
+    card.style.setProperty("--side-accent", sqMascots.resolveSideColor(side));
 
     const header = document.createElement("div");
-    header.className = "plan-card-header";
+    header.className = "side-card-header";
 
     const mascotThumb = document.createElement("img");
-    mascotThumb.className = "plan-card-mascot";
-    mascotThumb.src = planCardMascotImage(plan);
+    mascotThumb.className = "side-card-mascot";
+    mascotThumb.src = sideCardMascotImage(side);
     mascotThumb.alt = "";
     header.appendChild(mascotThumb);
 
     const name = document.createElement("span");
-    name.className = "plan-card-name";
-    name.textContent = plan.name;
+    name.className = "side-card-name";
+    name.textContent = side.name;
     header.appendChild(name);
 
     const badges = document.createElement("div");
-    badges.className = "plan-card-badges";
+    badges.className = "side-card-badges";
     // Officiel (embarqué avec l'app) / Importé (fichier JSON) / Généré par IA / rien pour un
-    // pack créé à la main dans le dashboard ("Perso") — voir plan.source, Phase 0 et
-    // plan-llm-pack-generation.md § 3.1 pour "generated".
+    // side créé à la main dans le dashboard ("Perso") — voir side.source, Phase 0 et
+    // plan-llm-side-generation.md § 3.1 pour "generated".
     if (isBundled) {
       const bundledBadge = document.createElement("span");
       bundledBadge.className = "status-badge bundled";
-      bundledBadge.textContent = i18n.t("plans.badge.bundled");
+      bundledBadge.textContent = i18n.t("sides.badge.bundled");
       badges.appendChild(bundledBadge);
-    } else if (plan.source === "imported") {
+    } else if (side.source === "imported") {
       const importedBadge = document.createElement("span");
       importedBadge.className = "status-badge imported";
-      importedBadge.textContent = i18n.t("plans.badge.imported");
+      importedBadge.textContent = i18n.t("sides.badge.imported");
       badges.appendChild(importedBadge);
-    } else if (plan.source === "generated") {
+    } else if (side.source === "generated") {
       const generatedBadge = document.createElement("span");
       generatedBadge.className = "status-badge generated";
-      generatedBadge.textContent = i18n.t("plans.badge.generated");
+      generatedBadge.textContent = i18n.t("sides.badge.generated");
       badges.appendChild(generatedBadge);
     }
     if (isActive) {
       const activeBadge = document.createElement("span");
       activeBadge.className = "status-badge installed";
-      activeBadge.textContent = i18n.t("plans.badge.active");
+      activeBadge.textContent = i18n.t("sides.badge.active");
       badges.appendChild(activeBadge);
     }
     header.appendChild(badges);
 
     const count = document.createElement("p");
-    count.className = "plan-card-count";
-    count.textContent = planExerciseCountLabel(plan);
+    count.className = "side-card-count";
+    count.textContent = sideExerciseCountLabel(side);
 
-    // Barre d'XP (gamification transverse à tous les packs) — voir Storage.addXp/getPackProgress.
-    // Palier tous les 100 xp (formule v1 volontairement simple, cf. plan-marketplace-packs.md § 3.4).
-    const progress = plansState.progress?.[plan.id] ?? { xp: 0, level: 1 };
+    // Barre d'XP (gamification transverse à tous les sides) — voir Storage.addXp/getSideProgress.
+    // Palier tous les 100 xp (formule v1 volontairement simple, cf. plan-marketplace-sides.md § 3.4).
+    const progress = sidesState.progress?.[side.id] ?? { xp: 0, level: 1 };
     const xpBar = document.createElement("div");
-    xpBar.className = "plan-card-xp";
+    xpBar.className = "side-card-xp";
     const xpTrack = document.createElement("div");
-    xpTrack.className = "plan-card-xp-track";
+    xpTrack.className = "side-card-xp-track";
     const xpFill = document.createElement("div");
-    xpFill.className = "plan-card-xp-fill";
+    xpFill.className = "side-card-xp-fill";
     xpFill.style.width = `${progress.xp % 100}%`;
     xpTrack.appendChild(xpFill);
     const xpLabel = document.createElement("span");
-    xpLabel.className = "plan-card-xp-label";
-    xpLabel.textContent = i18n.t("plans.level", progress.level);
+    xpLabel.className = "side-card-xp-label";
+    xpLabel.textContent = i18n.t("sides.level", progress.level);
     xpBar.append(xpTrack, xpLabel);
 
     const actions = document.createElement("div");
-    actions.className = "plan-card-actions";
+    actions.className = "side-card-actions";
 
     const openBtn = document.createElement("button");
     openBtn.className = "option-btn option-btn-sm";
-    openBtn.textContent = i18n.t("plans.action.open");
-    openBtn.addEventListener("click", () => openPlanEditor(plan.id));
+    openBtn.textContent = i18n.t("sides.action.open");
+    openBtn.addEventListener("click", () => openSideEditor(side.id));
 
     const duplicateBtn = document.createElement("button");
     duplicateBtn.className = "option-btn option-btn-sm";
-    duplicateBtn.textContent = i18n.t("plans.action.duplicate");
-    duplicateBtn.addEventListener("click", () => duplicatePlan(plan));
+    duplicateBtn.textContent = i18n.t("sides.action.duplicate");
+    duplicateBtn.addEventListener("click", () => duplicateSide(side));
 
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "option-btn option-btn-sm";
-    toggleBtn.textContent = isActive ? i18n.t("plans.action.deactivate") : i18n.t("plans.action.activate");
-    // Un plan sans exercice ne doit jamais pouvoir être activé (main/index.js s'en protège aussi
-    // en repliant sur le plan par défaut, mais autant ne pas laisser l'UI proposer l'action).
-    const isEmpty = plan.exercises.length === 0;
+    toggleBtn.textContent = isActive ? i18n.t("sides.action.deactivate") : i18n.t("sides.action.activate");
+    // Un side sans quête ne doit jamais pouvoir être activé (main/index.js s'en protège aussi
+    // en repliant sur le side par défaut, mais autant ne pas laisser l'UI proposer l'action).
+    const isEmpty = side.exercises.length === 0;
     if (!isActive && isEmpty) {
       toggleBtn.disabled = true;
-      toggleBtn.title = i18n.t("plans.action.disabledHint");
+      toggleBtn.title = i18n.t("sides.action.disabledHint");
     } else {
-      toggleBtn.addEventListener("click", () => activatePlan(isActive ? DEFAULT_PLAN_ID : plan.id));
+      toggleBtn.addEventListener("click", () => activateSide(isActive ? DEFAULT_SIDE_ID : side.id));
     }
 
     const exportBtn = document.createElement("button");
     exportBtn.className = "option-btn option-btn-sm";
-    exportBtn.textContent = i18n.t("plans.action.export");
-    exportBtn.addEventListener("click", () => exportPlan(plan.id));
+    exportBtn.textContent = i18n.t("sides.action.export");
+    exportBtn.addEventListener("click", () => exportSide(side.id));
 
     actions.append(openBtn, duplicateBtn, toggleBtn, exportBtn);
 
     if (!isBundled) {
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "option-btn option-btn-sm option-btn-danger";
-      deleteBtn.textContent = i18n.t("plans.action.delete");
-      deleteBtn.addEventListener("click", () => deletePlan(plan.id));
+      deleteBtn.textContent = i18n.t("sides.action.delete");
+      deleteBtn.addEventListener("click", () => deleteSide(side.id));
       actions.appendChild(deleteBtn);
     }
 
     card.append(header, count, xpBar, actions);
-    plansGrid.appendChild(card);
+    sidesGrid.appendChild(card);
   });
 }
 
-async function activatePlan(id) {
+async function activateSide(id) {
   await save({ activeProgram: id });
-  renderPlansGrid();
+  renderSidesGrid();
 }
 
-async function duplicatePlan(plan) {
-  const created = await window.dashboardAPI.createPlan(
-    `${plan.name} (${i18n.t("plans.copySuffix")})`,
-    structuredClone(plan.exercises)
+async function duplicateSide(side) {
+  const created = await window.dashboardAPI.createSide(
+    `${side.name} (${i18n.t("sides.copySuffix")})`,
+    structuredClone(side.exercises)
   );
-  plansState.customPlans.push(created);
-  openPlanEditor(created.id);
-  showToast(i18n.t("plans.toast.duplicated"));
+  sidesState.customSides.push(created);
+  openSideEditor(created.id);
+  showToast(i18n.t("sides.toast.duplicated"));
 }
 
-async function exportPlan(id) {
-  const { exported } = await window.dashboardAPI.exportPlan(id);
-  if (exported) showToast(i18n.t("plans.toast.exported"));
+async function exportSide(id) {
+  const { exported } = await window.dashboardAPI.exportSide(id);
+  if (exported) showToast(i18n.t("sides.toast.exported"));
 }
 
-async function importPlan() {
-  const { imported, error, plan } = await window.dashboardAPI.importPlan();
+async function importSide() {
+  const { imported, error, side } = await window.dashboardAPI.importSide();
   if (error) {
     showToast(error, "warning");
     return;
   }
   if (!imported) return; // annulé par l'utilisateur, rien à faire
-  plansState.customPlans.push(plan);
-  openPlanEditor(plan.id);
-  showToast(i18n.t("plans.toast.imported"));
+  sidesState.customSides.push(side);
+  openSideEditor(side.id);
+  showToast(i18n.t("sides.toast.imported"));
 }
 
-async function deletePlan(id) {
-  if (!confirm(i18n.t("plans.confirmDelete"))) return;
-  const nextSettings = await window.dashboardAPI.deletePlan(id);
-  plansState.customPlans = plansState.customPlans.filter((p) => p.id !== id);
+async function deleteSide(id) {
+  if (!confirm(i18n.t("sides.confirmDelete"))) return;
+  const nextSettings = await window.dashboardAPI.deleteSide(id);
+  sidesState.customSides = sidesState.customSides.filter((p) => p.id !== id);
   applySettingsToUI(nextSettings);
-  renderPlansGrid();
-  showToast(i18n.t("plans.toast.deleted"));
+  renderSidesGrid();
+  showToast(i18n.t("sides.toast.deleted"));
 }
 
-function openPlanEditor(id) {
-  const plan = findPlan(id);
-  if (!plan) return;
-  editingPlan = {
-    id: plan.id,
-    name: plan.name,
-    exercises: structuredClone(plan.exercises),
-    mascot: plan.mascot,
-    isBundled: plan.source === "bundled",
+function openSideEditor(id, aiMascotIdea) {
+  const side = findSide(id);
+  if (!side) return;
+  editingSide = {
+    id: side.id,
+    name: side.name,
+    exercises: structuredClone(side.exercises),
+    mascot: side.mascot,
+    isBundled: side.source === "bundled",
   };
-  planEditTitle.textContent = plan.name;
-  planNameInput.value = plan.name;
-  planNameInput.disabled = editingPlan.isBundled;
-  planAddExerciseBtn.hidden = editingPlan.isBundled;
-  renderPlanExercises();
-  renderPlanMascotOptions();
-  plansListView.hidden = true;
-  planEditView.hidden = false;
+  sideEditTitle.textContent = side.name;
+  sideNameInput.value = side.name;
+  sideNameInput.disabled = editingSide.isBundled;
+  sideAddExerciseBtn.hidden = editingSide.isBundled;
+  renderSideExercises();
+  renderSideMascotOptions();
+  // Idée de mascotte en texte suggérée par l'IA (dashboard:generate-side) — affichée une seule
+  // fois à l'ouverture juste après une génération, jamais persistée (pas d'image générée).
+  if (aiMascotIdea) {
+    sideMascotAiIdea.textContent = i18n.t("sideEditor.aiMascotIdea", aiMascotIdea);
+    sideMascotAiIdea.hidden = false;
+  } else {
+    sideMascotAiIdea.hidden = true;
+  }
+  sidesListView.hidden = true;
+  sideEditView.hidden = false;
 }
 
-function closePlanEditor() {
-  editingPlan = null;
-  planEditView.hidden = true;
-  plansListView.hidden = false;
-  renderPlansGrid();
+function closeSideEditor() {
+  editingSide = null;
+  sideEditView.hidden = true;
+  sidesListView.hidden = false;
+  renderSidesGrid();
 }
 
-/** Reconstruit les tuiles de mascotte de l'éditeur de pack : toutes les mascottes embarquées
-    (pas filtrées par thème, contrairement au sélecteur des réglages — l'identité d'un pack ne
-    dépend pas du skin choisi), la mascotte custom actuelle si le pack en a une, et une case "+"
+/** Reconstruit les tuiles de mascotte de l'éditeur de side : toutes les mascottes embarquées
+    (pas filtrées par thème, contrairement au sélecteur des réglages — l'identité d'un side ne
+    dépend pas du skin choisi), la mascotte custom actuelle si le side en a une, et une case "+"
     pour en ajouter une (fichier local aujourd'hui ; génération IA envisagée plus tard, voir
-    plan-marketplace-packs.md). Désactivée pour un pack bundled, comme le reste de l'éditeur. */
-function renderPlanMascotOptions() {
-  planMascotOptionsContainer.innerHTML = "";
-  const disabled = editingPlan.isBundled;
-  const activeMascotId = editingPlan.mascot?.id;
+    plan-marketplace-sides.md). Désactivée pour un side bundled, comme le reste de l'éditeur. */
+function renderSideMascotOptions() {
+  sideMascotOptionsContainer.innerHTML = "";
+  const disabled = editingSide.isBundled;
+  const activeMascotId = editingSide.mascot?.id;
 
   Object.keys(sqMascots.MASCOT_IMAGES).forEach((mascotId) => {
     const btn = document.createElement("button");
@@ -735,33 +750,33 @@ function renderPlanMascotOptions() {
 
     btn.append(img, label);
     // Recliquer sur la tuile déjà active l'efface (retombe sur la mascotte globale) — même
-    // convention "toggle" que le bouton Activer/Désactiver d'un pack dans la galerie.
+    // convention "toggle" que le bouton Activer/Désactiver d'un side dans la galerie.
     if (!disabled) {
       btn.addEventListener("click", () =>
-        activeMascotId === mascotId ? clearPlanMascot() : setPlanMascotBundled(mascotId)
+        activeMascotId === mascotId ? clearSideMascot() : setSideMascotBundled(mascotId)
       );
     }
-    planMascotOptionsContainer.appendChild(btn);
+    sideMascotOptionsContainer.appendChild(btn);
   });
 
   // Mascotte custom actuelle (id hors du catalogue embarqué : import avec sa propre image, ou
   // ajoutée ici via "+") — affichée comme tuile active en plus, pour rester visible/repérable.
-  if (editingPlan.mascot && !sqMascots.MASCOT_IMAGES[activeMascotId]) {
+  if (editingSide.mascot && !sqMascots.MASCOT_IMAGES[activeMascotId]) {
     const btn = document.createElement("button");
     btn.className = "mascot-option active";
     btn.disabled = disabled;
 
     const img = document.createElement("img");
-    img.src = `file://${editingPlan.mascot.imagePath}`;
-    img.alt = editingPlan.mascot.label;
+    img.src = `file://${editingSide.mascot.imagePath}`;
+    img.alt = editingSide.mascot.label;
 
     const label = document.createElement("span");
-    label.textContent = i18n.t("planEditor.mascotCustom");
+    label.textContent = i18n.t("sideEditor.mascotCustom");
 
     btn.append(img, label);
     // Recliquer efface (remplacer une custom = repasser par "+") — même convention toggle que les tuiles embarquées.
-    if (!disabled) btn.addEventListener("click", () => clearPlanMascot());
-    planMascotOptionsContainer.appendChild(btn);
+    if (!disabled) btn.addEventListener("click", () => clearSideMascot());
+    sideMascotOptionsContainer.appendChild(btn);
   }
 
   if (!disabled) {
@@ -771,156 +786,156 @@ function renderPlanMascotOptions() {
     plus.className = "mascot-option-plus";
     plus.textContent = "+";
     const label = document.createElement("span");
-    label.textContent = i18n.t("planEditor.mascotAdd");
+    label.textContent = i18n.t("sideEditor.mascotAdd");
     addBtn.append(plus, label);
-    addBtn.addEventListener("click", () => setPlanMascotCustom());
-    planMascotOptionsContainer.appendChild(addBtn);
+    addBtn.addEventListener("click", () => setSideMascotCustom());
+    sideMascotOptionsContainer.appendChild(addBtn);
   }
 }
 
-/** Synchronise le cache local (galerie) avec un plan renvoyé par le main process après une mise à jour de mascotte. */
-function updateCachedPlan(plan) {
-  const idx = plansState.customPlans.findIndex((p) => p.id === plan.id);
-  if (idx !== -1) plansState.customPlans[idx] = plan;
+/** Synchronise le cache local (galerie) avec un side renvoyé par le main process après une mise à jour de mascotte. */
+function updateCachedSide(side) {
+  const idx = sidesState.customSides.findIndex((p) => p.id === side.id);
+  if (idx !== -1) sidesState.customSides[idx] = side;
 }
 
-async function clearPlanMascot() {
-  const { updated, plan } = await window.dashboardAPI.clearPlanMascot(editingPlan.id);
+async function clearSideMascot() {
+  const { updated, side } = await window.dashboardAPI.clearSideMascot(editingSide.id);
   if (!updated) return;
-  editingPlan.mascot = plan.mascot;
-  updateCachedPlan(plan);
-  renderPlanMascotOptions();
+  editingSide.mascot = side.mascot;
+  updateCachedSide(side);
+  renderSideMascotOptions();
 }
 
-async function setPlanMascotBundled(mascotId) {
+async function setSideMascotBundled(mascotId) {
   const label = sqMascots.MASCOT_LABELS[mascotId] ?? mascotId;
-  const { updated, plan } = await window.dashboardAPI.setPlanMascotBundled(editingPlan.id, mascotId, label);
+  const { updated, side } = await window.dashboardAPI.setSideMascotBundled(editingSide.id, mascotId, label);
   if (!updated) return;
-  editingPlan.mascot = plan.mascot;
-  updateCachedPlan(plan);
-  renderPlanMascotOptions();
+  editingSide.mascot = side.mascot;
+  updateCachedSide(side);
+  renderSideMascotOptions();
 }
 
-async function setPlanMascotCustom() {
-  const { updated, error, plan } = await window.dashboardAPI.setPlanMascotCustom(editingPlan.id);
+async function setSideMascotCustom() {
+  const { updated, error, side } = await window.dashboardAPI.setSideMascotCustom(editingSide.id);
   if (error) {
     showToast(error, "warning");
     return;
   }
   if (!updated) return; // dialogue annulé par l'utilisateur
-  editingPlan.mascot = plan.mascot;
-  updateCachedPlan(plan);
-  renderPlanMascotOptions();
-  showToast(i18n.t("planEditor.toast.mascotUpdated"));
+  editingSide.mascot = side.mascot;
+  updateCachedSide(side);
+  renderSideMascotOptions();
+  showToast(i18n.t("sideEditor.toast.mascotUpdated"));
 }
 
-function renderPlanExercises() {
-  planExercisesList.innerHTML = "";
+function renderSideExercises() {
+  sideExercisesList.innerHTML = "";
 
-  editingPlan.exercises.forEach((exercise, index) => {
+  editingSide.exercises.forEach((exercise, index) => {
     const row = document.createElement("div");
-    row.className = "plan-exercise-row";
+    row.className = "side-exercise-row";
 
     const labelInput = document.createElement("input");
     labelInput.type = "text";
-    labelInput.className = "text-input plan-exercise-label";
-    labelInput.placeholder = i18n.t("planEditor.labelPlaceholder");
+    labelInput.className = "text-input side-exercise-label";
+    labelInput.placeholder = i18n.t("sideEditor.labelPlaceholder");
     labelInput.value = exercise.label;
-    labelInput.disabled = editingPlan.isBundled;
+    labelInput.disabled = editingSide.isBundled;
     labelInput.addEventListener("change", () => updateExerciseField(index, "label", labelInput.value));
 
     const categoryInput = document.createElement("input");
     categoryInput.type = "text";
-    categoryInput.className = "text-input plan-exercise-category";
-    categoryInput.placeholder = i18n.t("planEditor.categoryPlaceholder");
+    categoryInput.className = "text-input side-exercise-category";
+    categoryInput.placeholder = i18n.t("sideEditor.categoryPlaceholder");
     categoryInput.setAttribute("list", "exercise-category-options");
     categoryInput.value = exercise.category;
-    categoryInput.disabled = editingPlan.isBundled;
+    categoryInput.disabled = editingSide.isBundled;
     categoryInput.addEventListener("change", () => updateExerciseField(index, "category", categoryInput.value));
 
     const durationInput = document.createElement("input");
     durationInput.type = "number";
     durationInput.min = "5";
     durationInput.step = "5";
-    durationInput.className = "text-input plan-exercise-duration";
+    durationInput.className = "text-input side-exercise-duration";
     durationInput.value = exercise.durationSec;
-    durationInput.disabled = editingPlan.isBundled;
+    durationInput.disabled = editingSide.isBundled;
     durationInput.addEventListener("change", () =>
       updateExerciseField(index, "durationSec", Math.max(5, Number(durationInput.value) || 5))
     );
 
     row.append(labelInput, categoryInput, durationInput);
 
-    if (!editingPlan.isBundled) {
+    if (!editingSide.isBundled) {
       const removeBtn = document.createElement("button");
-      removeBtn.className = "plan-exercise-remove-btn";
+      removeBtn.className = "side-exercise-remove-btn";
       removeBtn.textContent = "✕";
-      removeBtn.title = i18n.t("planEditor.removeExerciseTitle");
+      removeBtn.title = i18n.t("sideEditor.removeExerciseTitle");
       removeBtn.addEventListener("click", () => removeExercise(index));
       row.appendChild(removeBtn);
     }
 
-    planExercisesList.appendChild(row);
+    sideExercisesList.appendChild(row);
   });
 
-  if (editingPlan.exercises.length === 0) {
+  if (editingSide.exercises.length === 0) {
     const empty = document.createElement("p");
-    empty.className = "plans-empty-hint";
-    empty.textContent = i18n.t("planEditor.emptyHint");
-    planExercisesList.appendChild(empty);
+    empty.className = "sides-empty-hint";
+    empty.textContent = i18n.t("sideEditor.emptyHint");
+    sideExercisesList.appendChild(empty);
   }
 }
 
-async function persistEditingPlan() {
-  const updated = await window.dashboardAPI.updatePlan(editingPlan.id, {
-    name: editingPlan.name,
-    exercises: editingPlan.exercises,
+async function persistEditingSide() {
+  const updated = await window.dashboardAPI.updateSide(editingSide.id, {
+    name: editingSide.name,
+    exercises: editingSide.exercises,
   });
-  const idx = plansState.customPlans.findIndex((p) => p.id === updated.id);
-  if (idx !== -1) plansState.customPlans[idx] = updated;
+  const idx = sidesState.customSides.findIndex((p) => p.id === updated.id);
+  if (idx !== -1) sidesState.customSides[idx] = updated;
   showToast("Enregistré");
 }
 
 function updateExerciseField(index, field, value) {
-  editingPlan.exercises[index][field] = value;
-  persistEditingPlan();
+  editingSide.exercises[index][field] = value;
+  persistEditingSide();
 }
 
 function removeExercise(index) {
-  editingPlan.exercises.splice(index, 1);
-  renderPlanExercises();
-  persistEditingPlan();
+  editingSide.exercises.splice(index, 1);
+  renderSideExercises();
+  persistEditingSide();
 }
 
-planAddExerciseBtn.addEventListener("click", () => {
-  editingPlan.exercises.push({ id: crypto.randomUUID(), label: "", durationSec: 30, category: "" });
-  renderPlanExercises();
-  persistEditingPlan();
+sideAddExerciseBtn.addEventListener("click", () => {
+  editingSide.exercises.push({ id: crypto.randomUUID(), label: "", durationSec: 30, category: "" });
+  renderSideExercises();
+  persistEditingSide();
 });
 
-planNameInput.addEventListener("change", () => {
-  editingPlan.name = planNameInput.value.trim() || i18n.t("plans.noNameFallback");
-  planNameInput.value = editingPlan.name;
-  planEditTitle.textContent = editingPlan.name;
-  persistEditingPlan();
+sideNameInput.addEventListener("change", () => {
+  editingSide.name = sideNameInput.value.trim() || i18n.t("sides.noNameFallback");
+  sideNameInput.value = editingSide.name;
+  sideEditTitle.textContent = editingSide.name;
+  persistEditingSide();
 });
 
-newPlanBtn.addEventListener("click", async () => {
-  const created = await window.dashboardAPI.createPlan(i18n.t("plans.defaultNewName"), []);
-  plansState.customPlans.push(created);
-  openPlanEditor(created.id);
+newSideBtn.addEventListener("click", async () => {
+  const created = await window.dashboardAPI.createSide(i18n.t("sides.defaultNewName"), []);
+  sidesState.customSides.push(created);
+  openSideEditor(created.id);
 });
 
-importPlanBtn.addEventListener("click", () => importPlan());
+importSideBtn.addEventListener("click", () => importSide());
 
-planBackBtn.addEventListener("click", () => closePlanEditor());
+sideBackBtn.addEventListener("click", () => closeSideEditor());
 
-async function refreshPlans() {
-  const { bundledPacks, customPlans } = await window.dashboardAPI.getPlans();
-  const packs = [...bundledPacks, ...customPlans];
+async function refreshSides() {
+  const { bundledSides, customSides } = await window.dashboardAPI.getSides();
+  const sides = [...bundledSides, ...customSides];
   const progressEntries = await Promise.all(
-    packs.map(async (p) => [p.id, await window.dashboardAPI.getPackProgress(p.id)])
+    sides.map(async (p) => [p.id, await window.dashboardAPI.getSideProgress(p.id)])
   );
-  plansState = { bundledPacks, customPlans, progress: Object.fromEntries(progressEntries) };
-  renderPlansGrid();
+  sidesState = { bundledSides, customSides, progress: Object.fromEntries(progressEntries) };
+  renderSidesGrid();
 }

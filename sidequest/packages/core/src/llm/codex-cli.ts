@@ -15,7 +15,7 @@ const MAX_BUFFER_BYTES = 2 * 1024 * 1024;
  * candidate text directly (no wrapper-unwrapping) since that convention isn't confirmed here —
  * if `codex exec` turns out to wrap its output too, this needs the same unwrap step
  * `claude-cli.ts` does. **Test against a real `codex` install before relying on this in
- * production** (see the caveat in plan-llm-pack-generation.md's Sprint 5 log).
+ * production** (see the caveat in plan-llm-side-generation.md's Sprint 5 log).
  */
 export async function isCodexCliAvailable(): Promise<boolean> {
   try {

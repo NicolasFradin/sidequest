@@ -3,7 +3,7 @@ import type { LlmProvider } from "./types.js";
 const DEFAULT_MODEL = "claude-sonnet-5";
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-/** Appel direct à l'API Messages d'Anthropic — pas de SDK, `fetch()` suffit (même logique que le choix de sauter zod, voir plan-marketplace-packs.md § 3.1). */
+/** Appel direct à l'API Messages d'Anthropic — pas de SDK, `fetch()` suffit (même logique que le choix de sauter zod, voir plan-marketplace-sides.md § 3.1). */
 export const anthropicApiProvider: LlmProvider = {
   id: "anthropic-api",
   async generate(prompt, opts) {

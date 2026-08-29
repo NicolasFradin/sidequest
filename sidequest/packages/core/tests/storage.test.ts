@@ -184,7 +184,7 @@ describe("Storage", () => {
   });
 });
 
-describe("Storage — plans custom", () => {
+describe("Storage — sides custom", () => {
   let storage: Storage;
 
   beforeEach(() => {
@@ -197,25 +197,25 @@ describe("Storage — plans custom", () => {
 
   const exercises = [{ id: "burpee-10", label: "10 burpees", durationSec: 30, category: "cardio" }];
 
-  it("retourne une liste vide sans plan créé", () => {
-    expect(storage.getPlans()).toEqual([]);
+  it("retourne une liste vide sans side créé", () => {
+    expect(storage.getSides()).toEqual([]);
   });
 
-  it("crée un plan et le relit", () => {
-    const created = storage.createPlan("Mon plan", exercises);
+  it("crée un side et le relit", () => {
+    const created = storage.createSide("Mon side", exercises);
     expect(created.id).toBeTruthy();
-    expect(created.name).toBe("Mon plan");
+    expect(created.name).toBe("Mon side");
     expect(created.exercises).toEqual(exercises);
     expect(created.source).toBe("custom");
     expect(created.mascot).toBeUndefined();
 
-    expect(storage.getPlan(created.id)).toEqual(created);
-    expect(storage.getPlans()).toEqual([created]);
+    expect(storage.getSide(created.id)).toEqual(created);
+    expect(storage.getSides()).toEqual([created]);
   });
 
-  it("crée un plan avec une source, une mascotte et une couleur explicites", () => {
+  it("crée un side avec une source, une mascotte et une couleur explicites", () => {
     const mascot = { id: "custom:foo", label: "Foo", imagePath: "/tmp/foo.png" };
-    const created = storage.createPlan("Pack importé", exercises, {
+    const created = storage.createSide("Side importé", exercises, {
       source: "imported",
       mascot,
       color: "#3ecfd6",
@@ -224,79 +224,79 @@ describe("Storage — plans custom", () => {
     expect(created.source).toBe("imported");
     expect(created.mascot).toEqual(mascot);
     expect(created.color).toBe("#3ecfd6");
-    expect(storage.getPlan(created.id)).toEqual(created);
+    expect(storage.getSide(created.id)).toEqual(created);
   });
 
-  it("retourne undefined pour un plan inconnu", () => {
-    expect(storage.getPlan("inexistant")).toBeUndefined();
+  it("retourne undefined pour un side inconnu", () => {
+    expect(storage.getSide("inexistant")).toBeUndefined();
   });
 
-  it("met à jour le nom et les exercices d'un plan sans écraser le reste", () => {
-    const created = storage.createPlan("Mon plan", exercises);
-    const updated = storage.updatePlan(created.id, { name: "Plan renommé" });
-    expect(updated.name).toBe("Plan renommé");
+  it("met à jour le nom et les exercices d'un side sans écraser le reste", () => {
+    const created = storage.createSide("Mon side", exercises);
+    const updated = storage.updateSide(created.id, { name: "Side renommé" });
+    expect(updated.name).toBe("Side renommé");
     expect(updated.exercises).toEqual(exercises);
 
     const newExercises = [{ id: "squat-20", label: "20 squats", durationSec: 40, category: "jambes" }];
-    const updated2 = storage.updatePlan(created.id, { exercises: newExercises });
-    expect(updated2.name).toBe("Plan renommé");
+    const updated2 = storage.updateSide(created.id, { exercises: newExercises });
+    expect(updated2.name).toBe("Side renommé");
     expect(updated2.exercises).toEqual(newExercises);
   });
 
-  it("assigne une mascotte à un plan, relue correctement", () => {
-    const created = storage.createPlan("Mon plan", exercises);
+  it("assigne une mascotte à un side, relue correctement", () => {
+    const created = storage.createSide("Mon side", exercises);
     const mascot = { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" };
-    const updated = storage.updatePlan(created.id, { mascot });
+    const updated = storage.updateSide(created.id, { mascot });
     expect(updated.mascot).toEqual(mascot);
-    expect(storage.getPlan(created.id)?.mascot).toEqual(mascot);
+    expect(storage.getSide(created.id)?.mascot).toEqual(mascot);
   });
 
-  it("mascot: null efface la mascotte du plan", () => {
-    const created = storage.createPlan("Mon plan", exercises, {
+  it("mascot: null efface la mascotte du side", () => {
+    const created = storage.createSide("Mon side", exercises, {
       mascot: { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" },
     });
-    const updated = storage.updatePlan(created.id, { mascot: null });
+    const updated = storage.updateSide(created.id, { mascot: null });
     expect(updated.mascot).toBeUndefined();
-    expect(storage.getPlan(created.id)?.mascot).toBeUndefined();
+    expect(storage.getSide(created.id)?.mascot).toBeUndefined();
   });
 
   it("ne pas passer 'mascot' dans le partial laisse la mascotte existante inchangée", () => {
     const mascot = { id: "custom:abc", label: "Ma mascotte", imagePath: "/tmp/abc.png" };
-    const created = storage.createPlan("Mon plan", exercises, { mascot });
-    const updated = storage.updatePlan(created.id, { name: "Renommé" });
+    const created = storage.createSide("Mon side", exercises, { mascot });
+    const updated = storage.updateSide(created.id, { name: "Renommé" });
     expect(updated.mascot).toEqual(mascot);
   });
 
-  it("lève une erreur en mettant à jour un plan inconnu", () => {
-    expect(() => storage.updatePlan("inexistant", { name: "x" })).toThrow();
+  it("lève une erreur en mettant à jour un side inconnu", () => {
+    expect(() => storage.updateSide("inexistant", { name: "x" })).toThrow();
   });
 
-  it("supprime un plan", () => {
-    const created = storage.createPlan("Mon plan", exercises);
-    storage.deletePlan(created.id);
-    expect(storage.getPlan(created.id)).toBeUndefined();
-    expect(storage.getPlans()).toEqual([]);
+  it("supprime un side", () => {
+    const created = storage.createSide("Mon side", exercises);
+    storage.deleteSide(created.id);
+    expect(storage.getSide(created.id)).toBeUndefined();
+    expect(storage.getSides()).toEqual([]);
   });
 
-  it("supprimer le plan actif remet activeProgram au plan par défaut", () => {
-    const created = storage.createPlan("Mon plan", exercises);
+  it("supprimer le side actif remet activeProgram au side par défaut", () => {
+    const created = storage.createSide("Mon side", exercises);
     storage.updateSettings({ activeProgram: created.id });
     expect(storage.getSettings().activeProgram).toBe(created.id);
 
-    storage.deletePlan(created.id);
+    storage.deleteSide(created.id);
     expect(storage.getSettings().activeProgram).toBe("sport-basic");
   });
 
-  it("supprimer un plan non actif ne touche pas activeProgram", () => {
-    const created = storage.createPlan("Mon plan", exercises);
+  it("supprimer un side non actif ne touche pas activeProgram", () => {
+    const created = storage.createSide("Mon side", exercises);
     storage.updateSettings({ activeProgram: "sport-basic" });
 
-    storage.deletePlan(created.id);
+    storage.deleteSide(created.id);
     expect(storage.getSettings().activeProgram).toBe("sport-basic");
   });
 });
 
-describe("Storage — progression XP des packs", () => {
+describe("Storage — progression XP des sides", () => {
   let storage: Storage;
 
   beforeEach(() => {
@@ -307,31 +307,31 @@ describe("Storage — progression XP des packs", () => {
     storage.close();
   });
 
-  it("retourne 0 xp / niveau 1 pour un pack sans progression", () => {
-    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 0, level: 1 });
+  it("retourne 0 xp / niveau 1 pour un side sans progression", () => {
+    expect(storage.getSideProgress("sport-basic")).toEqual({ xp: 0, level: 1 });
   });
 
   it("addXp cumule l'xp et recalcule le niveau (palier tous les 100 xp)", () => {
     expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 40, level: 1 });
     expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 80, level: 1 });
     expect(storage.addXp("sport-basic", 40)).toEqual({ xp: 120, level: 2 });
-    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 120, level: 2 });
+    expect(storage.getSideProgress("sport-basic")).toEqual({ xp: 120, level: 2 });
   });
 
-  it("suit la progression de chaque pack indépendamment", () => {
+  it("suit la progression de chaque side indépendamment", () => {
     storage.addXp("sport-basic", 50);
     storage.addXp("sidecat", 10);
-    expect(storage.getPackProgress("sport-basic")).toEqual({ xp: 50, level: 1 });
-    expect(storage.getPackProgress("sidecat")).toEqual({ xp: 10, level: 1 });
+    expect(storage.getSideProgress("sport-basic")).toEqual({ xp: 50, level: 1 });
+    expect(storage.getSideProgress("sidecat")).toEqual({ xp: 10, level: 1 });
   });
 
-  it("supprimer un plan efface sa progression", () => {
+  it("supprimer un side efface sa progression", () => {
     const exercises = [{ id: "burpee-10", label: "10 burpees", durationSec: 30, category: "cardio" }];
-    const created = storage.createPlan("Mon plan", exercises);
+    const created = storage.createSide("Mon side", exercises);
     storage.addXp(created.id, 50);
-    expect(storage.getPackProgress(created.id)).toEqual({ xp: 50, level: 1 });
+    expect(storage.getSideProgress(created.id)).toEqual({ xp: 50, level: 1 });
 
-    storage.deletePlan(created.id);
-    expect(storage.getPackProgress(created.id)).toEqual({ xp: 0, level: 1 });
+    storage.deleteSide(created.id);
+    expect(storage.getSideProgress(created.id)).toEqual({ xp: 0, level: 1 });
   });
 });

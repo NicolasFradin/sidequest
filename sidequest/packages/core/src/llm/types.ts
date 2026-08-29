@@ -11,8 +11,8 @@ export interface LlmGenerateOptions {
 
 /**
  * Un fournisseur LLM. `generate()` retourne du texte brut (la meilleure tentative de JSON du
- * modèle), jamais un `Pack` déjà validé — le parsing/sanitizing est le travail de
- * `parsePackJson` (packages/core/src/packs.ts), un seul chemin de validation pour tous les
+ * modèle), jamais un `Side` déjà validé — le parsing/sanitizing est le travail de
+ * `parseSideJson` (packages/core/src/sides.ts), un seul chemin de validation pour tous les
  * fournisseurs et pour l'import manuel. Lève une erreur (message court, stable, jamais affiché
  * tel quel — l'app le traduit) plutôt que de retourner une valeur d'échec.
  */
