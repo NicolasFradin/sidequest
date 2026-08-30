@@ -45,6 +45,18 @@ window.mascotAPI.onLanguageChanged((language) => {
   i18n.applyStaticTranslations();
 });
 
-btnDone.addEventListener("click", () => window.mascotAPI.markDone());
-btnSkip.addEventListener("click", () => window.mascotAPI.markSkipped());
-btnSettings.addEventListener("click", () => window.mascotAPI.openDashboard());
+// stopPropagation : les bulles sont désormais empilées dans #icon-stack juste sous la bulle
+// réglages — on coupe la propagation pour être certain qu'un clic sur "fait"/"passer" ne puisse
+// jamais aussi déclencher un listener posé plus haut dans l'arbre (ex. sur .card ou .icon-stack).
+btnDone.addEventListener("click", (event) => {
+  event.stopPropagation();
+  window.mascotAPI.markDone();
+});
+btnSkip.addEventListener("click", (event) => {
+  event.stopPropagation();
+  window.mascotAPI.markSkipped();
+});
+btnSettings.addEventListener("click", (event) => {
+  event.stopPropagation();
+  window.mascotAPI.openDashboard();
+});

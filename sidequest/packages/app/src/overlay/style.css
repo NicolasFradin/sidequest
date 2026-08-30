@@ -45,7 +45,7 @@ html, body {
   height: 100%;
   background: transparent;
   border: none;
-  border-radius: 20px;
+  border-radius: 0;
   box-shadow: none;
   display: flex;
   flex-direction: column;
@@ -73,7 +73,7 @@ html, body {
 .icon-bubble {
   width: 26px;
   height: 26px;
-  border-radius: 30%;
+  border-radius: 0;
   border: 1px solid var(--settings-border);
   background: var(--settings-bg);
   color: var(--text-secondary);
