@@ -9,15 +9,31 @@ const btnDone = document.getElementById("btn-done");
 const btnSkip = document.getElementById("btn-skip");
 const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
+const miniTimerFill = document.getElementById("mini-timer-fill");
 
 let currentMascotId = null;
 let currentMascotImage = null;
+
+/**
+ * Sablier qui se vide : on remet la bulle à 100% sans transition, on force un reflow (sinon le
+ * navigateur fusionne les deux changements de hauteur et saute direct à 0%, pas d'animation
+ * visible), puis on relance une transition dont la durée colle à exercise.durationSec.
+ */
+function startMiniTimer(durationSec) {
+  const seconds = Number(durationSec) > 0 ? Number(durationSec) : 30;
+  miniTimerFill.style.transition = "none";
+  miniTimerFill.style.height = "100%";
+  void miniTimerFill.offsetHeight;
+  miniTimerFill.style.transition = `height ${seconds}s linear`;
+  miniTimerFill.style.height = "0%";
+}
 
 window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, theme, blocking, language }) => {
   currentMascotId = mascot;
   currentMascotImage = mascotImage ?? null;
   mascotImg.src = sqMascots.resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
   exerciseLabel.textContent = exercise.label;
+  startMiniTimer(exercise.durationSec);
   document.documentElement.dataset.theme = theme ?? "dark";
   document.documentElement.lang = language ?? "fr";
   i18n.setLanguage(language ?? "fr");

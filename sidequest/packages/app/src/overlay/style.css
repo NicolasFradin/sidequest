@@ -95,16 +95,22 @@ html, body {
   display: none;
 }
 
+/* Sablier qui se vide : #mini-timer-fill part à 100% de hauteur (plein) puis descend à 0% via une
+   transition CSS dont la durée est réglée en JS sur exercise.durationSec (voir renderer.js) —
+   pas de setInterval, le navigateur anime le drainage lui-même. */
 .mini-timer {
-  border: 2px solid var(--settings-border);
-  border-top-color: var(--accent-teal);
-  animation: mini-timer-spin 1s linear infinite;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
 }
 
-@keyframes mini-timer-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.mini-timer-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  background: var(--side-accent, var(--accent-teal));
 }
 
 .blocking-badge {

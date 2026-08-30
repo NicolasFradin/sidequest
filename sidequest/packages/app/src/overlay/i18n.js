@@ -5,7 +5,7 @@ const TRANSLATIONS = {
     "overlay.done": "C'est fait 💪",
     "overlay.skip": "Passer",
     "overlay.settings.title": "Réglages",
-    "overlay.timer.title": "Temps écoulé",
+    "overlay.timer.title": "Temps restant",
     "overlay.blocking.title": "Séance obligatoire",
   },
   en: {
@@ -13,7 +13,7 @@ const TRANSLATIONS = {
     "overlay.done": "Done 💪",
     "overlay.skip": "Skip",
     "overlay.settings.title": "Settings",
-    "overlay.timer.title": "Elapsed time",
+    "overlay.timer.title": "Time remaining",
     "overlay.blocking.title": "Mandatory session",
   },
 };
