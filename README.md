@@ -27,6 +27,16 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 
 SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own side from scratch, import a JSON file, or generate one with AI right from the sides gallery — see below.
 
+## Mascots
+
+![SideQuest mascots](sidequest/packages/app/assets/mascots-banner.gif)
+
+The mascot is the face of a quest: it's what shows up in the popup every time one fires. Each side can carry its own — SideGym's drill sergeant, SideCat's cat — or leave it unset and fall back to a default: a bundled side (SideGym...) falls back to whichever global mascot matches your current visual skin, while a custom/imported/generated side falls back to the default SideQuest mascot regardless of skin, so it never looks like it's wearing someone else's costume.
+
+**Using a custom mascot:** open a side in the dashboard's editor and pick one from the mascot row — any of the built-in mascots (including the plain SideQuest one), or your own. Hit **+ Add** to upload a PNG/JPG/WebP (up to 3 MB, 2048×2048px) through the native file picker; it's copied locally and tied to that side from then on. Clicking the mascot that's already active clears it back to the default. This picker is only available on your own sides — a bundled one (SideGym...) keeps its mascot locked.
+
+Generating a side with AI has an optional mascot field too: describe the look you're picturing and the AI hands back a one-line text idea to guide you — no image is generated (no provider used here can produce one), so you still pick or upload the actual picture yourself afterward.
+
 ## How it works
 
 - A **timer** fires every N minutes (configurable) and shows a mascot with a random quest from your active side.
