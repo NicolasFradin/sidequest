@@ -706,7 +706,6 @@ html, body {
   height: 32px;
   object-fit: contain;
   border-radius: 0;
-  background: var(--bg-elevated);
   flex-shrink: 0;
 }
 
