@@ -169,7 +169,7 @@ La mascotte est optionnelle.`,
     "history.share.linkedin": "🔗 LinkedIn",
     "history.share.github": "🐙 GitHub",
     "history.share.text": (streak, week, total) =>
-      `🔥 ${streak} jour(s) de streak sur SideQuest, ${week} séance(s) cette semaine et ${total} au total ! 💪 #SideQuest`,
+      `🔥 ${streak} jour(s) de streak sur SideQuest, ${week} séance(s) cette semaine et ${total} au total ! 💪 https://github.com/NicolasFradin/sidequest #SideQuestApp`,
     "history.share.toast": "Texte copié dans le presse-papiers, la page de partage s'ouvre.",
 
     "status.done": "Fait",
@@ -342,7 +342,7 @@ The mascot is optional.`,
     "history.share.linkedin": "🔗 LinkedIn",
     "history.share.github": "🐙 GitHub",
     "history.share.text": (streak, week, total) =>
-      `🔥 ${streak}-day streak on SideQuest, ${week} session(s) this week, ${total} total! 💪 #SideQuest`,
+      `🔥 ${streak}-day streak on SideQuest, ${week} session(s) this week, ${total} total! 💪 https://github.com/NicolasFradin/sidequest #SideQuestApp`,
     "history.share.toast": "Text copied to clipboard, opening the share page.",
 
     "status.done": "Done",
