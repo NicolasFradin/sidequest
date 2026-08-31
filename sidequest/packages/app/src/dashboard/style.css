@@ -762,8 +762,8 @@ html, body {
 }
 
 .side-card-milestone-badge {
-  width: 44px;
-  height: 44px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
 }
 

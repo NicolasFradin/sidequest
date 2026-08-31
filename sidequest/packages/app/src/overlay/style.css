@@ -65,7 +65,10 @@ html, body {
   right: 10px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* flex-end plutôt que center : le badge du prochain palier est deux fois plus large que les
+     autres bulles (52px vs 26px) — on les garde alignées sur le même bord droit plutôt que de
+     tout recentrer sur la largeur du plus gros élément. */
+  align-items: flex-end;
   gap: 8px;
   -webkit-app-region: no-drag;
 }
@@ -117,9 +120,13 @@ html, body {
    au dernier niveau illustré une fois le side maxé, et la bulle entière se masque dans ce cas (rien
    de plus à viser) — même traitement que les autres bulles conditionnelles de la pile. */
 .next-badge {
+  /* Deux fois la taille des autres bulles de la pile (26px) : le badge doit rester lisible,
+     contrairement aux icônes/emoji des bulles voisines. */
+  width: 52px;
+  height: 52px;
   position: relative;
   overflow: hidden;
-  padding: 2px;
+  padding: 3px;
 }
 
 .next-badge-img {
@@ -130,10 +137,10 @@ html, body {
 
 .next-badge-progress {
   position: absolute;
-  left: 2px;
-  right: 2px;
-  bottom: 2px;
-  height: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  height: 5px;
   background: rgba(0, 0, 0, 0.4);
 }
 
