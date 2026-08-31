@@ -253,7 +253,29 @@ function applyAutolaunch(enabled) {
 function loadActiveProgram(settings) {
   const side = storage.getSide(settings.activeProgram) ?? loadSide(settings.activeProgram);
   const resolved = side.exercises.length > 0 ? side : loadSide("sport-basic");
-  return translateSide(resolved, settings.language);
+  return resolveBundledMascotPaths(translateSide(resolved, settings.language));
+}
+
+/**
+ * Résout `mascot.imagePath` (et `mascot.stages[].imagePath`) d'un side *bundled* vers un chemin
+ * absolu sous `ASSETS_DIR/mascots/` — `packages/core` stocke volontairement un simple nom de
+ * fichier (`grandma.png`), n'ayant aucune connaissance de `packages/app/assets/` (voir
+ * plan-community-sides.md § "Mascot image, if any"). No-op sur un side custom/importé/généré,
+ * dont `mascot.imagePath` est déjà un chemin absolu (décodé/copié sous `userData/` à l'import).
+ */
+function resolveBundledMascotPaths(side) {
+  if (side.source !== "bundled" || !side.mascot) return side;
+  const toAbsolute = (imagePath) => path.join(ASSETS_DIR, "mascots", imagePath);
+  return {
+    ...side,
+    mascot: {
+      ...side.mascot,
+      imagePath: toAbsolute(side.mascot.imagePath),
+      ...(side.mascot.stages
+        ? { stages: side.mascot.stages.map((s) => ({ ...s, imagePath: toAbsolute(s.imagePath) })) }
+        : {}),
+    },
+  };
 }
 
 /**
@@ -716,7 +738,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-sides", () => {
       const lang = storage.getSettings().language;
       return {
-        bundledSides: listBundledSides().map((p) => translateSide(p, lang)),
+        bundledSides: listBundledSides().map((p) => resolveBundledMascotPaths(translateSide(p, lang))),
         customSides: storage.getSides(),
       };
     });
@@ -777,7 +799,9 @@ if (!gotSingleInstanceLock) {
       if (!rawSide) return { exported: false };
       // Exporte dans la langue actuellement affichée (no-op sur un side custom/importé/généré,
       // qui n'a jamais de champs `*En`) — cohérent avec ce que l'utilisateur voit à l'écran.
-      const side = translateSide(rawSide, lang);
+      // resolveBundledMascotPaths() : mascotToDataUri() lit `mascot.imagePath` sur disque, qui
+      // doit donc déjà être un chemin absolu pour un side bundled (nom de fichier nu sinon).
+      const side = resolveBundledMascotPaths(translateSide(rawSide, lang));
 
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
         title: t(lang, "exportDialogTitle"),

@@ -2,6 +2,7 @@
   "id": "sport-basic",
   "name": "SideGym - Programme de base",
   "nameEn": "SideGym - Basic Program",
+  "mascot": { "id": "arnold-80s", "label": "Arnold 80s", "imagePath": "arnold-80s.png" },
   "exercises": [
     { "id": "squat-10", "label": "10 squats", "labelEn": "10 squats", "durationSec": 30, "category": "jambes", "categoryEn": "legs" },
     { "id": "pushup-10", "label": "10 pompes", "labelEn": "10 push-ups", "durationSec": 30, "category": "bras", "categoryEn": "arms" },

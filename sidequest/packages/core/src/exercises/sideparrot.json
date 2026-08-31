@@ -1,0 +1,17 @@
+{
+  "id": "sideparrot",
+  "name": "SideParrot - Apprentissage des langues",
+  "nameEn": "SideParrot - Language Learning",
+  "color": "#3E9C6B",
+  "mascot": { "id": "parrot", "label": "Parrot", "imagePath": "parrot.png" },
+  "exercises": [
+    { "id": "parrot-word", "label": "Apprends un nouveau mot", "labelEn": "Learn a new word", "durationSec": 20, "category": "vocabulaire", "categoryEn": "vocabulary" },
+    { "id": "parrot-repeat", "label": "Répète une phrase à voix haute", "labelEn": "Repeat a phrase out loud", "durationSec": 20, "category": "oral", "categoryEn": "speaking" },
+    { "id": "parrot-flashcard", "label": "Retourne une flashcard", "labelEn": "Flip a flashcard", "durationSec": 15, "category": "vocabulaire", "categoryEn": "vocabulary" },
+    { "id": "parrot-translate", "label": "Traduis une phrase simple", "labelEn": "Translate a simple sentence", "durationSec": 30, "category": "grammaire", "categoryEn": "grammar" },
+    { "id": "parrot-listen", "label": "Écoute un court extrait audio", "labelEn": "Listen to a short audio clip", "durationSec": 30, "category": "écoute", "categoryEn": "listening" },
+    { "id": "parrot-song", "label": "Chantonne un refrain dans la langue", "labelEn": "Hum a chorus in the language", "durationSec": 15, "category": "culture", "categoryEn": "culture" },
+    { "id": "parrot-verb", "label": "Conjugue un verbe à voix haute", "labelEn": "Conjugate a verb out loud", "durationSec": 20, "category": "grammaire", "categoryEn": "grammar" },
+    { "id": "parrot-greeting", "label": "Dis bonjour dans la langue du jour", "labelEn": "Say hello in today's language", "durationSec": 10, "category": "vocabulaire", "categoryEn": "vocabulary" }
+  ]
+}
