@@ -61,7 +61,7 @@ describe("parseSideJson", () => {
     expect(result.exercises[0].label).toBe("Squats");
   });
 
-  it("retombe sur un id générés et une durée de 30s si absents/invalides", () => {
+  it("retombe sur un id généré et omet durationSec si absent/invalide (optionnel, voir Exercise.durationSec)", () => {
     const result = parseSideJson({
       name: "Side",
       exercises: [{ label: "X" }, { id: "", label: "Y", durationSec: -5 }],
@@ -69,9 +69,9 @@ describe("parseSideJson", () => {
     expect("error" in result).toBe(false);
     if ("error" in result) return;
     expect(result.exercises[0].id).toBeTruthy();
-    expect(result.exercises[0].durationSec).toBe(30);
+    expect(result.exercises[0].durationSec).toBeUndefined();
     expect(result.exercises[1].id).toBeTruthy();
-    expect(result.exercises[1].durationSec).toBe(30);
+    expect(result.exercises[1].durationSec).toBeUndefined();
   });
 
   it("rejette un nom manquant ou vide", () => {

@@ -22,7 +22,7 @@ describe("Storage", () => {
     const settings = storage.getSettings();
     expect(settings.intervalMinutes).toBe(30);
     expect(settings.mode).toBe("notify");
-    expect(settings.activeMascot).toBe("ronnie-coleman");
+    expect(settings.activeMascot).toBe("ronnie-80s");
     expect(settings.theme).toBe("dark");
     expect(settings.triggerSource).toBe("both");
     expect(settings.hookEveryN).toBe(1);
@@ -59,7 +59,7 @@ describe("Storage", () => {
     const settings = storage.getSettings();
     expect(settings.intervalMinutes).toBe(45);
     expect(settings.mode).toBe("gate");
-    expect(settings.activeMascot).toBe("ronnie-coleman"); // inchangé
+    expect(settings.activeMascot).toBe("ronnie-80s"); // inchangé
   });
 
   it("enregistre et relit une session", () => {
@@ -69,7 +69,7 @@ describe("Storage", () => {
       status: "done",
       triggerType: "timer",
       verified: false,
-      mascot: "ronnie-coleman",
+      mascot: "ronnie-80s",
       mode: "notify",
     });
 
@@ -78,7 +78,7 @@ describe("Storage", () => {
     expect(sessions[0].exerciseId).toBe("squat-10");
     expect(sessions[0].status).toBe("done");
     expect(sessions[0].verified).toBe(false);
-    expect(sessions[0].mascot).toBe("ronnie-coleman");
+    expect(sessions[0].mascot).toBe("ronnie-80s");
   });
 
   it("calcule un streak de 1 pour une session faite aujourd'hui", () => {
@@ -88,7 +88,7 @@ describe("Storage", () => {
       status: "done",
       triggerType: "timer",
       verified: false,
-      mascot: "ronnie-coleman",
+      mascot: "ronnie-80s",
       mode: "notify",
     });
 
@@ -110,7 +110,7 @@ describe("Storage", () => {
       status: "skipped",
       triggerType: "timer",
       verified: false,
-      mascot: "ronnie-coleman",
+      mascot: "ronnie-80s",
       mode: "notify",
     });
     storage.recordSession({
@@ -119,7 +119,7 @@ describe("Storage", () => {
       status: "skipped",
       triggerType: "timer",
       verified: false,
-      mascot: "ronnie-coleman",
+      mascot: "ronnie-80s",
       mode: "notify",
     });
 
@@ -134,7 +134,7 @@ describe("Storage", () => {
         status,
         triggerType: "timer",
         verified: false,
-        mascot: "ronnie-coleman",
+        mascot: "ronnie-80s",
         mode: "notify",
       });
 
@@ -158,7 +158,7 @@ describe("Storage", () => {
         status,
         triggerType: "timer",
         verified: false,
-        mascot: "ronnie-coleman",
+        mascot: "ronnie-80s",
         mode: "notify",
       });
 
@@ -176,7 +176,7 @@ describe("Storage", () => {
       status: "skipped",
       triggerType: "timer",
       verified: false,
-      mascot: "ronnie-coleman",
+      mascot: "ronnie-80s",
       mode: "notify",
     });
 

@@ -6,7 +6,7 @@
  */
 const MASCOT_LABELS = {
   sidequest: "SideQuest",
-  "ronnie-coleman": "Ronnie Coleman",
+  "ronnie-80s": "Ronnie",
   "miami-80s": "Miami 80s",
   "arnold-80s": "Arnold 80s",
   sergeant: "Sergent",
@@ -15,7 +15,7 @@ const MASCOT_LABELS = {
 };
 const MASCOT_IMAGES = {
   sidequest: "../../assets/mascots/sidequest.png",
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
+  "ronnie-80s": "../../assets/mascots/ronnie-80s.png",
   "miami-80s": "../../assets/mascots/miami-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
@@ -27,7 +27,7 @@ const MASCOT_IMAGES = {
  * pour ce thème depuis le retrait de Goku (contenu sous licence, incompatible avec un projet open
  * source). */
 const MASCOTS_BY_THEME = {
-  "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
+  "miami-80s": ["ronnie-80s", "miami-80s", "arnold-80s"],
   "military-camo": ["sergeant"],
   manga: ["sidequest"],
   "roman-empire": ["centurion"],
@@ -58,7 +58,7 @@ const DEFAULT_SIDE_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
 function resolveMascotImage(mascotId, theme, overrideImageUrl) {
   if (overrideImageUrl) return overrideImageUrl;
   const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
+  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-80s"];
 }
 
 /**
