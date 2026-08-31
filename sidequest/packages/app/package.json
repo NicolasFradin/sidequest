@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Electron app: tray + mascot overlay",
-  "author": "NicolasFradin",
+  "author": {
+    "name": "NicolasFradin",
+    "email": "NicolasFradin@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/NicolasFradin/sidequest",
   "type": "module",
   "main": "src/main/index.js",
   "scripts": {
