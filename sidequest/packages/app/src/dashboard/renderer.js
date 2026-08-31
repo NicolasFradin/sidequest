@@ -436,7 +436,7 @@ function renderHistoryTable(sessions, exerciseLabels) {
     const mascotWrap = document.createElement("span");
     mascotWrap.className = "history-mascot";
     const mascotImg = document.createElement("img");
-    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["ronnie-80s"];
+    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["sidequest"];
     mascotImg.alt = "";
     const mascotLabel = document.createElement("span");
     mascotLabel.textContent = sqMascots.MASCOT_LABELS[session.mascot] ?? session.mascot;
@@ -548,7 +548,7 @@ function sideCardMascotImage(side) {
     : side.source !== "bundled"
       ? sqMascots.DEFAULT_SIDE_MASCOT_IMAGE
       : null;
-  const mascotId = side.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-80s";
+  const mascotId = side.mascot?.id ?? currentSettings?.activeMascot ?? "sidequest";
   return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
 

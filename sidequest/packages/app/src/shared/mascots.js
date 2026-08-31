@@ -12,6 +12,12 @@ const MASCOT_LABELS = {
   sergeant: "Sergent",
   "sergeant-desert": "Sergent (désert)",
   centurion: "Centurion",
+  // Mascottes des futurs sides (SideMamie, SideParrot, SideYoga, SideCodingGame) — pas encore
+  // rattachées à un side.mascot dédié, juste disponibles dans le catalogue en attendant.
+  grandma: "Mamie",
+  parrot: "Parrot",
+  "yoga-girl": "Yoga",
+  laptop: "Laptop",
 };
 const MASCOT_IMAGES = {
   sidequest: "../../assets/mascots/sidequest.png",
@@ -21,6 +27,10 @@ const MASCOT_IMAGES = {
   sergeant: "../../assets/mascots/sergeant.png",
   "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
   centurion: "../../assets/mascots/centurion.png",
+  grandma: "../../assets/mascots/grandma.png",
+  parrot: "../../assets/mascots/parrot.png",
+  "yoga-girl": "../../assets/mascots/yoga-girl.png",
+  laptop: "../../assets/mascots/laptop.png",
 };
 /** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3.
  * "manga" (ex-"dragonball") retombe sur la mascotte SideQuest par défaut — pas de mascotte dédiée
@@ -58,7 +68,7 @@ const DEFAULT_SIDE_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
 function resolveMascotImage(mascotId, theme, overrideImageUrl) {
   if (overrideImageUrl) return overrideImageUrl;
   const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-80s"];
+  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["sidequest"];
 }
 
 /**

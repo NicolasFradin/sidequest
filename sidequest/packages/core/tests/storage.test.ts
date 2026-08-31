@@ -22,7 +22,7 @@ describe("Storage", () => {
     const settings = storage.getSettings();
     expect(settings.intervalMinutes).toBe(30);
     expect(settings.mode).toBe("notify");
-    expect(settings.activeMascot).toBe("ronnie-80s");
+    expect(settings.activeMascot).toBe("sidequest");
     expect(settings.theme).toBe("dark");
     expect(settings.triggerSource).toBe("both");
     expect(settings.hookEveryN).toBe(1);
@@ -59,7 +59,7 @@ describe("Storage", () => {
     const settings = storage.getSettings();
     expect(settings.intervalMinutes).toBe(45);
     expect(settings.mode).toBe("gate");
-    expect(settings.activeMascot).toBe("ronnie-80s"); // inchangé
+    expect(settings.activeMascot).toBe("sidequest"); // inchangé
   });
 
   it("enregistre et relit une session", () => {

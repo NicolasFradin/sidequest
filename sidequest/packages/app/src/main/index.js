@@ -623,7 +623,7 @@ if (!gotSingleInstanceLock) {
       // runtime plus fragile qui finit par disparaître. En dev, l'icône générique Electron
       // est remplacée par la mascotte (best-effort, peut être capricieux selon le cache
       // d'icônes du Dock macOS — sans impact sur l'app packagée, ce qui compte vraiment).
-      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "ronnie-80s.png"));
+      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "sidequest.png"));
     }
 
     // Premier lancement : le dashboard s'ouvre automatiquement (onboarding, cf. Sprint 3.5).
