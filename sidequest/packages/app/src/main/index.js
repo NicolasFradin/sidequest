@@ -733,6 +733,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-streak", () => storage.getCurrentStreak());
     ipcMain.handle("dashboard:get-exercises", () => loadActiveProgram(storage.getSettings()).exercises);
     ipcMain.handle("dashboard:get-debt", () => storage.getDebt());
+    ipcMain.handle("dashboard:clear-history", () => storage.clearHistory());
     ipcMain.on("dashboard:trigger-exercise", () => scheduler.triggerNow());
 
     ipcMain.handle("dashboard:get-sides", () => {

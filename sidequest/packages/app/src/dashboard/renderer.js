@@ -483,6 +483,17 @@ async function refreshHistory() {
 const refreshHistoryBtn = document.getElementById("refresh-history");
 refreshHistoryBtn.addEventListener("click", () => refreshHistory());
 
+const clearHistoryBtn = document.getElementById("clear-history");
+clearHistoryBtn.addEventListener("click", async () => {
+  if (!confirm(i18n.t("history.clear.confirm"))) return;
+  await window.dashboardAPI.clearHistory();
+  await refreshHistory();
+  // L'XP/niveau (et donc les badges de palier, dérivés du niveau) vivent dans la galerie de
+  // sides, pas dans l'onglet Historique — on la resynchronise aussi si elle a déjà été chargée.
+  if (sidesState.bundledSides.length > 0 || sidesState.customSides.length > 0) await refreshSides();
+  showToast(i18n.t("history.clear.toast"));
+});
+
 refreshHistory();
 
 // --- Partage sur les réseaux sociaux ---

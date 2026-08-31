@@ -450,6 +450,16 @@ export class Storage {
     return row ?? { xp: 0, level: 1 };
   }
 
+  /**
+   * Efface l'historique de séances et remet à zéro l'XP/niveau de tous les sides (donc les
+   * badges de palier, purement dérivés du niveau — voir sqMilestones.getBadgesForLevel). Ne
+   * touche ni aux réglages ni aux sides eux-mêmes (bundled/custom).
+   */
+  clearHistory(): void {
+    this.db.exec("DELETE FROM sessions");
+    this.db.exec("DELETE FROM side_progress");
+  }
+
   close(): void {
     this.db.close();
   }
