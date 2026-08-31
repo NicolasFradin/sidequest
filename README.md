@@ -19,7 +19,7 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 |---|---|---|
 | 🏋️ **SideGym** — fitness | ships today | **You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm. |
 | 🐱 **SideCat** — look after your cat | ships today | **Your cat exists even when you're coding.** A pet, a bowl, 30 seconds. It grows with your streak, not your guilt. |
-| 🐣 **SideTama** — grow a tamagotchi | ships today | **Your tamagotchi doesn't judge your commits, it grows with them.** 30 seconds, one more level. |
+| 🐣 **SidePet** — grow a pet | ships today | **Your pet doesn't judge your commits, it grows with them.** 30 seconds, one more level. |
 | 🦜 **SideParrot** — language learning | ships today | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
 | 🧘 **SideYoga** — relaxation | ships today | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
 | 🎮 **SideCodingGame** — coding practice | ships today | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
@@ -31,7 +31,7 @@ All 7 bundled sides ship in the app today. Build your own from scratch, import a
 
 ![SideQuest mascots](sidequest/packages/app/assets/mascots-banner.gif)
 
-The mascot is the face of a quest: it's what shows up in the popup every time one fires. Each side can carry its own — SideGym's Arnold, SideGrandma's grandma, SideParrot's parrot — or leave it unset and fall back to a default: SideCat and SideTama have none of their own yet, so they fall back to whichever global mascot matches your current visual skin, while a custom/imported/generated side falls back to the default SideQuest mascot regardless of skin, so it never looks like it's wearing someone else's costume.
+The mascot is the face of a quest: it's what shows up in the popup every time one fires. Each side can carry its own — SideGym's Arnold, SideGrandma's grandma, SideParrot's parrot — or leave it unset and fall back to a default: SideCat and SidePet have none of their own yet, so they fall back to whichever global mascot matches your current visual skin, while a custom/imported/generated side falls back to the default SideQuest mascot regardless of skin, so it never looks like it's wearing someone else's costume.
 
 **Using a custom mascot:** open a side in the dashboard's editor and pick one from the mascot row — any of the built-in mascots (including the plain SideQuest one), or your own. Hit **+ Add** to upload a PNG/JPG/WebP (up to 3 MB, 2048×2048px) through the native file picker; it's copied locally and tied to that side from then on. Clicking the mascot that's already active clears it back to the default. This picker is only available on your own sides — a bundled one (SideGym...) keeps its mascot locked.
 
@@ -108,13 +108,28 @@ A quest pops up automatically every 30 minutes by default (configurable in the d
 
 ## Build from source / contribute
 
-The app's code lives in [`sidequest/`](sidequest/) — see [`sidequest/README.md`](sidequest/README.md) for dev setup, running tests, and packaging the app yourself.
+The app's code lives in [`sidequest/`](sidequest/) — see [`sidequest/README.md`](sidequest/README.md) for the full dev setup, running tests, and packaging the app yourself.
 
 ```
 sidequest/
 ├── packages/core/   # pure business logic (scheduler, SQLite storage, quest sides) — no Electron dependency
 └── packages/app/    # Electron app: tray, mascot overlay, dashboard
 ```
+
+### Quick start
+
+```bash
+cd sidequest
+corepack enable
+pnpm install
+pnpm approve-builds --all   # allow native compilation of better-sqlite3 and Electron's download
+pnpm build                  # compile core — required before running the app
+
+cd packages/app
+pnpm start                  # launch the Electron app (tray + mascot overlay)
+```
+
+An icon appears in the menu bar/tray — click it to open the dashboard or trigger a quest immediately.
 
 Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan, [`docs/plan-marketplace-sides.md`](docs/plan-marketplace-sides.md) for the sides gallery/import/XP design, and [`docs/plan-llm-side-generation.md`](docs/plan-llm-side-generation.md) for AI side generation.
 
@@ -124,7 +139,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
-- **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: the 7 bundled sides (SideGym, SideCat, SideTama, SideGrandma, SideParrot, SideYoga, SideCodingGame), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install <side>`) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
+- **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: the 7 bundled sides (SideGym, SideCat, SidePet, SideGrandma, SideParrot, SideYoga, SideCodingGame), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install <side>`) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 - **Support the project** — add a Buy Me a Coffee link/badge to the README for people who want to chip in.
 

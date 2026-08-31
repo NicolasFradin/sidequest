@@ -428,7 +428,7 @@ export class Storage {
   /**
    * Ajoute de l'XP à un side et recalcule son niveau (formule volontairement simple pour v1 :
    * un palier tous les 100 XP, pas de courbe par side). Sert à faire grandir la barre de
-   * progression de la galerie, et la mascotte d'un side qui définit des `stages` (SideCat/SideTama).
+   * progression de la galerie, et la mascotte d'un side qui définit des `stages` (SideCat/SidePet).
    */
   addXp(sideId: string, amount: number): { xp: number; level: number } {
     const current = this.getSideProgress(sideId);

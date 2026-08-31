@@ -1,0 +1,14 @@
+{
+  "id": "sidepet",
+  "name": "SidePet - Fais grandir ton animal de compagnie virtuel",
+  "nameEn": "SidePet - Grow Your Pet",
+  "color": "#FCE1A4",
+  "exercises": [
+    { "id": "pet-feed", "label": "Nourris-le", "labelEn": "Feed it", "durationSec": 15, "category": "repas", "categoryEn": "food" },
+    { "id": "pet-play", "label": "Joue avec lui", "labelEn": "Play with it", "durationSec": 30, "category": "jeu", "categoryEn": "play" },
+    { "id": "pet-sleep", "label": "Laisse-le dormir un instant", "labelEn": "Let it sleep a bit", "durationSec": 20, "category": "repos", "categoryEn": "rest" },
+    { "id": "pet-clean", "label": "Nettoie son écran", "labelEn": "Clean its screen", "durationSec": 15, "category": "entretien", "categoryEn": "care" },
+    { "id": "pet-check", "label": "Regarde-le grandir 30 secondes", "labelEn": "Watch it grow for 30 seconds", "durationSec": 30, "category": "jeu", "categoryEn": "play" },
+    { "id": "pet-praise", "label": "Félicite-le pour son niveau", "labelEn": "Praise it for its level", "durationSec": 10, "category": "jeu", "categoryEn": "play" }
+  ]
+}
