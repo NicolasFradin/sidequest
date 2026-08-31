@@ -2,6 +2,7 @@
 // dans le document, donc `const { resolveMascotImage } = ...` entrerait en conflit avec la
 // `function resolveMascotImage` déjà déclarée par shared/mascots.js (chargé juste avant).
 const sqMascots = window.sqMascots;
+const sqMilestones = window.sqMilestones;
 
 const mascotImg = document.getElementById("mascot-img");
 const exerciseLabel = document.getElementById("exercise-label");
@@ -11,6 +12,9 @@ const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
 const miniTimer = document.getElementById("mini-timer");
 const miniTimerFill = document.getElementById("mini-timer-fill");
+const nextBadge = document.getElementById("next-badge");
+const nextBadgeImg = document.getElementById("next-badge-img");
+const nextBadgeProgressFill = document.getElementById("next-badge-progress-fill");
 
 let currentMascotId = null;
 let currentMascotImage = null;
@@ -36,12 +40,31 @@ function startMiniTimer(durationSec) {
   miniTimerFill.style.height = "0%";
 }
 
-window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, theme, blocking, language }) => {
+/**
+ * Carré "prochain badge" sous le timer : image du niveau pas encore atteint sur ce side, avec une
+ * mini barre de progression (xp % 100, même calcul que la barre de la galerie dans le dashboard).
+ * Masqué une fois le side au niveau plafond (sqMilestones.MAX_BADGE_LEVEL) — plus rien à viser.
+ */
+function updateNextBadge(sideProgress) {
+  const level = sideProgress?.level ?? 1;
+  if (level >= sqMilestones.MAX_BADGE_LEVEL) {
+    nextBadge.hidden = true;
+    return;
+  }
+  const badge = sqMilestones.getBadgeForLevel(level + 1);
+  nextBadgeImg.src = badge.image;
+  nextBadgeProgressFill.style.width = `${(sideProgress?.xp ?? 0) % 100}%`;
+  nextBadge.title = `${i18n.t("overlay.level")} ${badge.level}`;
+  nextBadge.hidden = false;
+}
+
+window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, sideProgress, theme, blocking, language }) => {
   currentMascotId = mascot;
   currentMascotImage = mascotImage ?? null;
   mascotImg.src = sqMascots.resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
   exerciseLabel.textContent = exercise.label;
   startMiniTimer(exercise.durationSec);
+  updateNextBadge(sideProgress);
   document.documentElement.dataset.theme = theme ?? "dark";
   document.documentElement.lang = language ?? "fr";
   i18n.setLanguage(language ?? "fr");

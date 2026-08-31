@@ -17,6 +17,7 @@ themeToggle.addEventListener("click", async () => {
 // dans le document, donc `const { MASCOT_LABELS } = ...` entrerait en conflit avec le `const
 // MASCOT_LABELS` déjà déclaré par shared/mascots.js (chargé juste avant) — d'où cet alias unique.
 const sqMascots = window.sqMascots;
+const sqMilestones = window.sqMilestones;
 
 const languageButtons = [...document.querySelectorAll("#language-options .language-bubble")];
 languageButtons.forEach((btn) =>
@@ -435,7 +436,7 @@ function renderHistoryTable(sessions, exerciseLabels) {
     const mascotWrap = document.createElement("span");
     mascotWrap.className = "history-mascot";
     const mascotImg = document.createElement("img");
-    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["ronnie-coleman"];
+    mascotImg.src = sqMascots.MASCOT_IMAGES[session.mascot] ?? sqMascots.MASCOT_IMAGES["sidequest"];
     mascotImg.alt = "";
     const mascotLabel = document.createElement("span");
     mascotLabel.textContent = sqMascots.MASCOT_LABELS[session.mascot] ?? session.mascot;
@@ -547,7 +548,7 @@ function sideCardMascotImage(side) {
     : side.source !== "bundled"
       ? sqMascots.DEFAULT_SIDE_MASCOT_IMAGE
       : null;
-  const mascotId = side.mascot?.id ?? currentSettings?.activeMascot ?? "ronnie-coleman";
+  const mascotId = side.mascot?.id ?? currentSettings?.activeMascot ?? "sidequest";
   return sqMascots.resolveMascotImage(mascotId, currentSettings?.theme ?? "dark", overrideUrl);
 }
 
@@ -632,6 +633,23 @@ function renderSidesGrid() {
     xpLabel.textContent = i18n.t("sides.level", progress.level);
     xpBar.append(xpTrack, xpLabel);
 
+    // Badges de palier XP débloqués — pure fonction du niveau courant (plafonné à
+    // sqMilestones.MAX_BADGE_LEVEL), aucun état à part à charger/persister.
+    const earnedBadges = sqMilestones.getBadgesForLevel(progress.level);
+    let milestoneBadges = null;
+    if (earnedBadges.length > 0) {
+      milestoneBadges = document.createElement("div");
+      milestoneBadges.className = "side-card-milestones";
+      earnedBadges.forEach((badge) => {
+        const img = document.createElement("img");
+        img.className = "side-card-milestone-badge";
+        img.src = badge.image;
+        img.alt = i18n.t("sides.level", badge.level);
+        img.title = i18n.t("sides.level", badge.level);
+        milestoneBadges.appendChild(img);
+      });
+    }
+
     const actions = document.createElement("div");
     actions.className = "side-card-actions";
 
@@ -673,7 +691,7 @@ function renderSidesGrid() {
       actions.appendChild(deleteBtn);
     }
 
-    card.append(header, count, xpBar, actions);
+    card.append(header, count, xpBar, ...(milestoneBadges ? [milestoneBadges] : []), actions);
     sidesGrid.appendChild(card);
   });
 }

@@ -7,6 +7,7 @@ const TRANSLATIONS = {
     "overlay.settings.title": "Réglages",
     "overlay.timer.title": "Temps restant",
     "overlay.blocking.title": "Séance obligatoire",
+    "overlay.level": "Niveau",
   },
   en: {
     "overlay.label": "Time to move!",
@@ -15,6 +16,7 @@ const TRANSLATIONS = {
     "overlay.settings.title": "Settings",
     "overlay.timer.title": "Time remaining",
     "overlay.blocking.title": "Mandatory session",
+    "overlay.level": "Level",
   },
 };
 

@@ -8,7 +8,7 @@ export type TriggerType = "timer" | "hook";
 export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
 export type TriggerSource = "timer" | "hook" | "both";
-export type VisualTheme = "miami-80s" | "military-camo" | "dragonball" | "roman-empire";
+export type VisualTheme = "miami-80s" | "military-camo" | "manga" | "roman-empire";
 /** Langue de l'interface (dashboard + overlay + menu tray) — indépendante du thème clair/sombre et du skin visuel. */
 export type Language = "fr" | "en";
 /**
@@ -68,7 +68,7 @@ export interface SessionRecord {
 const DEFAULT_SETTINGS: Settings = {
   intervalMinutes: 30,
   mode: "notify",
-  activeMascot: "ronnie-coleman",
+  activeMascot: "sidequest",
   autolaunch: false,
   activeProgram: "sport-basic",
   theme: "dark",
@@ -135,7 +135,7 @@ export class Storage {
         status TEXT NOT NULL,
         trigger_type TEXT NOT NULL,
         verified INTEGER NOT NULL DEFAULT 0,
-        mascot TEXT NOT NULL DEFAULT 'ronnie-coleman',
+        mascot TEXT NOT NULL DEFAULT 'sidequest',
         mode TEXT NOT NULL DEFAULT 'notify'
       );
 
@@ -155,7 +155,7 @@ export class Storage {
     // Migrations pour les bases créées avant l'ajout de ces colonnes.
     const sessionColumns = this.db.prepare("PRAGMA table_info(sessions)").all() as { name: string }[];
     if (!sessionColumns.some((c) => c.name === "mascot")) {
-      this.db.exec("ALTER TABLE sessions ADD COLUMN mascot TEXT NOT NULL DEFAULT 'ronnie-coleman'");
+      this.db.exec("ALTER TABLE sessions ADD COLUMN mascot TEXT NOT NULL DEFAULT 'sidequest'");
     }
     if (!sessionColumns.some((c) => c.name === "mode")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'notify'");

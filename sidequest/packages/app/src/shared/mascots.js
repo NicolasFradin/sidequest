@@ -6,29 +6,38 @@
  */
 const MASCOT_LABELS = {
   sidequest: "SideQuest",
-  "ronnie-coleman": "Ronnie Coleman",
-  "miami-80s": "Miami 80s",
+  "ronnie-80s": "Ronnie",
   "arnold-80s": "Arnold 80s",
   sergeant: "Sergent",
   "sergeant-desert": "Sergent (désert)",
-  goku: "Goku",
   centurion: "Centurion",
+  // Mascottes des futurs sides (SideGrandma, SideParrot, SideYoga, SideCodingGame) — pas encore
+  // rattachées à un side.mascot dédié, juste disponibles dans le catalogue en attendant.
+  grandma: "Mamie",
+  parrot: "Parrot",
+  "yoga-girl": "Yoga",
+  laptop: "Laptop",
 };
 const MASCOT_IMAGES = {
   sidequest: "../../assets/mascots/sidequest.png",
-  "ronnie-coleman": "../../assets/mascots/ronnie-coleman.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
+  "ronnie-80s": "../../assets/mascots/ronnie-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
   "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
-  goku: "../../assets/mascots/goku.png",
   centurion: "../../assets/mascots/centurion.png",
+  grandma: "../../assets/mascots/grandma.png",
+  parrot: "../../assets/mascots/parrot.png",
+  "yoga-girl": "../../assets/mascots/yoga-girl.png",
+  laptop: "../../assets/mascots/laptop.png",
 };
-/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
+/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3.
+ * "manga" (ex-"dragonball") retombe sur la mascotte SideQuest par défaut — pas de mascotte dédiée
+ * pour ce thème depuis le retrait de Goku (contenu sous licence, incompatible avec un projet open
+ * source). */
 const MASCOTS_BY_THEME = {
-  "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
+  "miami-80s": ["ronnie-80s", "arnold-80s"],
   "military-camo": ["sergeant"],
-  dragonball: ["goku"],
+  manga: ["sidequest"],
   "roman-empire": ["centurion"],
 };
 /**
@@ -57,7 +66,7 @@ const DEFAULT_SIDE_MASCOT_IMAGE = "../../assets/mascots/sidequest.png";
 function resolveMascotImage(mascotId, theme, overrideImageUrl) {
   if (overrideImageUrl) return overrideImageUrl;
   const variantId = theme === "light" ? MASCOT_LIGHT_VARIANTS[mascotId] : null;
-  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["ronnie-coleman"];
+  return MASCOT_IMAGES[variantId ?? mascotId] ?? MASCOT_IMAGES["sidequest"];
 }
 
 /**

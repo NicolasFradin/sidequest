@@ -43,6 +43,7 @@
       "target": ["dmg", "zip"],
       "identity": null
     },
+    "afterSign": "build/afterSign.cjs",
     "win": {
       "target": ["nsis", "portable"]
     },

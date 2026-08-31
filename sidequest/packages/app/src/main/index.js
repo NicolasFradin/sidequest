@@ -189,6 +189,22 @@ function toggleDashboard() {
   }
 }
 
+/**
+ * État réel du lancement au démarrage, tel que le voit l'OS — jamais celui stocké en base seul,
+ * qui ne reflète que la dernière intention de l'utilisateur (voir dashboard:get-settings). Un
+ * écart est possible : refus silencieux de macOS en dev (voir applyAutolaunch), ou l'utilisateur
+ * a retiré l'entrée à la main depuis les réglages système (Connexion) sans repasser par ici.
+ */
+function getActualAutolaunchState() {
+  if (process.platform === "darwin" || process.platform === "win32") {
+    return app.getLoginItemSettings().openAtLogin;
+  }
+  if (process.platform === "linux") {
+    return existsSync(path.join(homedir(), ".config", "autostart", "sidequest.desktop"));
+  }
+  return false;
+}
+
 /** @returns {string | null} message d'avertissement si l'OS a refusé, sinon null */
 function applyAutolaunch(enabled) {
   try {
@@ -237,7 +253,29 @@ function applyAutolaunch(enabled) {
 function loadActiveProgram(settings) {
   const side = storage.getSide(settings.activeProgram) ?? loadSide(settings.activeProgram);
   const resolved = side.exercises.length > 0 ? side : loadSide("sport-basic");
-  return translateSide(resolved, settings.language);
+  return resolveBundledMascotPaths(translateSide(resolved, settings.language));
+}
+
+/**
+ * Résout `mascot.imagePath` (et `mascot.stages[].imagePath`) d'un side *bundled* vers un chemin
+ * absolu sous `ASSETS_DIR/mascots/` — `packages/core` stocke volontairement un simple nom de
+ * fichier (`grandma.png`), n'ayant aucune connaissance de `packages/app/assets/` (voir
+ * plan-community-sides.md § "Mascot image, if any"). No-op sur un side custom/importé/généré,
+ * dont `mascot.imagePath` est déjà un chemin absolu (décodé/copié sous `userData/` à l'import).
+ */
+function resolveBundledMascotPaths(side) {
+  if (side.source !== "bundled" || !side.mascot) return side;
+  const toAbsolute = (imagePath) => path.join(ASSETS_DIR, "mascots", imagePath);
+  return {
+    ...side,
+    mascot: {
+      ...side.mascot,
+      imagePath: toAbsolute(side.mascot.imagePath),
+      ...(side.mascot.stages
+        ? { stages: side.mascot.stages.map((s) => ({ ...s, imagePath: toAbsolute(s.imagePath) })) }
+        : {}),
+    },
+  };
 }
 
 /**
@@ -392,6 +430,9 @@ function showExercise() {
     // Couleur d'accent du side actif — l'overlay la pose en variable CSS (--side-accent),
     // consommée par son style.css (bordure du bouton "Passer", halo de la mascotte).
     sideColor: resolveSideColor(side),
+    // XP/niveau du side actif — l'overlay en tire l'affichage du prochain badge à débloquer
+    // (voir shared/milestones.js), sans avoir besoin d'un aller-retour IPC dédié.
+    sideProgress,
     mode: settings.mode,
     theme: settings.theme,
     language: settings.language,
@@ -620,7 +661,7 @@ if (!gotSingleInstanceLock) {
       // runtime plus fragile qui finit par disparaître. En dev, l'icône générique Electron
       // est remplacée par la mascotte (best-effort, peut être capricieux selon le cache
       // d'icônes du Dock macOS — sans impact sur l'app packagée, ce qui compte vraiment).
-      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "ronnie-coleman.png"));
+      app.dock.setIcon(path.join(ASSETS_DIR, "mascots", "sidequest.png"));
     }
 
     // Premier lancement : le dashboard s'ouvre automatiquement (onboarding, cf. Sprint 3.5).
@@ -635,7 +676,17 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:copy-to-clipboard", (_event, text) => clipboard.writeText(text));
     ipcMain.handle("dashboard:open-external", (_event, url) => shell.openExternal(url));
 
-    ipcMain.handle("dashboard:get-settings", () => ({ ...storage.getSettings(), isFirstLaunch }));
+    ipcMain.handle("dashboard:get-settings", () => {
+      const settings = storage.getSettings();
+      const actualAutolaunch = getActualAutolaunchState();
+      // Recale la case à cocher sur la réalité plutôt que sur la dernière intention enregistrée —
+      // sinon un refus silencieux de l'OS (ou une modification manuelle dans les réglages système)
+      // laisserait la case "cochée" alors que l'app ne se relance en fait pas au démarrage.
+      if (actualAutolaunch !== settings.autolaunch) {
+        storage.updateSettings({ autolaunch: actualAutolaunch });
+      }
+      return { ...settings, autolaunch: actualAutolaunch, isFirstLaunch };
+    });
     ipcMain.handle("dashboard:update-settings", (_event, partial) => {
       const next = storage.updateSettings(partial);
       if (partial.intervalMinutes !== undefined) {
@@ -687,7 +738,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:get-sides", () => {
       const lang = storage.getSettings().language;
       return {
-        bundledSides: listBundledSides().map((p) => translateSide(p, lang)),
+        bundledSides: listBundledSides().map((p) => resolveBundledMascotPaths(translateSide(p, lang))),
         customSides: storage.getSides(),
       };
     });
@@ -748,7 +799,9 @@ if (!gotSingleInstanceLock) {
       if (!rawSide) return { exported: false };
       // Exporte dans la langue actuellement affichée (no-op sur un side custom/importé/généré,
       // qui n'a jamais de champs `*En`) — cohérent avec ce que l'utilisateur voit à l'écran.
-      const side = translateSide(rawSide, lang);
+      // resolveBundledMascotPaths() : mascotToDataUri() lit `mascot.imagePath` sur disque, qui
+      // doit donc déjà être un chemin absolu pour un side bundled (nom de fichier nu sinon).
+      const side = resolveBundledMascotPaths(translateSide(rawSide, lang));
 
       const { canceled, filePath } = await dialog.showSaveDialog(dashboardWindow, {
         title: t(lang, "exportDialogTitle"),

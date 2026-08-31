@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal design docs — kept locally, not pushed to GitHub (README.md files excepted)
+docs/**/*.md

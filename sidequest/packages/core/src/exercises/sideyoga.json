@@ -1,0 +1,17 @@
+{
+  "id": "sideyoga",
+  "name": "SideYoga - Relaxation",
+  "nameEn": "SideYoga - Relaxation",
+  "color": "#B39DDB",
+  "mascot": { "id": "yoga-girl", "label": "Yoga", "imagePath": "yoga-girl.png" },
+  "exercises": [
+    { "id": "yoga-breathe", "label": "Respire profondément 5 fois", "labelEn": "Take 5 deep breaths", "durationSec": 20, "category": "respiration", "categoryEn": "breathing" },
+    { "id": "yoga-neck", "label": "Roule doucement la nuque", "labelEn": "Slowly roll your neck", "durationSec": 15, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "yoga-shoulders", "label": "Hausse et relâche les épaules", "labelEn": "Shrug and release your shoulders", "durationSec": 15, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "yoga-jaw", "label": "Détends ta mâchoire", "labelEn": "Unclench your jaw", "durationSec": 10, "category": "relaxation", "categoryEn": "relaxation" },
+    { "id": "yoga-stretch-back", "label": "Étire ton dos vers l'arrière", "labelEn": "Stretch your back backward", "durationSec": 20, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "yoga-eyes", "label": "Ferme les yeux 20 secondes", "labelEn": "Close your eyes for 20 seconds", "durationSec": 20, "category": "repos", "categoryEn": "rest" },
+    { "id": "yoga-wrists", "label": "Étire tes poignets", "labelEn": "Stretch your wrists", "durationSec": 15, "category": "étirement", "categoryEn": "stretch" },
+    { "id": "yoga-posture", "label": "Redresse ta posture", "labelEn": "Straighten your posture", "durationSec": 10, "category": "posture", "categoryEn": "posture" }
+  ]
+}

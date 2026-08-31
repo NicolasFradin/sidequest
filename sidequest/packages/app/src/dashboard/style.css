@@ -90,7 +90,7 @@
   --bg-elevated: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-elevated));
 }
 
-:root[data-visual-theme="dragonball"] {
+:root[data-visual-theme="manga"] {
   --accent-teal: #00c2ff;
   --accent-magenta: #e6391b;
   --accent-gold: #fdc82e;
@@ -225,6 +225,13 @@ html, body {
   background-repeat: no-repeat, no-repeat;
 }
 
+/* [hidden] doit gagner sur display:flex ci-dessous — même piège/correctif que .icon-bubble[hidden]
+   côté overlay (sélecteur de classe seul, même spécificité que [hidden], donc l'ordre de cascade
+   author > UA gagnerait sinon même avec l'attribut posé). */
+.visual-theme-row[hidden] {
+  display: none;
+}
+
 .visual-theme-row {
   display: flex;
   gap: 8px;
@@ -273,7 +280,7 @@ html, body {
     radial-gradient(circle at 82% 68%, #a67c52 0 34%, transparent 35%);
 }
 
-.visual-theme-dragonball {
+.visual-theme-manga {
   background: linear-gradient(135deg, #e6391b 0%, #fdc82e 45%, #00c2ff 100%);
 }
 
@@ -706,7 +713,6 @@ html, body {
   height: 32px;
   object-fit: contain;
   border-radius: 0;
-  background: var(--bg-elevated);
   flex-shrink: 0;
 }
 
@@ -753,6 +759,21 @@ html, body {
   font-weight: 700;
   color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.side-card-milestones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  /* .side-card applique un gap de 10px entre tous ses enfants — trop vu la taille des badges
+     (44px) ; on le compense ici plutôt que de toucher au gap des autres blocs de la carte. */
+  margin-top: -2px;
+}
+
+.side-card-milestone-badge {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 
 .side-card-actions {

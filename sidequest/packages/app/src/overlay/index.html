@@ -12,6 +12,12 @@
       <div class="icon-bubble mini-timer" id="mini-timer" data-i18n-title="overlay.timer.title" title="Temps restant">
         <div class="mini-timer-fill" id="mini-timer-fill"></div>
       </div>
+      <div class="icon-bubble next-badge" id="next-badge" title="" hidden>
+        <img class="next-badge-img" id="next-badge-img" alt="" />
+        <div class="next-badge-progress">
+          <div class="next-badge-progress-fill" id="next-badge-progress-fill"></div>
+        </div>
+      </div>
       <div class="icon-bubble blocking-badge" id="blocking-badge" data-i18n-title="overlay.blocking.title" title="Séance obligatoire" hidden>🔒</div>
       <button id="btn-done" class="icon-bubble icon-bubble-primary" data-i18n-title="overlay.done" title="C'est fait 💪">✔</button>
       <button id="btn-skip" class="icon-bubble" data-i18n-title="overlay.skip" title="Passer">⏭</button>
@@ -25,6 +31,7 @@
 
   <script src="i18n.js"></script>
   <script src="../shared/mascots.js"></script>
+  <script src="../shared/milestones.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

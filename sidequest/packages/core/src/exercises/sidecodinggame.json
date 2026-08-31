@@ -1,0 +1,17 @@
+{
+  "id": "sidecodinggame",
+  "name": "SideCodingGame - Pratique du code",
+  "nameEn": "SideCodingGame - Coding Practice",
+  "color": "#4A90D9",
+  "mascot": { "id": "laptop", "label": "Laptop", "imagePath": "laptop.png" },
+  "exercises": [
+    { "id": "code-riddle", "label": "Résous une petite énigme logique", "labelEn": "Solve a small logic riddle", "durationSec": 30, "category": "logique", "categoryEn": "logic" },
+    { "id": "code-syntax", "label": "Révise une syntaxe que tu oublies toujours", "labelEn": "Review a syntax you always forget", "durationSec": 20, "category": "syntaxe", "categoryEn": "syntax" },
+    { "id": "code-shortcut", "label": "Apprends un raccourci clavier de ton IDE", "labelEn": "Learn one IDE keyboard shortcut", "durationSec": 20, "category": "outils", "categoryEn": "tools" },
+    { "id": "code-explain", "label": "Explique une ligne de code à voix haute", "labelEn": "Explain a line of code out loud", "durationSec": 20, "category": "révision", "categoryEn": "review" },
+    { "id": "code-vocab", "label": "Apprends un terme technique", "labelEn": "Learn a technical term", "durationSec": 15, "category": "vocabulaire", "categoryEn": "vocabulary" },
+    { "id": "code-review-tip", "label": "Repense à une astuce de revue de code", "labelEn": "Recall a code-review tip", "durationSec": 15, "category": "révision", "categoryEn": "review" },
+    { "id": "code-complexity", "label": "Devine la complexité d'une boucle imbriquée", "labelEn": "Guess the complexity of a nested loop", "durationSec": 20, "category": "logique", "categoryEn": "logic" },
+    { "id": "code-git", "label": "Révise une commande git peu utilisée", "labelEn": "Review a rarely-used git command", "durationSec": 15, "category": "outils", "categoryEn": "tools" }
+  ]
+}
