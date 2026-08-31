@@ -12,7 +12,7 @@ const MASCOT_LABELS = {
   sergeant: "Sergent",
   "sergeant-desert": "Sergent (désert)",
   centurion: "Centurion",
-  // Mascottes des futurs sides (SideMamie, SideParrot, SideYoga, SideCodingGame) — pas encore
+  // Mascottes des futurs sides (SideGrandma, SideParrot, SideYoga, SideCodingGame) — pas encore
   // rattachées à un side.mascot dédié, juste disponibles dans le catalogue en attendant.
   grandma: "Mamie",
   parrot: "Parrot",

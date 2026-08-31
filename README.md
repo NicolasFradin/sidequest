@@ -23,9 +23,9 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | 🦜 **SideParrot** — language learning | planned | **You ship code. Your vocabulary ships rust.** One phrase, one flashcard, one rep while the build runs. It takes 30 seconds and that language you keep meaning to learn actually sticks. |
 | 🧘 **SideYoga** — relaxation | planned | **You ship code. Your shoulders ship tension.** Breathe. Unclench your jaw. Roll your neck. It takes 30 seconds and you'll stop carrying your inbox in your spine. |
 | 🎮 **SideCodingGame** — coding practice | planned | **You ship code. Your skills ship rust.** One kata, one riddle, one rep while the tests run. It takes 30 seconds and you'll actually remember it next time you need it. |
-| 🧓 **SideMamie** — check in on your grandma | ships today | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
+| 🧓 **SideGrandma** — check in on your grandma | ships today | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
 
-SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own side from scratch, import a JSON file, or generate one with AI right from the sides gallery — see below.
+SideGym, SideCat, SideTama and SideGrandma ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own side from scratch, import a JSON file, or generate one with AI right from the sides gallery — see below.
 
 ## Mascots
 
@@ -124,7 +124,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
-- **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: bundled sides (SideGym, SideCat, SideTama, SideMamie), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
+- **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: bundled sides (SideGym, SideCat, SideTama, SideGrandma), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
