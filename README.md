@@ -1,7 +1,7 @@
 <p align="center">
   <img src="docs/branding/SideQuest-logo.png" alt="SideQuest — Code. Quest. Grow." width="480">
   <br>
-  <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while you wait</strong>
+  <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while IA's coding</strong>
 </p>
 
 <p align="center">
@@ -144,7 +144,7 @@ If you feel any pain or discomfort, stop immediately and consult a physiotherapi
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE). Inspired by [claude-gym](https://github.com/477-Studio/claude-gym) (gentle notifications, local-only) and `workout-gate` (real session blocking).
+Apache 2.0 — see [LICENSE](LICENSE).
 
 ---
 
