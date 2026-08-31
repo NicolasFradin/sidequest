@@ -9,7 +9,6 @@ const MASCOT_LABELS = {
   "ronnie-80s": "Ronnie",
   "arnold-80s": "Arnold 80s",
   sergeant: "Sergent",
-  "sergeant-desert": "Sergent (désert)",
   centurion: "Centurion",
   // Mascottes des futurs sides (SideGrandma, SideParrot, SideYoga, SideCodingGame) — pas encore
   // rattachées à un side.mascot dédié, juste disponibles dans le catalogue en attendant.
@@ -23,7 +22,6 @@ const MASCOT_IMAGES = {
   "ronnie-80s": "../../assets/mascots/ronnie-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
-  "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
   centurion: "../../assets/mascots/centurion.png",
   grandma: "../../assets/mascots/grandma.png",
   parrot: "../../assets/mascots/parrot.png",
@@ -43,9 +41,10 @@ const MASCOTS_BY_THEME = {
 /**
  * Variante d'une mascotte à afficher en mode clair, si elle existe (sinon la mascotte normale
  * sert pour les deux modes) — sert de base à resolveMascotImage(). Mécanisme générique, pas
- * limité à Military camo, voir plan-theme-global.md sprint 5.
+ * limité à Military camo — vide pour l'instant (le sergent a perdu sa variante "désert" avec la
+ * suppression de sergeant-desert.png), prêt à être réutilisé pour une future mascotte.
  */
-const MASCOT_LIGHT_VARIANTS = { sergeant: "sergeant-desert" };
+const MASCOT_LIGHT_VARIANTS = {};
 
 /**
  * Mascotte par défaut d'un side custom/importé/généré par IA qui n'a pas la sienne — remplace le
