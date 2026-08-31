@@ -757,13 +757,13 @@ html, body {
 
 .side-card-milestones {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .side-card-milestone-badge {
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 }
 

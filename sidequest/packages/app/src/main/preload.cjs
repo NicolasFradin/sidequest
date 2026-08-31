@@ -10,9 +10,6 @@ contextBridge.exposeInMainWorld("mascotAPI", {
   onLanguageChanged: (callback) => {
     ipcRenderer.on("language-changed", (_event, language) => callback(language));
   },
-  onMilestoneReached: (callback) => {
-    ipcRenderer.on("milestone-reached", (_event, data) => callback(data));
-  },
   markDone: () => ipcRenderer.send("exercise-done"),
   markSkipped: () => ipcRenderer.send("exercise-skipped"),
   openDashboard: () => ipcRenderer.send("open-dashboard"),
