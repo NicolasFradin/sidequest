@@ -857,12 +857,16 @@ function renderSideExercises() {
     durationInput.type = "number";
     durationInput.min = "5";
     durationInput.step = "5";
+    durationInput.placeholder = i18n.t("sideEditor.durationPlaceholder");
     durationInput.className = "text-input side-exercise-duration";
-    durationInput.value = exercise.durationSec;
+    durationInput.value = exercise.durationSec ?? "";
     durationInput.disabled = editingSide.isBundled;
-    durationInput.addEventListener("change", () =>
-      updateExerciseField(index, "durationSec", Math.max(5, Number(durationInput.value) || 5))
-    );
+    durationInput.addEventListener("change", () => {
+      // Optionnel (voir Exercise.durationSec côté core) : champ vidé -> pas de minuteur pour cette
+      // quest dans l'overlay, plutôt qu'un repli silencieux sur une durée par défaut.
+      const raw = durationInput.value.trim();
+      updateExerciseField(index, "durationSec", raw === "" ? undefined : Math.max(5, Number(raw) || 5));
+    });
 
     row.append(labelInput, categoryInput, durationInput);
 

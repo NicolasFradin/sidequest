@@ -9,6 +9,7 @@ const btnDone = document.getElementById("btn-done");
 const btnSkip = document.getElementById("btn-skip");
 const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
+const miniTimer = document.getElementById("mini-timer");
 const miniTimerFill = document.getElementById("mini-timer-fill");
 
 let currentMascotId = null;
@@ -18,9 +19,16 @@ let currentMascotImage = null;
  * Sablier qui se vide : on remet la bulle à 100% sans transition, on force un reflow (sinon le
  * navigateur fusionne les deux changements de hauteur et saute direct à 0%, pas d'animation
  * visible), puis on relance une transition dont la durée colle à exercise.durationSec.
+ * durationSec est optionnel côté quest (voir Exercise.durationSec dans @sidequest/core) : sans
+ * valeur, on masque carrément la bulle plutôt que de retomber sur une durée par défaut arbitraire.
  */
 function startMiniTimer(durationSec) {
-  const seconds = Number(durationSec) > 0 ? Number(durationSec) : 30;
+  const seconds = Number(durationSec);
+  if (!(seconds > 0)) {
+    miniTimer.hidden = true;
+    return;
+  }
+  miniTimer.hidden = false;
   miniTimerFill.style.transition = "none";
   miniTimerFill.style.height = "100%";
   void miniTimerFill.offsetHeight;
