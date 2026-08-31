@@ -1,7 +1,7 @@
 /** Dictionnaire FR/EN de l'overlay mascotte — même mécanisme que dashboard/i18n.js. */
 const TRANSLATIONS = {
   fr: {
-    "overlay.label": "C'est l'heure de bouger !",
+    "overlay.label": "Mets cette période à profit !",
     "overlay.done": "C'est fait 💪",
     "overlay.skip": "Passer",
     "overlay.settings.title": "Réglages",
@@ -10,7 +10,7 @@ const TRANSLATIONS = {
     "overlay.level": "Niveau",
   },
   en: {
-    "overlay.label": "Time to move!",
+    "overlay.label": "Make the most of this time!",
     "overlay.done": "Done 💪",
     "overlay.skip": "Skip",
     "overlay.settings.title": "Settings",
