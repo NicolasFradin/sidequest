@@ -456,6 +456,8 @@ function renderHistoryTable(sessions, exerciseLabels) {
   });
 }
 
+const shareStats = { streak: 0, week: 0, total: 0 };
+
 async function refreshHistory() {
   const [sessions, streak, exercises, debt] = await Promise.all([
     window.dashboardAPI.getSessions(),
@@ -471,12 +473,40 @@ async function refreshHistory() {
   statDebt.textContent = debt;
   statDebt.classList.toggle("stat-value-warning", debt > 0);
   renderHistoryTable(sessions, exerciseLabels);
+
+  shareStats.streak = streak;
+  shareStats.week = statWeek.textContent;
+  shareStats.total = sessions.length;
 }
 
 const refreshHistoryBtn = document.getElementById("refresh-history");
 refreshHistoryBtn.addEventListener("click", () => refreshHistory());
 
 refreshHistory();
+
+// --- Partage sur les réseaux sociaux ---
+
+const SIDEQUEST_REPO_URL = "https://github.com/NicolasFradin/sidequest";
+
+function buildShareText() {
+  return i18n.t("history.share.text", shareStats.streak, shareStats.week, shareStats.total);
+}
+
+async function shareTo(url) {
+  await window.dashboardAPI.copyToClipboard(buildShareText());
+  window.dashboardAPI.openExternal(url);
+  showToast(i18n.t("history.share.toast"));
+}
+
+document.getElementById("share-linkedin-btn").addEventListener("click", () => {
+  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SIDEQUEST_REPO_URL)}`;
+  shareTo(linkedinUrl);
+});
+
+document.getElementById("share-github-btn").addEventListener("click", () => {
+  const githubUrl = `${SIDEQUEST_REPO_URL}/issues/new?title=${encodeURIComponent("Mon avancement SideQuest")}&body=${encodeURIComponent(buildShareText())}`;
+  shareTo(githubUrl);
+});
 
 // --- Sides personnalisés ---
 

@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("dashboardAPI", {
+  copyToClipboard: (text) => ipcRenderer.invoke("dashboard:copy-to-clipboard", text),
+  openExternal: (url) => ipcRenderer.invoke("dashboard:open-external", url),
   getSettings: () => ipcRenderer.invoke("dashboard:get-settings"),
   updateSettings: (partial) => ipcRenderer.invoke("dashboard:update-settings", partial),
   getSessions: () => ipcRenderer.invoke("dashboard:get-sessions"),

@@ -163,6 +163,15 @@ La mascotte est optionnelle.`,
     "history.table.mode": "Mode",
     "history.table.status": "Statut",
     "history.empty": "Aucune séance enregistrée pour l'instant.",
+
+    "history.share.label": "Partager mes stats",
+    "history.share.hint": "Le texte est copié dans le presse-papiers — colle-le dans ta publication.",
+    "history.share.linkedin": "🔗 LinkedIn",
+    "history.share.github": "🐙 GitHub",
+    "history.share.text": (streak, week, total) =>
+      `🔥 ${streak} jour(s) de streak sur SideQuest, ${week} séance(s) cette semaine et ${total} au total ! 💪 https://github.com/NicolasFradin/sidequest #SideQuestApp`,
+    "history.share.toast": "Texte copié dans le presse-papiers, la page de partage s'ouvre.",
+
     "status.done": "Fait",
     "status.skipped": "Passé",
     "status.missed": "Manqué",
@@ -327,6 +336,15 @@ The mascot is optional.`,
     "history.table.mode": "Mode",
     "history.table.status": "Status",
     "history.empty": "No sessions recorded yet.",
+
+    "history.share.label": "Share my stats",
+    "history.share.hint": "The text is copied to your clipboard — paste it into your post.",
+    "history.share.linkedin": "🔗 LinkedIn",
+    "history.share.github": "🐙 GitHub",
+    "history.share.text": (streak, week, total) =>
+      `🔥 ${streak}-day streak on SideQuest, ${week} session(s) this week, ${total} total! 💪 https://github.com/NicolasFradin/sidequest #SideQuestApp`,
+    "history.share.toast": "Text copied to clipboard, opening the share page.",
+
     "status.done": "Done",
     "status.skipped": "Skipped",
     "status.missed": "Missed",
