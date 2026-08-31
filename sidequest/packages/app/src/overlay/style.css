@@ -65,10 +65,7 @@ html, body {
   right: 10px;
   display: flex;
   flex-direction: column;
-  /* flex-end plutôt que center : le badge du prochain palier est deux fois plus large que les
-     autres bulles (52px vs 26px) — on les garde alignées sur le même bord droit plutôt que de
-     tout recentrer sur la largeur du plus gros élément. */
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag;
 }
@@ -118,15 +115,15 @@ html, body {
 
 /* Prochain badge de palier à débloquer sur ce side (voir shared/milestones.js) : l'image plafonne
    au dernier niveau illustré une fois le side maxé, et la bulle entière se masque dans ce cas (rien
-   de plus à viser) — même traitement que les autres bulles conditionnelles de la pile. */
+   de plus à viser) — même traitement que les autres bulles conditionnelles de la pile. Même
+   gabarit que les autres bulles (26px) : les PNG sources sont recadrés au plus près du médaillon
+   (voir packages/app/assets/xp-badges/) pour que le badge remplisse vraiment ce petit carré au
+   lieu de flotter au milieu d'une grande marge transparente.
+*/
 .next-badge {
-  /* Deux fois la taille des autres bulles de la pile (26px) : le badge doit rester lisible,
-     contrairement aux icônes/emoji des bulles voisines. */
-  width: 52px;
-  height: 52px;
   position: relative;
   overflow: hidden;
-  padding: 3px;
+  padding: 1px;
 }
 
 .next-badge-img {
@@ -137,10 +134,10 @@ html, body {
 
 .next-badge-progress {
   position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: 3px;
-  height: 5px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 3px;
   background: rgba(0, 0, 0, 0.4);
 }
 

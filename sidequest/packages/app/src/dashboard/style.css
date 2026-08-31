@@ -759,6 +759,9 @@ html, body {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  /* .side-card applique un gap de 10px entre tous ses enfants — trop vu la taille des badges
+     (88px) ; on le compense ici plutôt que de toucher au gap des autres blocs de la carte. */
+  margin-top: -6px;
 }
 
 .side-card-milestone-badge {
