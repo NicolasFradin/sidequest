@@ -9,7 +9,7 @@
   <a href="../../releases"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-informational?style=flat-square" alt="Platforms"></a>
 </p>
 
-**You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm.
+SideQuest started as a simple idea: get up and stretch while waiting on a build, a test run, or an AI response. It has since grown into a general-purpose idle-time quest marketplace — plan any kind of quick activity, not just fitness, for the small pockets of downtime in your day.
 
 SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. It's built to grow into a marketplace of idle-time quests, not just one: whatever fits in 30 seconds between two prompts, including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
 
