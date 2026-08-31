@@ -2,6 +2,7 @@
 // dans le document, donc `const { resolveMascotImage } = ...` entrerait en conflit avec la
 // `function resolveMascotImage` déjà déclarée par shared/mascots.js (chargé juste avant).
 const sqMascots = window.sqMascots;
+const sqMilestones = window.sqMilestones;
 
 const mascotImg = document.getElementById("mascot-img");
 const exerciseLabel = document.getElementById("exercise-label");
@@ -11,6 +12,9 @@ const btnSettings = document.getElementById("btn-settings");
 const blockingBadge = document.getElementById("blocking-badge");
 const miniTimer = document.getElementById("mini-timer");
 const miniTimerFill = document.getElementById("mini-timer-fill");
+const milestoneBanner = document.getElementById("milestone-banner");
+const milestoneBadgeImg = document.getElementById("milestone-badge-img");
+const milestoneText = document.getElementById("milestone-text");
 
 let currentMascotId = null;
 let currentMascotImage = null;
@@ -42,6 +46,9 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, the
   mascotImg.src = sqMascots.resolveMascotImage(mascot, theme ?? "dark", currentMascotImage);
   exerciseLabel.textContent = exercise.label;
   startMiniTimer(exercise.durationSec);
+  // Un palier affiché lors d'une quest ne doit jamais traîner sur la suivante.
+  milestoneBanner.hidden = true;
+  milestoneBanner.classList.remove("visible");
   document.documentElement.dataset.theme = theme ?? "dark";
   document.documentElement.lang = language ?? "fr";
   i18n.setLanguage(language ?? "fr");
@@ -56,6 +63,14 @@ window.mascotAPI.onShowExercise(({ exercise, mascot, mascotImage, sideColor, the
   } else {
     document.documentElement.style.removeProperty("--side-accent");
   }
+});
+
+window.mascotAPI.onMilestoneReached(({ level }) => {
+  const badge = sqMilestones.getBadgeForLevel(level);
+  milestoneBadgeImg.src = badge.image;
+  milestoneText.textContent = `${i18n.t("overlay.level")} ${badge.level}`;
+  milestoneBanner.hidden = false;
+  requestAnimationFrame(() => milestoneBanner.classList.add("visible"));
 });
 
 window.mascotAPI.onThemeChanged((theme) => {

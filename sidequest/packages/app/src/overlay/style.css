@@ -161,3 +161,38 @@ html, body {
   font-size: 20px;
   font-weight: 700;
 }
+
+/* [hidden] doit gagner sur display:flex ci-dessous — même piège/correctif que .icon-bubble[hidden]. */
+.milestone-banner[hidden] {
+  display: none;
+}
+
+.milestone-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.milestone-banner.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.milestone-badge {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+#milestone-text {
+  color: var(--accent-gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

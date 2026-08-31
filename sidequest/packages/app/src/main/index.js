@@ -90,6 +90,11 @@ let currentBlocking = false;
 let currentSideId = null;
 /** XP gagnée par exercice complété ("fait") — formule volontairement plate pour v1, pas de barème par side/exercice. */
 const XP_PER_EXERCISE = 10;
+/** Plafond des badges de palier — miroir de shared/milestones.js (pas de module partagé possible
+ * entre ce process Node et les renderers, voir le commentaire en tête de ce fichier-là). Seule la
+ * borne est dupliquée ici : le main n'a besoin que du numéro de niveau franchi pour notifier
+ * l'overlay, c'est lui qui résout l'image du badge côté client. */
+const MAX_BADGE_LEVEL = 10;
 
 let overlayReady = false;
 let pendingPayload = null;
@@ -433,18 +438,34 @@ function recordAndHide(status) {
     mascot: currentMascot ?? storage.getSettings().activeMascot,
     mode: currentMode ?? storage.getSettings().mode,
   });
+  let milestoneLevel = null;
   if (status === "done" && currentSideId) {
-    storage.addXp(currentSideId, XP_PER_EXERCISE);
+    const before = storage.getSideProgress(currentSideId);
+    const after = storage.addXp(currentSideId, XP_PER_EXERCISE);
+    // Plafonné à MAX_BADGE_LEVEL : pas d'artwork au-delà (voir shared/milestones.js). Ne peut de
+    // toute façon jamais franchir plus d'un niveau d'un coup vu XP_PER_EXERCISE (10) et le palier
+    // (100xp) — pas besoin d'une boucle sur les niveaux intermédiaires.
+    const crossed = Math.min(after.level, MAX_BADGE_LEVEL);
+    if (crossed > before.level) milestoneLevel = crossed;
   }
   currentExercise = null;
   currentMascot = null;
   currentMode = null;
   currentBlocking = false;
   currentSideId = null;
-  overlayWindow.hide();
+
+  if (milestoneLevel) {
+    // Laisse le temps de voir le badge avant de masquer, au lieu d'un hide() immédiat.
+    overlayWindow.webContents.send("milestone-reached", { level: milestoneLevel });
+    setTimeout(() => overlayWindow.hide(), 1800);
+  } else {
+    overlayWindow.hide();
+  }
 
   // Libère le hook Claude Code retenu par ce même exercice (mode "stop"/"start" bloquant, voir
   // maybeTriggerFromHook) — no-op si l'exercice ne venait pas d'un hook ou n'était pas bloquant.
+  // Immédiatement, sans attendre le setTimeout ci-dessus : un effet visuel ne doit jamais retarder
+  // le déblocage du flux Claude Code.
   if (pendingHookRespond) {
     pendingHookRespond();
     pendingHookRespond = null;
