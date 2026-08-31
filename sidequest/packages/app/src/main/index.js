@@ -189,6 +189,22 @@ function toggleDashboard() {
   }
 }
 
+/**
+ * État réel du lancement au démarrage, tel que le voit l'OS — jamais celui stocké en base seul,
+ * qui ne reflète que la dernière intention de l'utilisateur (voir dashboard:get-settings). Un
+ * écart est possible : refus silencieux de macOS en dev (voir applyAutolaunch), ou l'utilisateur
+ * a retiré l'entrée à la main depuis les réglages système (Connexion) sans repasser par ici.
+ */
+function getActualAutolaunchState() {
+  if (process.platform === "darwin" || process.platform === "win32") {
+    return app.getLoginItemSettings().openAtLogin;
+  }
+  if (process.platform === "linux") {
+    return existsSync(path.join(homedir(), ".config", "autostart", "sidequest.desktop"));
+  }
+  return false;
+}
+
 /** @returns {string | null} message d'avertissement si l'OS a refusé, sinon null */
 function applyAutolaunch(enabled) {
   try {
@@ -638,7 +654,17 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle("dashboard:copy-to-clipboard", (_event, text) => clipboard.writeText(text));
     ipcMain.handle("dashboard:open-external", (_event, url) => shell.openExternal(url));
 
-    ipcMain.handle("dashboard:get-settings", () => ({ ...storage.getSettings(), isFirstLaunch }));
+    ipcMain.handle("dashboard:get-settings", () => {
+      const settings = storage.getSettings();
+      const actualAutolaunch = getActualAutolaunchState();
+      // Recale la case à cocher sur la réalité plutôt que sur la dernière intention enregistrée —
+      // sinon un refus silencieux de l'OS (ou une modification manuelle dans les réglages système)
+      // laisserait la case "cochée" alors que l'app ne se relance en fait pas au démarrage.
+      if (actualAutolaunch !== settings.autolaunch) {
+        storage.updateSettings({ autolaunch: actualAutolaunch });
+      }
+      return { ...settings, autolaunch: actualAutolaunch, isFirstLaunch };
+    });
     ipcMain.handle("dashboard:update-settings", (_event, partial) => {
       const next = storage.updateSettings(partial);
       if (partial.intervalMinutes !== undefined) {
