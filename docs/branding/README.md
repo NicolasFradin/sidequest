@@ -12,7 +12,7 @@ This folder centralizes the project's reference visual assets, **organized by si
   - `sidequest-emblem-white.png` — white-on-transparent version, kept as spare source art (not currently wired into the app — template mode already covers dark menu bars from the black asset alone).
 - `sidequest/` — the app's own default mascot, used as the fallback for any custom/imported/AI-generated side that doesn't carry its own mascot (see `plan-marketplace-sides.md` § 3.2/3.8). Shipped at runtime as `app/assets/mascots/sidequest.png`.
   - `mascot-sidequest.png` — source art.
-- `sidegym/` — assets for the **SideGym** bundled side (`sport-basic.json`). SideGym itself has no dedicated mascot yet (falls back to the active global mascot); what lives here are its 4 **visual themes (skins)** — `visualTheme` is a dashboard-wide setting today, but the actual style-guide/mascot art was designed against this side's fitness-coach identity, so it's grouped under it rather than floating at the top level. All 4 themes have their colors **and** their mascot(s) integrated into the app (`app/assets/mascots/`, dynamically selected based on the active theme in the dashboard — `MASCOTS_BY_THEME` in `app/src/shared/mascots.js`).
+- `sidegym/` — assets for the **SideGym** bundled side (`sport-basic.json`). SideGym itself has no dedicated mascot yet (falls back to the active global mascot); what lives here are its 4 **visual themes (skins)** — `visualTheme` is a dashboard-wide setting today, but the actual style-guide/mascot art was designed against this side's fitness-coach identity, so it's grouped under it rather than floating at the top level. 3 of the 4 themes have their colors **and** their mascot(s) integrated into the app (`app/assets/mascots/`, dynamically selected based on the active theme in the dashboard — `MASCOTS_BY_THEME` in `app/src/shared/mascots.js`); the 4th ("Manga", see below) has colors only.
   - `miami-80s/` — default theme, Miami Vice / GTA Vice City style.
     - `style-guide-dark.png` / `style-guide-light.png` — reference style guide, dark/light variants.
     - `mascot-ronnie-coleman.png`, `mascot-miami-80s.png`, `mascot-arnold-80s.png` — 3 mascots integrated into the app.
@@ -22,9 +22,7 @@ This folder centralizes the project's reference visual assets, **organized by si
   - `roman-empire/` — "Roman Empire" theme.
     - `style-guide.png` — reference style guide.
     - `mascot-roman_empire.png` — integrated mascot.
-  - `dragonball/` — "Dragonball" theme.
-    - `style-guide.png` — reference style guide.
-    - `mascot-dragonball.png` — integrated mascot.
+  - "Manga" theme (formerly "Dragonball") — no branding folder here anymore: the licensed mascot and its style-guide art were removed, the theme kept only its color palette (renamed in code) and now falls back to the default SideQuest mascot, same as any theme without a dedicated one.
 - `sidecat/`, `sidetama/` — reserved for those sides' own mascot art once it exists (see the bundled-mascot path-resolution gap noted in `plan-community-sides.md`). No folder yet — nothing to put in it until that art ships.
 
 ## Intended use

@@ -8,7 +8,7 @@ export type TriggerType = "timer" | "hook";
 export type ScheduleMode = "notify" | "gate" | "mixed";
 export type Theme = "dark" | "light";
 export type TriggerSource = "timer" | "hook" | "both";
-export type VisualTheme = "miami-80s" | "military-camo" | "dragonball" | "roman-empire";
+export type VisualTheme = "miami-80s" | "military-camo" | "manga" | "roman-empire";
 /** Langue de l'interface (dashboard + overlay + menu tray) — indépendante du thème clair/sombre et du skin visuel. */
 export type Language = "fr" | "en";
 /**

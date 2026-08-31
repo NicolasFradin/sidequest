@@ -11,7 +11,6 @@ const MASCOT_LABELS = {
   "arnold-80s": "Arnold 80s",
   sergeant: "Sergent",
   "sergeant-desert": "Sergent (désert)",
-  goku: "Goku",
   centurion: "Centurion",
 };
 const MASCOT_IMAGES = {
@@ -21,14 +20,16 @@ const MASCOT_IMAGES = {
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
   "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
-  goku: "../../assets/mascots/goku.png",
   centurion: "../../assets/mascots/centurion.png",
 };
-/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3. */
+/** Mascottes disponibles selon le thème global (skin) actif — voir docs/plan-theme-global.md sprint 3.
+ * "manga" (ex-"dragonball") retombe sur la mascotte SideQuest par défaut — pas de mascotte dédiée
+ * pour ce thème depuis le retrait de Goku (contenu sous licence, incompatible avec un projet open
+ * source). */
 const MASCOTS_BY_THEME = {
   "miami-80s": ["ronnie-coleman", "miami-80s", "arnold-80s"],
   "military-camo": ["sergeant"],
-  dragonball: ["goku"],
+  manga: ["sidequest"],
   "roman-empire": ["centurion"],
 };
 /**

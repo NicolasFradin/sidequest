@@ -90,7 +90,7 @@
   --bg-elevated: color-mix(in srgb, var(--accent-teal) 10%, var(--bg-elevated));
 }
 
-:root[data-visual-theme="dragonball"] {
+:root[data-visual-theme="manga"] {
   --accent-teal: #00c2ff;
   --accent-magenta: #e6391b;
   --accent-gold: #fdc82e;
@@ -280,7 +280,7 @@ html, body {
     radial-gradient(circle at 82% 68%, #a67c52 0 34%, transparent 35%);
 }
 
-.visual-theme-dragonball {
+.visual-theme-manga {
   background: linear-gradient(135deg, #e6391b 0%, #fdc82e 45%, #00c2ff 100%);
 }
 
