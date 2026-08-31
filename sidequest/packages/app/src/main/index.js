@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, screen, nativeImage, ipcMain, globalShortcut, dialog } from "electron";
+import { app, BrowserWindow, Tray, Menu, screen, nativeImage, ipcMain, globalShortcut, dialog, shell, clipboard } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from "node:fs";
@@ -631,6 +631,9 @@ if (!gotSingleInstanceLock) {
     ipcMain.on("exercise-done", () => recordAndHide("done"));
     ipcMain.on("exercise-skipped", () => recordAndHide("skipped"));
     ipcMain.on("open-dashboard", () => showDashboard());
+
+    ipcMain.handle("dashboard:copy-to-clipboard", (_event, text) => clipboard.writeText(text));
+    ipcMain.handle("dashboard:open-external", (_event, url) => shell.openExternal(url));
 
     ipcMain.handle("dashboard:get-settings", () => ({ ...storage.getSettings(), isFirstLaunch }));
     ipcMain.handle("dashboard:update-settings", (_event, partial) => {
