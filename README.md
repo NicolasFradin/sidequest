@@ -9,7 +9,7 @@
   <a href="../../releases"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-informational?style=flat-square" alt="Platforms"></a>
 </p>
 
-**You ship code. Your body ships pain.** Stand up. Stretch your back. Shake out your legs. It takes 30 seconds and your body will stop screaming at you by 6pm.
+SideQuest started as a simple idea: get up and stretch while waiting on a build, a test run, or an AI response. It has since grown into a general-purpose idle-time quest marketplace — plan any kind of quick activity, not just fitness, for the small pockets of downtime in your day.
 
 SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenever you've been idle for a while — or, if you're running Claude Code, exactly when Claude finishes answering and you're staring at the screen waiting on nothing. It's built to grow into a marketplace of idle-time quests, not just one: whatever fits in 30 seconds between two prompts, including quests proposed by the community down the line. See the [Roadmap](#roadmap--major-next-steps) below.
 
@@ -26,6 +26,16 @@ SideQuest sits in your tray and pops up a mascot with a quick micro-quest whenev
 | 🧓 **SideMamie** — check in on your grandma | ships today | **Your commits ship. Your calls to mamie don't.** A text, a call, 30 seconds between two prompts. She won't remember your last PR, but she'll remember you thought of her. |
 
 SideGym, SideCat, SideTama and SideMamie ship in the app today — SideParrot/SideYoga/SideCodingGame are names reserved for what's next. Build your own side from scratch, import a JSON file, or generate one with AI right from the sides gallery — see below.
+
+## Mascots
+
+![SideQuest mascots](sidequest/packages/app/assets/mascots-banner.gif)
+
+The mascot is the face of a quest: it's what shows up in the popup every time one fires. Each side can carry its own — SideGym's drill sergeant, SideCat's cat — or leave it unset and fall back to a default: a bundled side (SideGym...) falls back to whichever global mascot matches your current visual skin, while a custom/imported/generated side falls back to the default SideQuest mascot regardless of skin, so it never looks like it's wearing someone else's costume.
+
+**Using a custom mascot:** open a side in the dashboard's editor and pick one from the mascot row — any of the built-in mascots (including the plain SideQuest one), or your own. Hit **+ Add** to upload a PNG/JPG/WebP (up to 3 MB, 2048×2048px) through the native file picker; it's copied locally and tied to that side from then on. Clicking the mascot that's already active clears it back to the default. This picker is only available on your own sides — a bundled one (SideGym...) keeps its mascot locked.
+
+Generating a side with AI has an optional mascot field too: describe the look you're picturing and the AI hands back a one-line text idea to guide you — no image is generated (no provider used here can produce one), so you still pick or upload the actual picture yourself afterward.
 
 ## How it works
 
@@ -114,7 +124,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Pause during an active session** — don't interrupt mid-typing; only trigger during genuine idle time, not just "Claude is between turns."
 - **Codex support** — investigate whether Codex's hook mechanism (if any) can plug into the same local server, alongside Claude Code.
 - **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
-- **Marketplace of quests** — SideGym, SideCat and SideTama ship today. Side import/export (JSON) and AI generation already work as stepping stones toward an installable side registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...), followed further out by a full marketplace open to third-party/community-submitted quests.
+- **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: bundled sides (SideGym, SideCat, SideTama, SideMamie), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
