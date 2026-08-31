@@ -6,7 +6,8 @@ import path from "node:path";
 export interface Exercise {
   id: string;
   label: string;
-  durationSec: number;
+  /** Optionnel : sans valeur, la quest s'affiche dans l'overlay sans bulle minuteur (pas de durée imposée). */
+  durationSec?: number;
   category: string;
   /** Traduction anglaise optionnelle (sides embarqués uniquement — voir `translateSide()`). `label`/`category` restent la référence en français. */
   labelEn?: string;
@@ -124,11 +125,14 @@ export function parseSideJson(
 
   const exercises = obj.exercises.map((raw) => {
     const e = raw as Record<string, unknown>;
+    const durationSec = Number(e?.durationSec);
     return {
       id: typeof e?.id === "string" && e.id ? e.id : randomUUID(),
       label: String(e?.label ?? ""),
-      durationSec: Number(e?.durationSec) > 0 ? Number(e.durationSec) : 30,
       category: String(e?.category ?? ""),
+      // Optionnel (voir Exercise.durationSec) : on ne force plus de valeur par défaut quand elle
+      // est absente/invalide, une quest sans minuteur est une forme valide d'entrée.
+      ...(durationSec > 0 ? { durationSec } : {}),
     };
   });
 
