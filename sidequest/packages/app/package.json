@@ -1,8 +1,8 @@
 {
   "name": "@sidequest/app",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
-  "description": "App Electron : tray + overlay mascotte",
+  "description": "Electron app: tray + mascot overlay",
   "author": "NicolasFradin",
   "type": "module",
   "main": "src/main/index.js",

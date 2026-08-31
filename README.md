@@ -1,12 +1,16 @@
 <p align="center">
   <img src="docs/branding/SideQuest-logo.png" alt="SideQuest — Code. Quest. Grow." width="480">
   <br>
-  <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while IA's coding</strong>
+  <strong>SideQuest — an idle-time marketplace: micro-quests for your desktop while AI is coding</strong>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="License"></a>
   <a href="../../releases"><img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-informational?style=flat-square" alt="Platforms"></a>
+</p>
+
+<p align="center">
+  <img src="sidequest/packages/app/assets/demo/sidequest-demo.gif" alt="SideQuest demo" width="720">
 </p>
 
 SideQuest started as a simple idea: get up and stretch while waiting on a build, a test run, or an AI response. It has since grown into a general-purpose idle-time quest marketplace — plan any kind of quick activity, not just fitness, for the small pockets of downtime in your day.
@@ -137,7 +141,7 @@ pnpm start                  # launch the Electron app (tray + mascot overlay)
 
 An icon appears in the menu bar/tray — click it to open the dashboard or trigger a quest immediately.
 
-Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs/plan-mvp-sidequest.md) for the original product plan, [`docs/plan-marketplace-sides.md`](docs/plan-marketplace-sides.md) for the sides gallery/import/XP design, and [`docs/plan-llm-side-generation.md`](docs/plan-llm-side-generation.md) for AI side generation.
+Branding assets (logo, mascots, style guides) live in [`docs/branding/`](docs/branding/).
 
 ## Roadmap — major next steps
 
@@ -148,8 +152,6 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: the 7 bundled sides (SideGym, SideCat, SidePet, SideGrandma, SideParrot, SideYoga, SideCodingGame), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install <side>`) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
 - **Support the project** — add a Buy Me a Coffee link/badge to the README for people who want to chip in.
-
-Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
 
 ## FAQ
 

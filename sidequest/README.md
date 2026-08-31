@@ -1,6 +1,6 @@
-# SideQuest — MVP
+# SideQuest
 
-Desktop app that shows a coach mascot during idle time, prompting quick quests (fitness today via the SideGym side, more to come).
+Desktop app that shows a mascot during idle time, prompting quick quests — 7 bundled sides today (fitness, language learning, coding practice, and more). See the [root README](../README.md) for the full picture.
 
 ![SideQuest demo](packages/app/assets/demo/sidequest-demo.gif)
 

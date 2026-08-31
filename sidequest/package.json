@@ -1,15 +1,15 @@
 {
   "name": "sidequest-monorepo",
   "private": true,
-  "version": "0.0.1",
-  "description": "SideQuest - idle time marketplace (MVP)",
+  "version": "0.1.0",
+  "description": "SideQuest - idle-time quest marketplace for your desktop",
   "scripts": {
     "test": "pnpm --filter @sidequest/core test",
     "build": "pnpm --filter @sidequest/core build",
     "fix:native-modules": "rm -rf node_modules packages/*/node_modules $(pnpm store path) && pnpm install"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "packageManager": "pnpm@11.21.0"
 }

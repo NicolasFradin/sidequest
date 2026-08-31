@@ -1,7 +1,7 @@
 {
   "name": "@sidequest/core",
-  "version": "0.0.1",
-  "description": "Logique métier réutilisable : scheduler, storage, sides de quêtes, gate",
+  "version": "0.1.0",
+  "description": "Reusable core business logic: scheduler, storage, quest sides, gate mode",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
