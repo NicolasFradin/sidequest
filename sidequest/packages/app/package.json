@@ -44,8 +44,10 @@
     "asar": false,
     "mac": {
       "category": "public.app-category.healthcare-fitness",
-      "target": ["dmg", "zip"],
-      "arch": ["x64", "arm64"],
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
       "identity": null
     },
     "afterSign": "build/afterSign.cjs",
