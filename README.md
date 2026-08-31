@@ -97,7 +97,7 @@ Download the latest build from the [**Releases**](../../releases) page:
 
 | OS | File |
 |---|---|
-| macOS | `SideQuest-x.x.x-mac-x64.dmg` |
+| macOS | `SideQuest-x.x.x-mac-arm64.dmg` (Apple Silicon) or `SideQuest-x.x.x-mac-x64.dmg` (Intel) |
 | Windows | `SideQuest-x.x.x-win-x64.exe` (or the `portable` build) |
 | Linux | `SideQuest-x.x.x-linux-x86_64.AppImage` (or the `.deb`) |
 
