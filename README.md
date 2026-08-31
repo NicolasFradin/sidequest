@@ -126,6 +126,7 @@ Design docs live in [`docs/`](docs/) — see [`docs/plan-mvp-sidequest.md`](docs
 - **Animated mascots** — the overlay currently shows static PNGs; idle/quest/done animation is next (CSS keyframes, sprite frames, or a [Rive](https://rive.app) state machine, depending on how much time we want to sink into it).
 - **From gallery to marketplace** — what ships today is a gallery, not a marketplace yet: bundled sides (SideGym, SideCat, SideTama, SideMamie), build-your-own, JSON import/export, and AI generation, all local and free. Side import/export already works as a stepping stone toward an installable registry (`sidequest install sidegym`, `sideparrot`, `sideyoga`, `sidecodinggame`...) open to third-party/community-submitted sides. Further out, that's also where more ambitious sides would live — multi-stage mascots, richer plan structures beyond today's flat exercise list — with some of that advanced or community content potentially paid/downloadable rather than free-and-bundled, once there's an actual marketplace to sell it through.
 - **Unsigned-app polish** — investigate the intermittent macOS Dock icon glitch (likely tied to running unsigned), and eventually get a real code-signing certificate so installs don't need the Gatekeeper/SmartScreen workaround above.
+- **Support the project** — add a Buy Me a Coffee link/badge to the README for people who want to chip in.
 
 Full sprint-by-sprint history and open questions live in [`docs/`](docs/).
 
