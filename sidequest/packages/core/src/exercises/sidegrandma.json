@@ -1,7 +1,7 @@
 {
-  "id": "sidemamie",
-  "name": "SideMamie - Prends des nouvelles de ta mamie",
-  "nameEn": "SideMamie - Check In On Your Grandma",
+  "id": "sidegrandma",
+  "name": "SideGrandma - Prends des nouvelles de ta mamie",
+  "nameEn": "SideGrandma - Check In On Your Grandma",
   "color": "#D98A8A",
   "exercises": [
     { "id": "mamie-text", "label": "Envoie-lui un texto", "labelEn": "Send her a text", "durationSec": 15, "category": "texto", "categoryEn": "text" },
