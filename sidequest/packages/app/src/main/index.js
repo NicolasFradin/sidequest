@@ -360,7 +360,7 @@ const DEFAULT_SIDE_MASCOT_PATH = path.join(ASSETS_DIR, "mascots", "sidequest.png
 
 /**
  * Résout le chemin de l'image d'une mascotte de side selon le niveau atteint (paliers de
- * croissance optionnels, ex. SideCat/SideTama — voir `SideMascot.stages` dans @sidequest/core).
+ * croissance optionnels, ex. SideCat/SidePet — voir `SideMascot.stages` dans @sidequest/core).
  * Sans `stages`, `imagePath` sert pour tous les niveaux (comportement inchangé pour SideGym etc.).
  * Un side sans mascotte propre retombe sur `DEFAULT_SIDE_MASCOT_PATH`, sauf s'il est bundled
  * (SideGym...), qui garde le repli sur la mascotte globale géré par l'appelant (`payload.mascot`).

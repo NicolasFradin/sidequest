@@ -28,7 +28,7 @@ export interface SideMascot {
   label: string;
   /** Chemin fichier absolu vers l'image décodée sur disque — jamais de base64 stocké tel quel. */
   imagePath: string;
-  /** Paliers de croissance optionnels (ex. sides SideCat/SideTama) — si absent, `imagePath` sert pour tous les niveaux. */
+  /** Paliers de croissance optionnels (ex. sides SideCat/SidePet) — si absent, `imagePath` sert pour tous les niveaux. */
   stages?: SideStage[];
 }
 

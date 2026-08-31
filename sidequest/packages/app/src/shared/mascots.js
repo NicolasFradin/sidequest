@@ -70,7 +70,7 @@ function resolveMascotImage(mascotId, theme, overrideImageUrl) {
 
 /**
  * Résout le chemin d'image d'une mascotte de side selon le niveau XP atteint (paliers de
- * croissance optionnels, ex. SideCat/SideTama — `mascot.stages: [{minLevel, imagePath}]`).
+ * croissance optionnels, ex. SideCat/SidePet — `mascot.stages: [{minLevel, imagePath}]`).
  * Sans `stages`, `mascot.imagePath` sert pour tous les niveaux. Miroir de la fonction équivalente
  * côté main process (packages/app/src/main/index.js) — celle-ci sert la galerie du dashboard,
  * l'autre construit le payload envoyé à l'overlay ; même logique, deux contextes JS séparés
