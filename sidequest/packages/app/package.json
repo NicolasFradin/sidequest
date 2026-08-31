@@ -45,6 +45,7 @@
     "mac": {
       "category": "public.app-category.healthcare-fitness",
       "target": ["dmg", "zip"],
+      "arch": ["x64", "arm64"],
       "identity": null
     },
     "afterSign": "build/afterSign.cjs",
