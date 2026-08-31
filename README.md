@@ -37,6 +37,12 @@ The mascot is the face of a quest: it's what shows up in the popup every time on
 
 Generating a side with AI has an optional mascot field too: describe the look you're picturing and the AI hands back a one-line text idea to guide you — no image is generated (no provider used here can produce one), so you still pick or upload the actual picture yourself afterward.
 
+## Badges
+
+![SideQuest XP badges](sidequest/packages/app/assets/xp-badges/badges-banner.png)
+
+Every side tracks its own XP and levels up as you complete quests — one badge per 100 XP, from LV 1 to LV 10. The overlay always shows a preview of the next badge to unlock, with a small progress bar ticking up as you rack up sessions; the dashboard's sides gallery shows every badge you've already earned on that side.
+
 ## How it works
 
 - A **timer** fires every N minutes (configurable) and shows a mascot with a random quest from your active side.

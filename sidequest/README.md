@@ -2,6 +2,8 @@
 
 Desktop app that shows a coach mascot during idle time, prompting quick quests (fitness today via the SideGym side, more to come).
 
+![SideQuest demo](packages/app/assets/demo/sidequest-demo.gif)
+
 ## Installing the app (end users)
 
 Download the latest release from the [GitHub Releases page](../../releases):
