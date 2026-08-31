@@ -7,7 +7,6 @@
 const MASCOT_LABELS = {
   sidequest: "SideQuest",
   "ronnie-80s": "Ronnie",
-  "miami-80s": "Miami 80s",
   "arnold-80s": "Arnold 80s",
   sergeant: "Sergent",
   "sergeant-desert": "Sergent (désert)",
@@ -22,7 +21,6 @@ const MASCOT_LABELS = {
 const MASCOT_IMAGES = {
   sidequest: "../../assets/mascots/sidequest.png",
   "ronnie-80s": "../../assets/mascots/ronnie-80s.png",
-  "miami-80s": "../../assets/mascots/miami-80s.png",
   "arnold-80s": "../../assets/mascots/arnold-80s.png",
   sergeant: "../../assets/mascots/sergeant.png",
   "sergeant-desert": "../../assets/mascots/sergeant-desert.png",
@@ -37,7 +35,7 @@ const MASCOT_IMAGES = {
  * pour ce thème depuis le retrait de Goku (contenu sous licence, incompatible avec un projet open
  * source). */
 const MASCOTS_BY_THEME = {
-  "miami-80s": ["ronnie-80s", "miami-80s", "arnold-80s"],
+  "miami-80s": ["ronnie-80s", "arnold-80s"],
   "military-camo": ["sergeant"],
   manga: ["sidequest"],
   "roman-empire": ["centurion"],
