@@ -151,6 +151,10 @@ La mascotte est optionnelle.`,
 
     "history.pageTitle": "Historique",
     "history.refresh.title": "Rafraîchir",
+    "history.clear.title": "Effacer l'historique",
+    "history.clear.confirm":
+      "Effacer tout l'historique ? Les séances enregistrées, l'XP et les niveaux de tous les sides seront remis à zéro, et les badges obtenus seront perdus. Cette action est irréversible.",
+    "history.clear.toast": "Historique effacé",
     "history.stat.streak": "🔥 Streak (jours)",
     "history.stat.week": "Séances cette semaine",
     "history.stat.total": "Séances au total",
@@ -324,6 +328,10 @@ The mascot is optional.`,
 
     "history.pageTitle": "History",
     "history.refresh.title": "Refresh",
+    "history.clear.title": "Clear history",
+    "history.clear.confirm":
+      "Clear the whole history? Recorded sessions, XP and levels for every side will be reset to zero, and earned badges will be lost. This action can't be undone.",
+    "history.clear.toast": "History cleared",
     "history.stat.streak": "🔥 Streak (days)",
     "history.stat.week": "Sessions this week",
     "history.stat.total": "Total sessions",
