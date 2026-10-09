@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SideQuest Motion Demo</title>
+<style>
+@font-face { font-family: "Bebas Neue"; src: url("../../sidequest/packages/app/assets/fonts/BebasNeue-Regular.woff2") format("woff2"); }
+:root {
+  --bg: #0b0e1a; --card: #15182b; --line: rgba(34,211,240,.18);
+  --teal: #22d3f0; --gold: #f5a623; --red: #e2574c; --text: #fff; --muted: #a1a1aa;
+  --side: #6ed279;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 960px; height: 600px; overflow: hidden; background: var(--bg); }
+body { font-family: -apple-system, "Inter", "Segoe UI", sans-serif; color: var(--text); }
+.stage { position: relative; width: 960px; height: 600px; overflow: hidden; background: var(--bg); }
+.abs { position: absolute; }
+.bebas { font-family: "Bebas Neue", "Arial Narrow", sans-serif; letter-spacing: 1px; }
+
+/* subtle grid */
+.grid { inset: 0; background-image:
+  linear-gradient(rgba(34,211,240,.05) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(34,211,240,.05) 1px, transparent 1px);
+  background-size: 40px 40px; }
+
+/* fake menu bar */
+.menubar { left: 0; top: 0; width: 960px; height: 26px; background: #070913; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: flex-end; padding: 0 14px; gap: 14px; font-size: 12px; color: var(--muted); }
+.tray { width: 18px; height: 18px; position: relative; }
+.tray img { width: 18px; height: 18px; object-fit: contain; }
+.tray-ring { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 2px solid var(--gold); border-radius: 50%; opacity: 0; }
+
+/* terminal */
+.term { left: 70px; top: 120px; width: 520px; height: 250px; background: #0f1222; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; }
+.term-bar { height: 30px; background: #161a2e; display: flex; align-items: center; padding: 0 12px; gap: 7px; }
+.dot { width: 11px; height: 11px; border-radius: 50%; }
+.term-title { flex: 1; text-align: center; font-size: 12px; color: var(--muted); margin-right: 50px; }
+.term-body { padding: 18px 20px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 14px; line-height: 1.9; }
+.tl { white-space: pre; opacity: 0; }
+.c-prompt { color: var(--teal); }
+.c-claude { color: #d97757; }
+.c-muted { color: #6b7080; }
+.c-ok { color: #4ade80; }
+.caret { display: inline-block; width: 8px; height: 16px; background: var(--text); vertical-align: -3px; }
+
+/* hook pulse */
+.pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 6px rgba(245,166,35,.25); opacity: 0; }
+.hook-tag { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--gold); background: #1c1708; border: 1px solid rgba(245,166,35,.45); padding: 4px 9px; border-radius: 4px; opacity: 0; white-space: nowrap; }
+.timer-tag { font-size: 12px; color: var(--teal); background: #0b1a20; border: 1px solid rgba(34,211,240,.4); padding: 4px 9px; border-radius: 4px; opacity: 0; white-space: nowrap; }
+
+/* overlay (mirrors packages/app/src/overlay) */
+.overlay { left: 618px; top: 96px; width: 292px; height: 300px; background: rgba(11,14,26,.92); border: 1px solid rgba(34,211,240,.35);
+  display: flex; flex-direction: column; align-items: center; padding: 22px 18px; opacity: 0; transform-origin: 85% 0%; }
+.mascot { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; }
+.ov-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.ov-ex { font-size: 22px; font-weight: 700; }
+.ov-dur { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.stack { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 8px; }
+.bub { width: 26px; height: 26px; border: 1px solid rgba(34,211,240,.4); background: rgba(11,14,26,.6); color: var(--muted);
+  font-size: 13px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.bub.primary { background: var(--side); border-color: transparent; color: #0b0e1a; font-weight: 700; font-size: 14px; }
+.tfill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--side); }
+.nb img { width: 100%; height: 100%; object-fit: contain; }
+.nb-bar { position: absolute; left: 2px; right: 2px; bottom: 2px; height: 3px; background: rgba(0,0,0,.5); }
+.nb-fill { height: 100%; background: var(--side); }
+.ripple { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; }
+.cursor { width: 22px; height: 22px; opacity: 0; }
+
+/* xp */
+.xp-float { font-size: 26px; color: #0b0e1a; background: var(--gold); padding: 2px 10px 0; opacity: 0; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.lvl { left: 0; top: 0; width: 960px; height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+.lvl-backdrop { position: absolute; inset: 0; background: rgba(7,9,19,.86); }
+.lvl-badge { height: 200px; position: relative; }
+.lvl-title { position: relative; font-size: 54px; color: var(--gold); margin-top: 6px; }
+.lvl-sub { position: relative; font-size: 15px; color: var(--muted); }
+.xpbar { position: relative; width: 300px; height: 10px; background: #22263d; margin-top: 14px; overflow: hidden; }
+.xpbar > div { height: 100%; background: var(--gold); }
+
+/* sides */
+.sides { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.sides-title { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-size: 44px; }
+.sides-title span { color: var(--gold); }
+.sides-sub { position: absolute; left: 0; right: 0; top: 122px; text-align: center; font-size: 15px; color: var(--muted); }
+.side-card { position: absolute; top: 170px; width: 118px; height: 210px; background: var(--card); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; padding: 12px 8px; text-align: center; }
+.side-card .m { width: 84px; height: 84px; object-fit: contain; }
+.side-card .emo { width: 84px; height: 84px; font-size: 56px; line-height: 84px; }
+.side-card .n { font-size: 21px; margin-top: 8px; }
+.side-card .q { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+.side-card .tag { position: absolute; top: -10px; font-size: 10px; letter-spacing: 1px; padding: 2px 6px; background: var(--gold); color: #0b0e1a; font-weight: 700; opacity: 0; }
+.chips { position: absolute; top: 412px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; }
+.chip { border: 1px solid rgba(34,211,240,.45); color: var(--teal); padding: 8px 14px; font-size: 14px; font-weight: 600; opacity: 0; background: #0d1424; white-space: nowrap; }
+.chip.ai { border-color: rgba(245,166,35,.6); color: var(--gold); background: #1c1708; }
+
+/* modes */
+.modes { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.mode { position: absolute; top: 220px; width: 260px; height: 190px; background: var(--card); border: 1px solid var(--line); padding: 22px; opacity: 0; }
+.mode .ic { font-size: 30px; }
+.mode .t { font-size: 30px; margin-top: 10px; }
+.mode .d { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+
+/* architecture slide */
+.arch { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.arch-title { position: absolute; left: 0; right: 0; top: 36px; text-align: center; font-size: 112px; line-height: 1; }
+.arch-title span { color: var(--teal); text-shadow: 0 0 18px rgba(34,211,240,.55); }
+.abox { position: absolute; top: 196px; width: 232px; height: 128px; background: #0d1020; border: 3px solid var(--teal);
+  outline: 1px solid rgba(34,211,240,.35); outline-offset: 4px; box-shadow: 0 0 22px rgba(34,211,240,.25);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+.abox .ic { font-size: 40px; line-height: 1; }
+.abox .t { font-size: 18px; font-weight: 700; margin-top: 12px; }
+.abox .t.mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 19px; }
+.abox .d { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.aline { position: absolute; top: 259px; height: 3px; background: var(--teal); width: 0; }
+.apacket { position: absolute; width: 14px; height: 14px; background: var(--gold); box-shadow: 0 0 12px rgba(245,166,35,.8); opacity: 0; }
+.achips { position: absolute; top: 380px; left: 0; right: 0; display: flex; justify-content: center; gap: 18px; }
+.achip { border: 3px solid var(--teal); outline: 1px solid rgba(34,211,240,.35); outline-offset: 4px; background: #0d1020;
+  padding: 11px 22px; font-size: 19px; font-weight: 800; opacity: 0; white-space: nowrap; box-shadow: 0 0 18px rgba(34,211,240,.2); }
+.amodes { position: absolute; top: 478px; left: 0; right: 0; text-align: center; font-size: 19px; color: #8e93a8; opacity: 0; }
+.amodes b { font-weight: 800; }
+
+/* enterprise slide */
+.ent { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.ent-kicker { position: absolute; left: 0; right: 0; top: 30px; text-align: center; font-family: "SF Mono", Menlo, monospace; font-size: 15px; font-weight: 700; letter-spacing: 4px; color: var(--gold); opacity: 0; }
+.ent-title { position: absolute; left: 0; right: 0; top: 54px; text-align: center; font-size: 58px; opacity: 0; }
+.ent-title span { color: var(--teal); }
+.avatar { position: absolute; width: 50px; height: 50px; opacity: 0; }
+.ent-svg { position: absolute; left: 0; top: 0; }
+.ent-svg path { fill: none; stroke: rgba(34,211,240,.55); stroke-width: 2; }
+.dpk { position: absolute; width: 9px; height: 9px; background: var(--gold); box-shadow: 0 0 8px rgba(245,166,35,.8); opacity: 0; }
+.agg { position: absolute; left: 300px; top: 222px; width: 170px; height: 118px; background: #0d1020; border: 3px solid var(--teal);
+  outline: 1px solid rgba(34,211,240,.35); outline-offset: 4px; box-shadow: 0 0 22px rgba(34,211,240,.25);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; }
+.agg .ic { font-size: 30px; line-height: 1; }
+.agg .t { font-size: 15px; font-weight: 800; margin-top: 8px; }
+.agg .d { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.board { position: absolute; left: 560px; top: 150px; width: 370px; height: 262px; background: #0d1020; border: 3px solid var(--gold);
+  outline: 1px solid rgba(245,166,35,.35); outline-offset: 4px; box-shadow: 0 0 22px rgba(245,166,35,.18); padding: 14px 18px; opacity: 0; }
+.board-h { font-size: 24px; color: var(--gold); margin-bottom: 8px; }
+.brow { display: flex; align-items: center; gap: 10px; height: 40px; opacity: 0; }
+.brow .rk { width: 26px; font-size: 20px; text-align: center; }
+.brow .nm { width: 108px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.brow .bar { flex: 1; height: 10px; background: #22263d; overflow: hidden; }
+.brow .bar > div { height: 100%; background: var(--teal); width: 0; }
+.brow .xp { width: 64px; text-align: right; font-family: "SF Mono", Menlo, monospace; font-size: 13px; color: var(--gold); }
+.echips { position: absolute; top: 470px; left: 0; right: 0; display: flex; justify-content: center; gap: 14px; }
+.echip { border: 1px solid rgba(34,211,240,.45); background: #0d1424; padding: 9px 14px; font-size: 14px; opacity: 0; white-space: nowrap; }
+.echip b { color: var(--teal); }
+
+/* history dashboard slide (mirrors the app's History tab) */
+.hist { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.hwin { position: absolute; left: 60px; top: 30px; width: 840px; height: 478px; background: var(--bg); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.5); display: flex; flex-direction: column; }
+.hwin-bar { height: 26px; background: #161a2e; display: flex; align-items: center; padding: 0 10px; gap: 6px; flex: none; }
+.hwin-bar .dot { width: 10px; height: 10px; }
+.hwin-bar span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); margin-right: 40px; }
+.hbody { flex: 1; display: flex; }
+.hside { width: 170px; background: var(--card); border-right: 1px solid var(--line); padding: 16px 12px; }
+.hside img { width: 140px; margin-bottom: 18px; }
+.hnav { font-size: 13px; color: var(--muted); padding: 9px 10px; margin-bottom: 4px; font-weight: 600; }
+.hnav.on { background: var(--teal); color: #0b0e1a; }
+.hmain { flex: 1; padding: 16px 20px; }
+.htitle { font-size: 32px; margin-bottom: 10px; }
+.hstats { display: flex; gap: 12px; margin-bottom: 12px; }
+.hstat { flex: 1; background: var(--card); border: 1px solid var(--line); padding: 10px 12px; }
+.hstat .v { font-size: 26px; font-weight: 700; color: var(--teal); }
+.hstat .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.hrow2 { display: flex; gap: 12px; }
+.hcard { background: var(--card); border: 1px solid var(--line); padding: 12px 14px; }
+.hcard .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.hchart { width: 262px; height: 240px; }
+.hbars { display: flex; align-items: flex-end; gap: 10px; height: 183px; padding: 0 2px; }
+.hbar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.hbar > div { width: 100%; background: var(--teal); min-height: 3px; }
+.hbar > span { font-size: 10px; color: var(--muted); margin-top: 5px; }
+.htable { flex: 1; height: 240px; overflow: hidden; }
+.htr { display: flex; align-items: center; gap: 8px; font-size: 12px; height: 33px; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; }
+.htr .tm { width: 40px; color: var(--muted); font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+.htr img { width: 20px; height: 20px; object-fit: contain; }
+.htr .q { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.htr .st { font-size: 11px; font-weight: 700; padding: 2px 7px; }
+.htr .st.ok { color: #6ed279; background: rgba(110,210,121,.12); }
+.htr .st.sk { color: var(--muted); background: rgba(161,161,170,.12); }
+.hshare { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 12px; color: var(--muted); }
+.hshare div { border: 1px solid rgba(34,211,240,.4); color: var(--teal); padding: 5px 10px; font-weight: 600; }
+
+/* outro */
+.outro { left: 0; top: 0; width: 960px; height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+.outro img { width: 520px; }
+.pills { display: flex; gap: 10px; margin-top: 26px; }
+.pill { font-size: 14px; padding: 7px 14px; border: 1px solid rgba(34,211,240,.4); color: var(--text); background: #0d1424; opacity: 0; white-space: nowrap; }
+.outro-tag { margin-top: 26px; font-size: 30px; color: var(--gold); opacity: 0; }
+
+
+/* "the way we code has changed" slide */
+.ch-seg > span { flex: none; text-align: center; }
+.change { left: 0; top: 0; width: 960px; height: 600px; opacity: 0; }
+.ch-title { position: absolute; left: 0; right: 0; top: 52px; text-align: center; font-size: 66px; }
+.ch-title span, .ch-teal { color: var(--teal); }
+.ch-label { position: absolute; left: 20px; width: 186px; text-align: right; font-size: 32px; color: #8e93a8; }
+.ch-track { position: absolute; left: 226px; width: 690px; height: 58px; display: flex; overflow: hidden; }
+.ch-seg { height: 100%; display: flex; align-items: center; justify-content: flex-start; font-size: 14px; font-weight: 700; color: #0b0e1a; white-space: nowrap; overflow: hidden; flex: none; }
+.ch-seg.code { background: var(--teal); }
+.ch-seg.review { background: var(--gold); }
+.ch-seg.wait { background: repeating-linear-gradient(135deg, #1b1f33 0 10px, #222740 10px 20px); color: #8e93a8; font-weight: 500; border-top: 1px solid #2a2f4a; border-bottom: 1px solid #2a2f4a; }
+.ch-punch { position: absolute; left: 0; right: 0; top: 388px; text-align: center; font-size: 58px; }
+.ch-punch span { color: #8e93a8; }
+.ch-count { position: absolute; left: 0; right: 0; top: 470px; text-align: center; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 18px; color: #8e93a8; }
+.ch-count b { color: var(--gold); font-weight: 400; }
+
+/* intro */
+.intro { left: 0; top: 0; width: 960px; height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.intro img { width: 560px; }
+.intro p { font-size: 20px; color: var(--muted); margin-top: 18px; }
+.intro p b { color: var(--text); }
+
+/* caption */
+.caption { left: 0; right: 0; bottom: 28px; display: flex; justify-content: center; }
+.cap { position: absolute; bottom: 0; display: flex; align-items: center; gap: 12px; opacity: 0; white-space: nowrap; }
+.cap .num { width: 34px; height: 34px; background: var(--gold); color: #0b0e1a; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+.cap .txt { font-size: 30px; }
+.cap .txt em { font-style: normal; color: var(--teal); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="abs grid"></div>
+
+  <!-- desktop scene -->
+  <div id="desk" class="abs" style="inset:0">
+    <div class="abs menubar">
+      <span>Wed 10:42</span>
+      <div class="tray" id="tray"><img src="../branding/emblem/sidequest-emblem-color.png" alt=""><div class="tray-ring" id="tray-ring"></div></div>
+    </div>
+
+    <div class="abs term" id="term">
+      <div class="term-bar">
+        <div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div>
+        <div class="term-title">claude — ~/my-app</div>
+      </div>
+      <div class="term-body">
+        <div class="tl" id="l0"><span class="c-claude">✻</span> <span class="c-muted">Welcome to Claude Code</span></div>
+        <div class="tl" id="l1"><span class="c-prompt">&gt;</span> <span id="typed"></span><span class="caret" id="caret1"></span></div>
+        <div class="tl" id="l2"><span class="c-claude" id="spin">✻</span> <span class="c-claude">Working…</span> <span class="c-muted" id="secs">(1s)</span></div>
+        <div class="tl" id="l3"><span class="c-ok">⏺</span> Updated 3 files · all tests passing</div>
+        <div class="tl" id="l4"><span class="c-prompt">&gt;</span> <span class="caret" id="caret2"></span></div>
+      </div>
+    </div>
+
+    <div class="abs pulse" id="pulse"></div>
+    <div class="abs hook-tag" id="hooktag" style="left:70px; top:390px">🪝 Thinking hook → 127.0.0.1 (local only)</div>
+    <div class="abs hook-tag" id="hooktag2" style="left:70px; top:426px">⏳ Claude still working after 8 s → quest time!</div>
+    <div class="abs timer-tag" id="timertag" style="left:70px; top:462px">⚙ Or trigger on turn start · turn end · a timer</div>
+
+    <div class="abs overlay" id="overlay">
+      <div class="stack">
+        <div class="bub">⚙</div>
+        <div class="bub"><div class="tfill" id="tfill"></div></div>
+        <div class="bub nb"><img src="../../sidequest/packages/app/assets/xp-badges/level-2.png" alt=""><div class="nb-bar"><div class="nb-fill" id="nbfill"></div></div></div>
+        <div class="bub primary" id="btn-done">✔</div>
+        <div class="bub">⏭</div>
+      </div>
+      <img class="mascot" id="ov-mascot" src="../../sidequest/packages/app/assets/mascots/arnold-80s.png" alt="">
+      <p class="ov-label">Make the most of this time!</p>
+      <p class="ov-ex">10 squats</p>
+      <p class="ov-dur">SideGym · 30 s</p>
+    </div>
+    <div class="abs ripple" id="ripple"></div>
+    <div class="abs xp-float bebas" id="xpfloat">+10 XP</div>
+  </div>
+
+  <div class="abs lvl" id="lvl">
+    <div class="lvl-backdrop"></div>
+    <img class="lvl-badge" id="lvlbadge" src="../../sidequest/packages/app/assets/xp-badges/level-2.png" alt="">
+    <div class="lvl-title bebas">Level up · SideGym LV 2</div>
+    <div class="lvl-sub">Every side earns its own XP — one badge per 100 XP, up to LV 10</div>
+    <div class="xpbar"><div id="xpbar"></div></div>
+  </div>
+
+  <div class="abs hist" id="hist">
+    <div class="hwin" id="hwin">
+      <div class="hwin-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span>SideQuest</span></div>
+      <div class="hbody">
+        <div class="hside">
+          <img src="../../sidequest/packages/app/assets/sidequest-logo.png" alt="">
+          <div class="hnav on">📊 History</div>
+          <div class="hnav">📋 Sides</div>
+          <div class="hnav">⚙ Settings</div>
+        </div>
+        <div class="hmain">
+          <div class="htitle bebas">History</div>
+          <div class="hstats">
+            <div class="hstat" id="hs0"><div class="v" id="hv0">0</div><div class="l">🔥 Streak (days)</div></div>
+            <div class="hstat" id="hs1"><div class="v" id="hv1">0</div><div class="l">Sessions this week</div></div>
+            <div class="hstat" id="hs2"><div class="v" id="hv2">0</div><div class="l">Total sessions</div></div>
+            <div class="hstat" id="hs3"><div class="v" id="hv3">0</div><div class="l">⛓ Session debt</div></div>
+          </div>
+          <div class="hrow2">
+            <div class="hcard hchart"><div class="lbl">Volume / week (last 7 days)</div><div class="hbars"><div class="hbar"><div id="hb0"></div><span>Mon</span></div><div class="hbar"><div id="hb1"></div><span>Tue</span></div><div class="hbar"><div id="hb2"></div><span>Wed</span></div><div class="hbar"><div id="hb3"></div><span>Thu</span></div><div class="hbar"><div id="hb4"></div><span>Fri</span></div><div class="hbar"><div id="hb5"></div><span>Sat</span></div><div class="hbar"><div id="hb6"></div><span>Sun</span></div></div></div>
+            <div class="hcard htable"><div class="lbl">Recent sessions</div><div id="htrows"><div class="htr" id="htr0"><span class="tm">10:42</span><img src="../../sidequest/packages/app/assets/mascots/arnold-80s.png"><span class="q">10 squats</span><span class="st ok">✔ Done</span></div><div class="htr" id="htr1"><span class="tm">10:05</span><img src="../../sidequest/packages/app/assets/mascots/yoga-girl.png"><span class="q">Take 5 deep breaths</span><span class="st ok">✔ Done</span></div><div class="htr" id="htr2"><span class="tm">09:31</span><img src="../../sidequest/packages/app/assets/mascots/grandma.png"><span class="q">Send her a text</span><span class="st sk">⏭ Skipped</span></div><div class="htr" id="htr3"><span class="tm">09:02</span><img src="../../sidequest/packages/app/assets/mascots/parrot.png"><span class="q">Learn a new word</span><span class="st ok">✔ Done</span></div><div class="htr" id="htr4"><span class="tm">08:40</span><img src="../../sidequest/packages/app/assets/mascots/laptop.png"><span class="q">Learn one IDE shortcut</span><span class="st ok">✔ Done</span></div><div class="htr" id="htr5"><span class="tm">08:12</span><img src="../../sidequest/packages/app/assets/mascots/arnold-80s.png"><span class="q">Plank</span><span class="st ok">✔ Done</span></div></div></div>
+          </div>
+          <div class="hshare" id="hshare">Share my stats <div>🔗 LinkedIn</div><div>🐙 GitHub</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="abs sides" id="sides">
+    <div class="sides-title bebas">Pick your <span>side</span></div>
+    <div class="sides-sub">7 bundled quest packs — one active at a time</div>
+    <div id="cards"></div>
+    <div class="chips">
+      <div class="chip" id="chip0">＋ Build your own</div>
+      <div class="chip" id="chip1">⇅ Import / export JSON</div>
+      <div class="chip ai" id="chip2">✨ Generate one with AI (opt-in)</div>
+    </div>
+  </div>
+
+  <div class="abs modes" id="modes">
+    <div class="sides-title bebas">Your rules, <span style="color:var(--gold)">three modes</span></div>
+    <div class="mode" id="mode0" style="left:60px"><div class="ic">🔔</div><div class="t bebas">Soft notification</div><div class="d">Skip whenever you want. A gentle nudge, nothing more.</div></div>
+    <div class="mode" id="mode1" style="left:350px"><div class="ic">🔒</div><div class="t bebas">Hard gate</div><div class="d">No dismissing until the quest is done. Can even hold your Claude Code hook.</div></div>
+    <div class="mode" id="mode2" style="left:640px"><div class="ic">⚖️</div><div class="t bebas">Mixed</div><div class="d">Soft at first. Skip too often and the debt turns it into a gate.</div></div>
+  </div>
+
+
+  <div class="abs change" id="change">
+    <div class="ch-title bebas" id="ch-title">The way we code <span>has changed.</span></div>
+    <div class="ch-label bebas" id="ch-l0" style="top:186px">Before</div>
+    <div class="ch-track" id="ch-t0" style="top:180px"><div class="ch-seg code" id="ch-before" style="width:0"><span style="width:690px">✎ code, code, code</span></div></div>
+    <div class="ch-label bebas ch-teal" id="ch-l1" style="top:276px">With agents</div>
+    <div class="ch-track" id="ch-t1" style="top:270px"></div>
+    <div class="ch-punch bebas" id="ch-punch">AI codes. <span>We wait.</span></div>
+    <div class="ch-count" id="ch-count">time spent waiting today: <b id="ch-time">0h00</b></div>
+  </div>
+
+  <div class="abs intro" id="intro">
+    <img id="intro-logo" src="../../sidequest/packages/app/assets/sidequest-logo.png" alt="SideQuest">
+    <p id="intro-p">Micro-quests for the moments you spend <b>waiting on your AI</b></p>
+  </div>
+
+  <div class="abs arch" id="arch">
+    <div class="arch-title bebas" id="arch-title"><span>100 %</span> local</div>
+    <div class="aline" id="aline0" style="left:278px"></div>
+    <div class="aline" id="aline1" style="left:598px"></div>
+    <div class="abox" id="abox0" style="left:46px"><div class="ic">🤖</div><div class="t">Coding agent</div><div class="d">end-of-turn hook</div></div>
+    <div class="abox" id="abox1" style="left:366px"><div class="ic">🔁</div><div class="t mono">127.0.0.1</div><div class="d">loopback server</div></div>
+    <div class="abox" id="abox2" style="left:686px"><div class="ic">💾</div><div class="t">SQLite</div><div class="d">on your disk</div></div>
+    <div class="apacket" id="apacket"></div>
+    <div class="achips">
+      <div class="achip" id="achip0">☁️ No cloud</div>
+      <div class="achip" id="achip1">👤 No account</div>
+      <div class="achip" id="achip2">🔒 Zero data leaves your machine</div>
+    </div>
+    <div class="amodes" id="amodes">Mode <b style="color:var(--teal)">soft</b> · mode <b style="color:var(--red)">hard gate</b> · mode <b style="color:var(--gold)">mixed</b></div>
+  </div>
+
+  <div class="abs ent" id="ent">
+    <div class="ent-kicker" id="ent-kicker">NEXT LEVEL · SIDEQUEST FOR TEAMS</div>
+    <div class="ent-title bebas" id="ent-title">Tomorrow, plugged into <span>your company</span></div>
+    <svg class="ent-svg" id="ent-svg" width="960" height="600"></svg>
+    <div id="avatars"></div>
+    <div id="dpks"></div>
+    <div class="agg" id="agg"><div class="ic">🔒</div><div class="t">Anonymized<br>aggregation</div><div class="d">team-level only</div></div>
+    <div class="board" id="board">
+      <div class="board-h bebas">🏆 Team leaderboard · this week</div>
+      <div id="brows"></div>
+    </div>
+    <div class="echips">
+      <div class="echip" id="echip0">⏱ <b>Prompt rhythm</b> · think between requests</div>
+      <div class="echip" id="echip1">🎓 <b>Continuous learning</b> · 30 s at a time</div>
+      <div class="echip" id="echip2">📊 <b>Anonymized KPIs</b> · GDPR-friendly</div>
+    </div>
+  </div>
+
+  <div class="abs outro" id="outro">
+    <img id="outro-logo" src="../../sidequest/packages/app/assets/sidequest-logo.png" alt="SideQuest">
+    <div class="pills">
+      <div class="pill" id="pill0">🔒 100% local · no telemetry</div>
+      <div class="pill" id="pill1">🧩 Open source · Apache-2.0</div>
+      <div class="pill" id="pill2">💻 macOS · Windows · Linux</div>
+    </div>
+    <div class="outro-tag bebas" id="outrotag"><span style="color:#fff">While Claude thinks, you choose:</span> <span style="color:#8e93a8">keep waiting</span><span style="color:#fff">,</span> or take on a new side quest.</div>
+  </div>
+
+  <div class="abs caption">
+    <div class="cap" id="cap0"><div class="num bebas">1</div><div class="txt bebas">You prompt <em>Claude Code</em>… and wait</div></div>
+    <div class="cap" id="cap1"><div class="num bebas">2</div><div class="txt bebas">SideQuest catches the <em>idle moment</em></div></div>
+    <div class="cap" id="cap2"><div class="num bebas">3</div><div class="txt bebas">A mascot drops a <em>30-second quest</em></div></div>
+    <div class="cap" id="cap4"><div class="num bebas">5</div><div class="txt bebas">Track your <em>streak</em>, keep the motivation</div></div>
+    <div class="cap" id="cap3"><div class="num bebas">4</div><div class="txt bebas">Done? <em>Earn XP</em> and level up</div></div>
+  </div>
+
+  <svg class="abs cursor" id="cursor" viewBox="0 0 22 22"><path d="M3 2 L3 18 L7.5 13.8 L10.5 20 L13.2 18.8 L10.3 12.7 L16.5 12.7 Z" fill="#fff" stroke="#0b0e1a" stroke-width="1.4" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+const A = "../../sidequest/packages/app/assets/";
+const SIDES = [
+  { n: "SideGym",   img: "mascots/arnold-80s.png", q: "10 squats" },
+  { n: "SideCat",   emo: "🐱", q: "Feed your cat" },
+  { n: "SidePet",   emo: "🐣", q: "Play with it" },
+  { n: "SideParrot",img: "mascots/parrot.png", q: "Learn a new word" },
+  { n: "SideYoga",  img: "mascots/yoga-girl.png", q: "Take 5 deep breaths" },
+  { n: "SideCoding", img: "mascots/laptop.png", q: "Solve a small logic riddle" },
+  { n: "SideGrandma", img: "mascots/grandma.png", q: "Send her a text" },
+];
+const cards = document.getElementById("cards");
+SIDES.forEach((s, i) => {
+  const d = document.createElement("div");
+  d.className = "side-card"; d.id = "card" + i;
+  d.style.left = (31 + i * 130) + "px";
+  d.innerHTML = (s.img ? `<img class="m" src="${A + s.img}">` : `<div class="emo">${s.emo}</div>`) +
+    `<div class="n bebas">${s.n}</div><div class="q">${s.q}</div>` + (i === 0 ? `<div class="tag">ACTIVE</div>` : "");
+  cards.appendChild(d);
+});
+
+
+// "with agents" timeline segments (widths from the original slide, as fractions of the track)
+const AGENT_SEGS = [["code", 110, "prompt"], ["wait", 272, "⠿ waiting…"], ["review", 136, "review"], ["code", 95, ""],
+  ["wait", 328, "⠿ waiting…"], ["review", 122, "review"], ["code", 82, ""], ["wait", 220, "⠿ waiting…"]];
+const SEG_TOTAL = AGENT_SEGS.reduce((a, s) => a + s[1], 0);
+AGENT_SEGS.forEach(([k, w, label], i) => {
+  const d = document.createElement("div");
+  d.className = "ch-seg " + k; d.id = "seg" + i;
+  d.dataset.w = (w / SEG_TOTAL * 690).toFixed(1);
+  d.innerHTML = `<span style="width:${d.dataset.w}px">${label}</span>`;
+  document.getElementById("ch-t1").appendChild(d);
+});
+
+
+// enterprise slide: avatars -> anonymized aggregation -> team leaderboard
+const AV_COLORS = ["#22d3f0", "#f5a623", "#6ed279", "#e2574c", "#a78bfa", "#22d3f0", "#f5a623", "#6ed279"];
+const AVATARS = [];
+for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) AVATARS.push({ x: 58 + c * 82 + (r % 2) * 22, y: 160 + r * 68 });
+const AGG = { x: 300, y: 281 };
+const svg = document.getElementById("ent-svg");
+AVATARS.forEach((a, i) => {
+  const col = AV_COLORS[i];
+  const d = document.createElement("div");
+  d.className = "avatar"; d.id = "av" + i; d.style.left = a.x + "px"; d.style.top = a.y + "px";
+  d.innerHTML = `<svg viewBox="0 0 50 50" width="50" height="50"><defs><clipPath id="cp${i}"><circle cx="25" cy="25" r="23"/></clipPath></defs>
+    <circle cx="25" cy="25" r="23" fill="#15182b" stroke="${col}" stroke-width="2.5"/>
+    <g clip-path="url(#cp${i})" fill="${col}"><circle cx="25" cy="19" r="8"/><ellipse cx="25" cy="44" rx="15" ry="12"/></g></svg>`;
+  document.getElementById("avatars").appendChild(d);
+  const x1 = a.x + 50, y1 = a.y + 25;
+  svg.insertAdjacentHTML("beforeend", `<path id="ln${i}" d="M${x1} ${y1} C ${x1 + 50} ${y1}, ${AGG.x - 60} ${AGG.y}, ${AGG.x} ${AGG.y}"/>`);
+  const k = document.createElement("div"); k.className = "dpk"; k.id = "dpk" + i;
+  document.getElementById("dpks").appendChild(k);
+});
+svg.insertAdjacentHTML("beforeend", `<path id="ln-out" d="M476 281 L 552 281" style="stroke:var(--gold);stroke-width:3"/><path id="ln-arrow" d="M544 273 L 554 281 L 544 289" style="stroke:var(--gold);stroke-width:3"/>`);
+const TEAMS = [["🥇", "Data squad", 1240], ["🥈", "Cloud squad", 1085], ["🥉", "Mobile squad", 960], ["4", "Security squad", 870], ["5", "Design squad", 715]];
+TEAMS.forEach(([rk, nm, xp], i) => {
+  document.getElementById("brows").insertAdjacentHTML("beforeend",
+    `<div class="brow" id="brow${i}"><div class="rk">${rk}</div><div class="nm">${nm}</div><div class="bar"><div id="bbar${i}"></div></div><div class="xp" id="bxp${i}">0 XP</div></div>`);
+});
+
+// ---------- timeline helpers ----------
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+const easeIn = (p) => p * p * p;
+const easeInOut = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const backOut = (p) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+// visible window with fade in/out
+const win = (t, a, b, f = .3) => Math.min(seg(t, a, a + f), 1 - seg(t, b - f, b));
+const set = (id, o, tr) => { const e = $(id); e.style.opacity = o; if (tr !== undefined) e.style.transform = tr; };
+
+const PROMPT = "add pagination to the /users endpoint";
+const SPIN = ["✻", "✶", "✳", "✢", "·", "✢", "✳", "✶"];
+const SHIFT = 4.4;
+const HIST = 4.0;            // length of the history dashboard slide inserted before "pick your side"           // length of the "has changed" slide inserted after the intro
+const DURATION = 32.2 + SHIFT + HIST;
+
+function seek(t) {
+  introScene(t);
+  changeScene(t);
+  mainScenes(t - SHIFT);
+}
+
+function changeScene(t) {
+  // 2.4 – 7.0 : "the way we code has changed"
+  $("change").style.opacity = win(t, 2.4, 7.0, .4);
+  const tp = easeOut(seg(t, 2.5, 3.0));
+  $("ch-title").style.opacity = tp;
+  $("ch-title").style.transform = `translateY(${lerp(16, 0, tp)}px)`;
+  $("ch-l0").style.opacity = seg(t, 2.9, 3.2);
+  $("ch-before").style.width = (easeInOut(seg(t, 3.0, 3.7)) * 690) + "px";
+  $("ch-l1").style.opacity = seg(t, 3.8, 4.1);
+  // segments fill the track one after the other
+  let start = 3.9;
+  AGENT_SEGS.forEach((sg, i) => {
+    const d = $("seg" + i), dur = .2 + sg[1] / SEG_TOTAL * 1.2;
+    d.style.width = (easeOut(seg(t, start, start + dur)) * d.dataset.w) + "px";
+    start += dur * .8;
+  });
+  const pp = easeOut(seg(t, 5.3, 5.7));
+  $("ch-punch").style.opacity = pp;
+  $("ch-punch").style.transform = `scale(${lerp(1.08, 1, pp)})`;
+  $("ch-count").style.opacity = seg(t, 5.6, 5.9);
+  const mins = Math.round(easeOut(seg(t, 5.7, 6.5)) * 107);
+  $("ch-time").textContent = `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, "0")}`;
+}
+
+function introScene(t) {
+  // INTRO 0 – 2.6
+  const iv = win(t, 0, 2.6, .5);
+  const ip = easeOut(seg(t, 0, .8));
+  set("intro", iv);
+  $("intro-logo").style.transform = `scale(${lerp(.82, 1, ip)})`;
+  $("intro-p").style.opacity = seg(t, .6, 1.1);
+  $("intro-p").style.transform = `translateY(${lerp(12, 0, easeOut(seg(t, .6, 1.1)))}px)`;
+}
+
+function mainScenes(t) {
+  // DESK 2.4 – 14.2
+  const dv = win(t, 2.4, 14.2, .4);
+  set("desk", dv);
+
+  // terminal
+  const tp = easeOut(seg(t, 2.4, 3.0));
+  set("term", 1, `translateY(${lerp(30, 0, tp)}px)`);
+  $("term").style.opacity = tp;
+  $("l0").style.opacity = seg(t, 2.6, 2.8);
+  $("l1").style.opacity = seg(t, 2.9, 3.0);
+  const nChars = Math.floor(seg(t, 3.0, 4.6) * PROMPT.length);
+  $("typed").textContent = PROMPT.slice(0, nChars);
+  $("caret1").style.opacity = (t < 4.9 && (nChars < PROMPT.length || Math.floor(t * 3) % 2 === 0)) ? 1 : 0;
+  // thinking mode: the hook fires on prompt submit, the quest shows if Claude is still busy after 8 s
+  const FINISH = 12.3;
+  const working = t >= 4.9 && t < FINISH;
+  $("l2").style.opacity = t >= 4.9 ? 1 : 0;
+  $("spin").textContent = working ? SPIN[Math.floor(t * 8) % SPIN.length] : "✻";
+  const secs = Math.max(1, Math.floor((Math.min(t, FINISH) - 4.9) * (8 / 3.7)) + 1);
+  $("secs").textContent = t < FINISH ? `(${secs}s · esc to interrupt)` : `(${secs}s)`;
+  $("l3").style.opacity = t >= FINISH ? 1 : 0;
+  $("l4").style.opacity = t >= FINISH + .2 ? 1 : 0;
+  $("caret2").style.opacity = Math.floor(t * 3) % 2 === 0 ? 1 : 0;
+
+  // hook pulse on prompt submit: from the terminal prompt line to the tray icon
+  const pp = seg(t, 4.9, 5.7);
+  const sx = 380, sy = 222, ex = 924, ey = 6;
+  const px = lerp(sx, ex, easeInOut(pp)), py = lerp(sy, ey, easeInOut(pp)) - Math.sin(pp * Math.PI) * 60;
+  $("pulse").style.left = (px - 7) + "px"; $("pulse").style.top = (py - 7) + "px";
+  $("pulse").style.opacity = (t >= 4.9 && t < 5.75) ? 1 : 0;
+  $("hooktag").style.opacity = win(t, 5.0, 10.6, .3);
+  $("hooktag2").style.opacity = win(t, 8.2, 10.6, .3);
+  $("timertag").style.opacity = win(t, 8.8, 10.6, .3);
+  // tray ring: once when the hook lands, once when the 8 s debounce fires the quest
+  const ring = (a) => { const r = seg(t, a, a + .6); return t >= a && t < a + .6 ? [1 - r, 1 + r * 1.6] : null; };
+  const rg = ring(8.0) || ring(5.7) || [0, 1];
+  $("tray-ring").style.opacity = rg[0];
+  $("tray-ring").style.transform = `scale(${rg[1]})`;
+
+  // overlay pops from tray
+  const op = seg(t, 8.6, 9.1);
+  $("overlay").style.opacity = clamp(op * 2);
+  $("overlay").style.transform = `scale(${lerp(.4, 1, backOut(op))})`;
+  // mascot bounce
+  const bob = t > 9.1 ? Math.sin((t - 9.1) * 5) * 3 : 0;
+  $("ov-mascot").style.transform = `translateY(${bob}px)`;
+  // quest timer drains (sped up for the demo)
+  $("tfill").style.height = (100 - seg(t, 9.1, 12.0) * 100) + "%";
+  // next-badge progress 80% -> 90% after done, then 100%
+  $("nbfill").style.width = lerp(80, 100, easeOut(seg(t, 12.2, 12.9))) + "%";
+
+  // cursor travels to ✔ and clicks
+  const cp = easeInOut(seg(t, 10.4, 11.6));
+  const doneX = 618 + 292 - 10 - 26 / 2, doneY = 96 + 10 + 3 * 34 + 13;
+  $("cursor").style.left = lerp(760, doneX - 2, cp) + "px";
+  $("cursor").style.top = lerp(520, doneY - 2, cp) + "px";
+  $("cursor").style.opacity = win(t, 10.3, 13.0, .2);
+  const press = t >= 11.75 && t < 11.95;
+  $("cursor").style.transform = press ? "scale(.85)" : "scale(1)";
+  $("btn-done").style.transform = press ? "scale(.88)" : "scale(1)";
+  const rip = seg(t, 11.8, 12.4);
+  $("ripple").style.left = (doneX - 13) + "px"; $("ripple").style.top = (doneY - 13) + "px";
+  $("ripple").style.opacity = t >= 11.8 && t < 12.4 ? 1 - rip : 0;
+  $("ripple").style.transform = `scale(${1 + rip * 2})`;
+  // +10 XP float
+  const xf = seg(t, 11.9, 13.2);
+  $("xpfloat").style.left = (doneX - 112) + "px";
+  $("xpfloat").style.top = (doneY - 20 - xf * 50) + "px";
+  $("xpfloat").style.opacity = t >= 11.9 ? win(t, 11.9, 13.2, .2) : 0;
+
+  // LEVEL UP 13.0 – 15.6
+  const lv = win(t, 13.0, 15.6, .35);
+  $("lvl").style.opacity = lv;
+  const lb = seg(t, 13.1, 13.7);
+  $("lvlbadge").style.transform = `scale(${lerp(.3, 1, backOut(lb))}) rotate(${lerp(-25, 0, easeOut(lb))}deg)`;
+  $("xpbar").style.width = lerp(90, 100, easeOut(seg(t, 13.4, 14.0))) + "%";
+
+  captions(t);
+  historyScene(t);
+  t -= HIST;   // everything below starts after the history slide
+
+  // SIDES 15.4 – 19.8
+  $("sides").style.opacity = win(t, 15.4, 19.8, .35);
+  SIDES.forEach((s, i) => {
+    const p = seg(t, 15.6 + i * .12, 16.1 + i * .12);
+    const c = $("card" + i);
+    c.style.opacity = p;
+    c.style.transform = `translateY(${lerp(40, 0, backOut(p))}px)`;
+    // highlight sweep
+    const hi = Math.abs(t - (17.0 + i * .18)) < .25;
+    c.style.borderColor = (i === 0 || hi) ? "rgba(245,166,35,.85)" : "";
+  });
+  $("card0").querySelector(".tag").style.opacity = seg(t, 16.2, 16.5);
+  for (let i = 0; i < 3; i++) {
+    const p = seg(t, 17.6 + i * .25, 18.0 + i * .25);
+    $("chip" + i).style.opacity = p;
+    $("chip" + i).style.transform = `translateY(${lerp(12, 0, easeOut(p))}px)`;
+  }
+
+  // MODES 19.6 – 22.0
+  $("modes").style.opacity = win(t, 19.6, 22.0, .35);
+  for (let i = 0; i < 3; i++) {
+    const p = seg(t, 19.8 + i * .2, 20.3 + i * .2);
+    $("mode" + i).style.opacity = p;
+    $("mode" + i).style.transform = `translateY(${lerp(30, 0, backOut(p))}px)`;
+  }
+
+  // ARCHITECTURE 21.8 – 25.6
+  $("arch").style.opacity = win(t, 21.8, 25.6, .35);
+  const at = easeOut(seg(t, 21.9, 22.4));
+  $("arch-title").style.opacity = at;
+  $("arch-title").style.transform = `scale(${lerp(1.15, 1, at)})`;
+  for (let i = 0; i < 3; i++) {
+    const p = seg(t, 22.2 + i * .25, 22.6 + i * .25);
+    $("abox" + i).style.opacity = p;
+    $("abox" + i).style.transform = `translateY(${lerp(24, 0, backOut(p))}px)`;
+  }
+  $("aline0").style.width = easeInOut(seg(t, 22.6, 23.0)) * 88 + "px";
+  $("aline1").style.width = easeInOut(seg(t, 22.85, 23.25)) * 88 + "px";
+  // data packet: agent -> loopback -> SQLite, twice
+  const lp = (t - 23.3) % 1.4, inLoop = t >= 23.3 && t < 25.4;
+  let ax = 0, av = 0;
+  if (inLoop && lp < .55) { ax = lerp(278, 366, easeInOut(lp / .55)); av = 1; }
+  else if (inLoop && lp >= .7 && lp < 1.25) { ax = lerp(598, 686, easeInOut((lp - .7) / .55)); av = 1; }
+  $("apacket").style.left = (ax - 7) + "px"; $("apacket").style.top = "253px";
+  $("apacket").style.opacity = av;
+  // the box that just received the packet flashes
+  ["abox1", "abox2"].forEach((id, i) => {
+    const hit = inLoop && lp >= (i ? 1.25 : .55) && lp < (i ? 1.4 : .7);
+    $(id).style.boxShadow = hit ? "0 0 36px rgba(245,166,35,.6)" : "";
+  });
+  for (let i = 0; i < 3; i++) {
+    const p = seg(t, 23.3 + i * .18, 23.65 + i * .18);
+    $("achip" + i).style.opacity = p;
+    $("achip" + i).style.transform = `scale(${lerp(.85, 1, backOut(p))})`;
+  }
+  $("amodes").style.opacity = seg(t, 24.0, 24.4);
+
+  // ENTERPRISE 25.4 – 30.2
+  $("ent").style.opacity = win(t, 25.4, 30.2, .35);
+  $("ent-kicker").style.opacity = seg(t, 25.5, 25.8);
+  const et = easeOut(seg(t, 25.6, 26.0));
+  $("ent-title").style.opacity = et;
+  $("ent-title").style.transform = `translateY(${lerp(14, 0, et)}px)`;
+  AVATARS.forEach((a, i) => {
+    const p = seg(t, 25.9 + i * .07, 26.25 + i * .07);
+    $("av" + i).style.opacity = p;
+    $("av" + i).style.transform = `scale(${lerp(.3, 1, backOut(p))})`;
+    const ln = $("ln" + i), L = ln.getTotalLength();
+    ln.style.strokeDasharray = L;
+    ln.style.strokeDashoffset = L * (1 - easeInOut(seg(t, 26.3 + i * .04, 26.8 + i * .04)));
+    // data packets flow continuously from each avatar into the aggregator
+    const ph = ((t - 26.9) + i * .37) % 1.1;
+    if (t >= 26.9 && t < 29.9 && ph < .8) {
+      const pt = ln.getPointAtLength(L * easeInOut(ph / .8));
+      $("dpk" + i).style.left = (pt.x - 4.5) + "px"; $("dpk" + i).style.top = (pt.y - 4.5) + "px";
+      $("dpk" + i).style.opacity = 1;
+    } else $("dpk" + i).style.opacity = 0;
+  });
+  const ag = seg(t, 26.5, 26.9);
+  $("agg").style.opacity = ag;
+  $("agg").style.transform = `scale(${lerp(.6, 1, backOut(ag))})`;
+  ["ln-out", "ln-arrow"].forEach((id) => {
+    const ln = $(id), L = ln.getTotalLength();
+    ln.style.strokeDasharray = L;
+    ln.style.strokeDashoffset = L * (1 - seg(t, 26.9, 27.2));
+  });
+  const bd = seg(t, 27.0, 27.35);
+  $("board").style.opacity = bd;
+  $("board").style.transform = `translateX(${lerp(30, 0, easeOut(bd))}px)`;
+  TEAMS.forEach(([, , xp], i) => {
+    $("brow" + i).style.opacity = seg(t, 27.25 + i * .12, 27.6 + i * .12);
+    const g = easeOut(seg(t, 27.4 + i * .12, 28.4 + i * .12));
+    $("bbar" + i).style.width = (g * xp / 1240 * 100) + "%";
+    $("bxp" + i).textContent = Math.round(g * xp).toLocaleString("en-US") + " XP";
+  });
+  for (let i = 0; i < 3; i++) {
+    const p = seg(t, 28.4 + i * .18, 28.75 + i * .18);
+    $("echip" + i).style.opacity = p;
+    $("echip" + i).style.transform = `translateY(${lerp(12, 0, easeOut(p))}px)`;
+  }
+
+  // OUTRO 30.0 – 32.2
+  $("outro").style.opacity = Math.min(seg(t, 30.0, 30.4), 1 - seg(t, 31.8, 32.2));
+  $("outro-logo").style.transform = `scale(${lerp(.85, 1, easeOut(seg(t, 30.0, 30.7)))})`;
+  for (let i = 0; i < 3; i++) $("pill" + i).style.opacity = seg(t, 30.4 + i * .15, 30.7 + i * .15);
+  $("outrotag").style.opacity = seg(t, 30.9, 31.2);
+
+}
+
+function captions(t) {
+  // captions
+  const caps = [[2.6, 8.0], [8.0, 10.4], [10.4, 12.0], [12.0, 15.4], [15.6, 19.3]];
+  caps.forEach(([a, b], i) => {
+    const v = win(t, a, b, .25);
+    $("cap" + i).style.opacity = v;
+    $("cap" + i).style.transform = `translateY(${lerp(10, 0, easeOut(seg(t, a, a + .3)))}px)`;
+  });
+  // captions sit on top of the level-up backdrop during step 4
+}
+
+const H_BARS = [6, 7, 9, 0, 0, 0, 0];      // sessions per day (sum = sessions this week), today (Wed) grows live
+function historyScene(t) {
+  // HISTORY 15.4 – 19.6
+  $("hist").style.opacity = win(t, 15.4, 19.6, .35);
+  const w = easeOut(seg(t, 15.4, 15.9));
+  $("hwin").style.transform = `translateY(${lerp(30, 0, w)}px) scale(${lerp(.96, 1, w)})`;
+  const done = t >= 17.4;               // the quest just completed lands in the history
+  const targets = [done ? 12 : 11, done ? 23 : 22, done ? 148 : 147, 0];
+  for (let i = 0; i < 4; i++) {
+    const p = seg(t, 15.8 + i * .1, 16.15 + i * .1);
+    $("hs" + i).style.opacity = p;
+    $("hs" + i).style.transform = `translateY(${lerp(14, 0, easeOut(p))}px)`;
+    const c = easeOut(seg(t, 15.9, 16.8));
+    $("hv" + i).textContent = done ? targets[i] : Math.round(c * targets[i]);
+    const pop = i < 3 && t >= 17.4 && t < 17.8 ? 1 + Math.sin(seg(t, 17.4, 17.8) * Math.PI) * .25 : 1;
+    $("hv" + i).style.transform = `scale(${pop})`;
+    $("hv" + i).style.transformOrigin = "left center";
+    $("hv" + i).style.color = pop > 1 ? "var(--gold)" : "";
+  }
+  H_BARS.forEach((n, i) => {
+    const today = i === 2;
+    const v = today ? (done ? n + 1 : n) : n;
+    const g = easeOut(seg(t, 16.2 + i * .08, 16.9 + i * .08));
+    $("hb" + i).style.height = (g * v / 10 * 100) + "%";
+    $("hb" + i).style.background = today ? "var(--gold)" : "";
+  });
+  // recent sessions: rows appear, then the fresh "10 squats" row slides in on top
+  for (let i = 1; i < 6; i++) $("htr" + i).style.opacity = seg(t, 16.3 + i * .08, 16.6 + i * .08);
+  const nr = seg(t, 17.3, 17.7);
+  $("htr0").style.opacity = nr;
+  $("htr0").style.marginTop = lerp(-33, 0, easeOut(nr)) + "px";
+  $("htr0").style.background = t >= 17.3 && t < 18.8 ? "rgba(245,166,35,.12)" : "";
+  $("hshare").style.opacity = seg(t, 18.0, 18.4);
+}
+
+window.seek = seek;
+window.DURATION = DURATION;
+
+// live preview: plays in a loop when opened in a browser (renderer calls seek() directly)
+if (!location.search.includes("render")) {
+  const t0 = performance.now();
+  const loop = () => { seek(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else { seek(0); }
+</script>
+</body>
+</html>
